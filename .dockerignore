@@ -1,0 +1,15 @@
+.git/
+.gitignore
+.github/
+.env
+.env.*
+.vscode/
+.idea/
+*.log
+*.md
+!README.md
+docker-compose*.yaml
+Dockerfile
+docs/
+scratchpad/
+tmp/

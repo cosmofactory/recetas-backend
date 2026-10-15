@@ -10,9 +10,8 @@ import (
 
 type Config struct {
 	DatabaseURL string
-	HTTPAddr string
+	HTTPAddr    string
 }
-
 
 func Load() (Config, error) {
 	_ = godotenv.Load()
@@ -24,11 +23,11 @@ func Load() (Config, error) {
 
 	addr := os.Getenv("HTTP_ADDR")
 	if addr == "" {
-		addr = ":8000"
+		addr = ":8080"
 	}
 	return Config{
 		DatabaseURL: dbURL,
-		HTTPAddr: addr,
+		HTTPAddr:    addr,
 	}, nil
 }
 

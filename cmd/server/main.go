@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -22,12 +21,12 @@ func main() {
 
 	cfg, err := config.Load()
 	if err != nil {
-			log.Fatalf("config: %v", err)
+		log.Fatalf("config: %v", err)
 	}
 
 	pool, err := database.NewPool(ctx, cfg.DatabaseURL)
 	if err != nil {
-			log.Fatalf("database: %v", err)
+		log.Fatalf("database: %v", err)
 	}
 	defer pool.Close()
 
@@ -40,16 +39,16 @@ func main() {
 	handler.Register(mux)
 
 	srv := &http.Server{
-			Addr:              cfg.HTTPAddr,
-			Handler:           mux,
-			ReadHeaderTimeout: 5 * time.Second,
+		Addr:              cfg.HTTPAddr,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	go func() {
-			log.Printf("listening on %s", cfg.HTTPAddr)
-			if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-					log.Fatalf("server: %v", err)
-			}
+		log.Printf("listening on %s", cfg.HTTPAddr)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("server: %v", err)
+		}
 	}()
 
 	<-ctx.Done()
@@ -58,7 +57,7 @@ func main() {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-			log.Fatalf("shutdown: %v", err)
+		log.Fatalf("shutdown: %v", err)
 	}
 	log.Println("bye")
 }

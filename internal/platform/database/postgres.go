@@ -28,7 +28,7 @@ func NewPool(ctx context.Context, url string) (*pgxpool.Pool, error) {
 	defer cancel()
 	if err := pool.Ping(pingCtx); err != nil {
 		pool.Close()
-		return nil, fmt.Errorf("ping postgrew: %w", err)
+		return nil, fmt.Errorf("ping postgres: %w", err)
 	}
 	return pool, nil
 }

@@ -1,0 +1,25 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - gosec
+    - govet
+    - ineffassign
+    - revive
+    - staticcheck
+    - unused
+  exclusions:
+    generated: strict
+    paths:
+      - internal/dish/dishdb
+  settings:
+    revive:
+      enable-default-rules: true
+      rules:
+        # Internal service, not a library: doc comments on every export are noise.
+        - name: exported
+          disabled: true
+        - name: package-comments
+          disabled: true

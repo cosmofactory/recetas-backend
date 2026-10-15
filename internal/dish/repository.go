@@ -64,7 +64,7 @@ func (r *pgRepository) Get(ctx context.Context, id int64) (Dish, error) {
 func (r *pgRepository) Count(ctx context.Context) (int64, error) {
 	numberOfDishes, err := r.q.CountDishes(ctx)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("count dishes: %w", err)
 	}
 	return numberOfDishes, nil
 }
