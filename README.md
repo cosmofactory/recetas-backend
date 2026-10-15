@@ -27,15 +27,12 @@ internal/
   platform/logging/    # slog JSON logger
   platform/httpx/      # http.Server timeouts + middleware (access log, panic recovery, body limit)
   platform/health/     # GET /healthz (DB ping)
-  dish/                # dish domain module
-    dish.go            # domain model
-    repository.go      # Repository interface + pg implementation
-    service.go         # business logic
-    handler.go         # HTTP handlers
-    dishdb/            # sqlc-generated code (do not edit)
+  catalog/             # catalog module: regions, dishes, variations, recipes
+    catalogdb/         # sqlc-generated code (do not edit)
+    catalogtest/       # test-only fixture loader
 db/
-  migrations/          # goose .sql files
-  queries/             # sqlc .sql inputs
+  migrations/          # goose .sql files (schema: docs/schema.md)
+  queries/<module>/    # sqlc .sql inputs, one dir per module
 docker/
   entrypoint.sh        # runs migrations then execs the server
 ```
@@ -55,7 +52,7 @@ Domain modules never import each other — wiring happens only in `cmd/server/ma
 ```bash
 cp .env.example .env
 make docker-up          # builds image, starts postgres + backend
-curl -i http://localhost:8080/dishes
+curl -i http://localhost:8080/healthz
 make docker-logs        # tail backend logs
 make docker-down        # stop
 ```
@@ -102,12 +99,6 @@ The contract is `api/openapi.yaml`, also served as JSON at `GET /openapi.json`. 
 
 Errors use `{"error":{"code":"...","message":"..."}}`. Unknown paths, and wrong methods on known ones, return a 404 in that shape.
 
-Legacy iteration-1 routes (removed in BE-3):
-
-- `POST /dishes` — create a dish (`{name, description}`)
-- `GET /dishes` — list all dishes
-- `GET /dishes/{id}` — get one dish
-- `GET /dishes/total/count` — total dish count
 - `GET /healthz` — liveness + DB ping (1s timeout): 200 `{"status":"ok"}`, or 503 `{"status":"degraded","checks":{"db":"timeout|unavailable"}}`
 
 ## Configuration

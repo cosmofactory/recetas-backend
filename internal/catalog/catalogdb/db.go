@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.31.1
 
-package dishdb
+package catalogdb
 
 import (
 	"context"

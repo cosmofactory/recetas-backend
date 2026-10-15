@@ -13,7 +13,7 @@ linters:
   exclusions:
     generated: strict
     paths:
-      - internal/dish/dishdb
+      - internal/catalog/catalogdb
       - internal/api/apigen
   settings:
     revive:
