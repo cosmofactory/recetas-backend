@@ -38,6 +38,8 @@ func SpecJSON() ([]byte, error) {
 // catch-all that answers unrouted paths with the contract 404. /healthz is
 // documented in the spec but registered by the health package. Because "/"
 // matches every method, a wrong method on a known path also gets 404, not 405.
+// Catalog operations answer If-None-Match through httpx.ConditionalGET, since
+// the strict interface can't see request headers.
 func Register(mux *http.ServeMux, impl apigen.StrictServerInterface, logger *slog.Logger) {
 	strict := apigen.NewStrictHandlerWithOptions(impl, nil, apigen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, _ error) {
@@ -50,7 +52,7 @@ func Register(mux *http.ServeMux, impl apigen.StrictServerInterface, logger *slo
 	})
 	apigen.HandlerWithOptions(strict, apigen.StdHTTPServerOptions{
 		BaseRouter:  mux,
-		Middlewares: []apigen.MiddlewareFunc{validateLang},
+		Middlewares: []apigen.MiddlewareFunc{validateLang, httpx.ConditionalGET},
 		ErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			httpx.WriteError(w, http.StatusBadRequest, "bad_request", paramErrorMessage(err))
 		},

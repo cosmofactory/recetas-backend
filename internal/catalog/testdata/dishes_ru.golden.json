@@ -1,0 +1,87 @@
+[
+  {
+    "course": "tapas",
+    "description": "Одно блюдо — два века споров. С луком или без — это только начало.",
+    "flags": {
+      "pork": false,
+      "quick": true,
+      "seafood": false,
+      "slowCooked": false,
+      "vegetarian": true
+    },
+    "key": "tortilla",
+    "name": "Тортилья",
+    "nameEs": "Tortilla de patatas",
+    "order": 1,
+    "photos": {
+      "card": "dishes/tortilla/card-5e6f7a8b",
+      "hero": "dishes/tortilla/hero-9c0d1e2f",
+      "thumb": "dishes/tortilla/thumb-1a2b3c4d"
+    },
+    "season": "all",
+    "variations": [
+      {
+        "description": "Едва схваченная серединка, без лука, едят с хлебом",
+        "name": "По-бетансосски, жидкая внутри",
+        "nameEs": "Estilo Betanzos, jugosa",
+        "photos": {
+          "card": "dishes/tortilla/gal/card-7e8f9a0b",
+          "hero": "dishes/tortilla/gal/hero-1c2d3e4f",
+          "thumb": "dishes/tortilla/gal/thumb-3a4b5c6d"
+        },
+        "recipeKey": "tortilla-betanzos",
+        "regionKey": "gal",
+        "regionName": "Галисия"
+      },
+      {
+        "description": "Жир чорисо окрашивает картофель",
+        "name": "С чорисо",
+        "nameEs": "Con chorizo",
+        "photos": {
+          "card": null,
+          "hero": null,
+          "thumb": null
+        },
+        "recipeKey": "tortilla-chorizo",
+        "regionKey": "ast",
+        "regionName": "Астурия"
+      }
+    ]
+  },
+  {
+    "course": "mains",
+    "description": "Воскресный котёл. Нут, фасоль или капуста — в зависимости от широты.",
+    "flags": {
+      "pork": true,
+      "quick": false,
+      "seafood": false,
+      "slowCooked": true,
+      "vegetarian": false
+    },
+    "key": "cocido",
+    "name": "Косидо и рагу",
+    "nameEs": "Cocidos y guisos",
+    "order": 3,
+    "photos": {
+      "card": null,
+      "hero": null,
+      "thumb": null
+    },
+    "season": "winter",
+    "variations": [
+      {
+        "description": "Фасоль фабес-де-ла-гранха, без овощей",
+        "name": "Fabada asturiana",
+        "nameEs": "Fabada asturiana",
+        "photos": {
+          "card": null,
+          "hero": null,
+          "thumb": null
+        },
+        "recipeKey": "fabada-asturiana",
+        "regionKey": "ast",
+        "regionName": "Астурия"
+      }
+    ]
+  }
+]
