@@ -154,7 +154,7 @@ func TestRecover_PanicReturnsGeneric500AndLogsStack(t *testing.T) {
 			if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
 				t.Errorf("got Content-Type %q, want application/json", ct)
 			}
-			if got, want := strings.TrimSpace(rec.Body.String()), `{"error":"internal error"}`; got != want {
+			if got, want := strings.TrimSpace(rec.Body.String()), `{"error":{"code":"internal","message":"internal error"}}`; got != want {
 				t.Errorf("got body %q, want %q", got, want)
 			}
 			if strings.Contains(rec.Body.String(), "secret-panic-detail") {

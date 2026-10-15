@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+
+	"github.com/cosmofactory/recetas-backend/internal/platform/httpx"
 )
 
 type Handler struct {
@@ -34,7 +36,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		var mbe *http.MaxBytesError
 		if errors.As(err, &mbe) {
-			h.writeError(w, http.StatusRequestEntityTooLarge, "request body too large")
+			httpx.WriteError(w, http.StatusRequestEntityTooLarge, "payload_too_large", "request body too large")
 			return
 		}
 		h.writeError(w, http.StatusBadRequest, "Invalid JSON body")

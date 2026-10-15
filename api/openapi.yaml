@@ -1,0 +1,555 @@
+openapi: 3.0.3
+info:
+  title: Asadorov API
+  version: 1.0.0
+  description: |
+    Read API for Asadorov, an atlas of Spanish cooking. Internal only: the
+    SvelteKit frontend is the sole client (stack.md X4).
+
+    - Every human-readable field is returned in the locale given by `lang`.
+      Keys (`key`, `regionKey`, `dishKey`, `recipeKey`) are ASCII slugs and
+      identical in every locale.
+    - Searchable entities also carry `nameEs`, the Spanish original, so search
+      can match it in any locale (stack.md X1).
+    - Variations of a dish are ordered by region order. No variation is
+      primary, best or featured.
+    - Read endpoints send `ETag` and `Cache-Control` and answer a matching
+      `If-None-Match` with `304 Not Modified`. `If-None-Match` is read from
+      the raw request headers (it may be a list, or split over several header
+      lines), so it is deliberately not declared as an operation parameter.
+    - Lists and nested lists are in editorial order: regions by `Region.order`,
+      dishes by `Dish.order`, variations of a dish by region order, variations
+      of a region by dish order. Never alphabetical, never per locale.
+  license:
+    name: MIT
+servers:
+  - url: http://backend:8080
+    description: Internal Docker network
+
+tags:
+  - name: catalog
+    description: Regions, dishes, variations and recipes.
+  - name: ops
+    description: Operational endpoints. Documented here, served by their own handlers.
+
+paths:
+  /v1/regions:
+    get:
+      operationId: listRegions
+      tags: [catalog]
+      summary: All regions, in map/region order.
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+      responses:
+        '200':
+          description: All 14 regions.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Region'
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/Internal'
+
+  /v1/regions/{regionKey}:
+    get:
+      operationId: getRegion
+      tags: [catalog]
+      summary: One region with the variations cooked there.
+      parameters:
+        - $ref: '#/components/parameters/RegionKey'
+        - $ref: '#/components/parameters/Lang'
+      responses:
+        '200':
+          description: The region.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegionDetail'
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/Internal'
+
+  /v1/dishes:
+    get:
+      operationId: listDishes
+      tags: [catalog]
+      summary: All dishes with their variation summaries, in dish order.
+      description: |
+        Together with `/v1/regions` this is everything the frontend needs for
+        search and filters, which run in the browser (stack.md X1).
+      parameters:
+        - $ref: '#/components/parameters/Lang'
+      responses:
+        '200':
+          description: All dishes.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dish'
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/Internal'
+
+  /v1/dishes/{dishKey}:
+    get:
+      operationId: getDish
+      tags: [catalog]
+      summary: One dish with its variations.
+      parameters:
+        - $ref: '#/components/parameters/DishKey'
+        - $ref: '#/components/parameters/Lang'
+      responses:
+        '200':
+          description: The dish.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dish'
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/Internal'
+
+  /v1/dishes/{dishKey}/variations/{regionKey}/recipe:
+    get:
+      operationId: getRecipe
+      tags: [catalog]
+      summary: The recipe of one variation (one dish in one region).
+      parameters:
+        - $ref: '#/components/parameters/DishKey'
+        - $ref: '#/components/parameters/RegionKey'
+        - $ref: '#/components/parameters/Lang'
+      responses:
+        '200':
+          description: The recipe.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Cache-Control:
+              $ref: '#/components/headers/CacheControl'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/Internal'
+
+  /healthz:
+    get:
+      operationId: getHealth
+      tags: [ops]
+      summary: Liveness plus a database ping (1s timeout).
+      responses:
+        '200':
+          description: Healthy.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '503':
+          description: A dependency is down.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+
+  /openapi.json:
+    get:
+      operationId: getOpenAPI
+      tags: [ops]
+      summary: This document, as JSON.
+      responses:
+        '200':
+          description: The OpenAPI document.
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  parameters:
+    Lang:
+      name: lang
+      in: query
+      required: false
+      description: Locale of the human-readable fields. An unknown value is a 400.
+      schema:
+        $ref: '#/components/schemas/Locale'
+    RegionKey:
+      name: regionKey
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Slug'
+    DishKey:
+      name: dishKey
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Slug'
+
+  headers:
+    ETag:
+      description: 'Weak validator, `W/"<contentVersion>-<locale>"`.'
+      schema:
+        type: string
+    CacheControl:
+      description: '`public, max-age=60, stale-while-revalidate=600`'
+      schema:
+        type: string
+    NoStore:
+      description: '`no-store`'
+      schema:
+        type: string
+
+  responses:
+    NotModified:
+      description: The `If-None-Match` validator still matches.
+      headers:
+        ETag:
+          $ref: '#/components/headers/ETag'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+    BadRequest:
+      description: Invalid parameter, e.g. an unknown `lang`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: No such region, dish or variation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Internal:
+      description: Unexpected server error. Details are logged, never returned.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Locale:
+      type: string
+      enum: [en, es, ru]
+      default: en
+
+    Slug:
+      type: string
+      pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+      maxLength: 64
+      example: tortilla
+
+    Course:
+      type: string
+      enum: [tapas, mains, desserts]
+
+    Season:
+      type: string
+      enum: [summer, winter, easter, all]
+
+    Unit:
+      # `null` is allowed via `nullable` but deliberately not listed in `enum`:
+      # oapi-codegen v2.8 turns a listed null into a "<nil>" string constant.
+      type: string
+      nullable: true
+      enum: [g, ml, tsp]
+      description: '`null` means a counted item ("4 eggs"). The frontend shows `kg`/`L` when a scaled quantity reaches 1000.'
+
+    Flags:
+      type: object
+      additionalProperties: false
+      required: [vegetarian, seafood, pork, quick, slowCooked]
+      properties:
+        vegetarian:
+          type: boolean
+        seafood:
+          type: boolean
+        pork:
+          type: boolean
+        quick:
+          type: boolean
+        slowCooked:
+          type: boolean
+
+    Photos:
+      type: object
+      additionalProperties: false
+      description: |
+        Key prefixes in the media CDN (stack.md X3), e.g.
+        `dishes/tortilla/gal/hero-3f9a1c2b`. The frontend appends
+        `-<width>w.<ext>` and builds the `srcset`. `null` when there is no photo.
+      required: [thumb, card, hero]
+      properties:
+        thumb:
+          type: string
+          nullable: true
+          description: 1:1, widths 128 and 256.
+        card:
+          type: string
+          nullable: true
+          description: 3:2, widths 480 and 960.
+        hero:
+          type: string
+          nullable: true
+          description: 16:9, widths 800 and 1600.
+
+    Region:
+      type: object
+      # No additionalProperties: false here: RegionDetail extends it via allOf.
+      required: [key, order, name, nameEs, mapLabel, tileColor, description, regionalDishes]
+      properties:
+        key:
+          $ref: '#/components/schemas/Slug'
+        order:
+          type: integer
+          minimum: 1
+          description: Region order; variations are sorted by it.
+        name:
+          type: string
+        nameEs:
+          type: string
+        mapLabel:
+          type: string
+        tileColor:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        description:
+          type: string
+        regionalDishes:
+          type: array
+          description: Spanish proper names, the same in every locale.
+          items:
+            type: string
+
+    RegionDetail:
+      allOf:
+        - $ref: '#/components/schemas/Region'
+        - type: object
+          required: [variations]
+          properties:
+            variations:
+              type: array
+              description: The variations cooked in this region, in dish order (`Dish.order`).
+              items:
+                $ref: '#/components/schemas/RegionVariation'
+
+    RegionVariation:
+      type: object
+      additionalProperties: false
+      required: [dishKey, dishName, dishNameEs, regionKey, recipeKey, name, nameEs, description, photos]
+      properties:
+        dishKey:
+          $ref: '#/components/schemas/Slug'
+        dishName:
+          type: string
+        dishNameEs:
+          type: string
+        regionKey:
+          $ref: '#/components/schemas/Slug'
+        recipeKey:
+          $ref: '#/components/schemas/Slug'
+        name:
+          type: string
+        nameEs:
+          type: string
+        description:
+          type: string
+        photos:
+          $ref: '#/components/schemas/Photos'
+
+    Dish:
+      type: object
+      additionalProperties: false
+      required: [key, order, name, nameEs, description, flags, course, season, photos, variations]
+      properties:
+        key:
+          $ref: '#/components/schemas/Slug'
+        order:
+          type: integer
+          minimum: 1
+          description: Editorial order; Popular and region lists use it. There is no sort control.
+        name:
+          type: string
+        nameEs:
+          type: string
+        description:
+          type: string
+        flags:
+          $ref: '#/components/schemas/Flags'
+        course:
+          $ref: '#/components/schemas/Course'
+        season:
+          $ref: '#/components/schemas/Season'
+        photos:
+          $ref: '#/components/schemas/Photos'
+        variations:
+          type: array
+          description: One per region the dish is cooked in, ordered by region order. All equal.
+          items:
+            $ref: '#/components/schemas/VariationSummary'
+
+    VariationSummary:
+      type: object
+      additionalProperties: false
+      required: [regionKey, regionName, recipeKey, name, nameEs, description, photos]
+      properties:
+        regionKey:
+          $ref: '#/components/schemas/Slug'
+        regionName:
+          type: string
+        recipeKey:
+          $ref: '#/components/schemas/Slug'
+        name:
+          type: string
+        nameEs:
+          type: string
+        description:
+          type: string
+          description: One line.
+        photos:
+          $ref: '#/components/schemas/Photos'
+
+    Ingredient:
+      type: object
+      additionalProperties: false
+      required: [quantity, unit, name]
+      properties:
+        quantity:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: For `baseServings`. The frontend scales and rounds it.
+        unit:
+          $ref: '#/components/schemas/Unit'
+        name:
+          type: string
+
+    Recipe:
+      type: object
+      additionalProperties: false
+      description: Everything the recipe page needs in one response (eyebrow, title, description, recipe).
+      required: [dishKey, dishName, regionKey, regionName, recipeKey, name, nameEs, description, timeMinutes, baseServings, ingredients, steps, photos]
+      properties:
+        dishKey:
+          $ref: '#/components/schemas/Slug'
+        dishName:
+          type: string
+        regionKey:
+          $ref: '#/components/schemas/Slug'
+        regionName:
+          type: string
+        recipeKey:
+          $ref: '#/components/schemas/Slug'
+        name:
+          type: string
+          description: The variation name.
+        nameEs:
+          type: string
+        description:
+          type: string
+          description: The variation's one-line description.
+        timeMinutes:
+          type: integer
+          minimum: 1
+          description: Total time; the frontend formats it per locale (D-BE3-1).
+        baseServings:
+          type: integer
+          minimum: 1
+        ingredients:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Ingredient'
+        steps:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        photos:
+          $ref: '#/components/schemas/Photos'
+
+    Health:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        checks:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [timeout, unavailable]
+
+    Error:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum: [bad_request, not_found, payload_too_large, internal, not_implemented]
+            message:
+              type: string
+              description: Safe for clients; never contains internal detail.

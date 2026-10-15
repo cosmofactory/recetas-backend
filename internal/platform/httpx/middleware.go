@@ -48,9 +48,7 @@ func Recover(logger *slog.Logger) Middleware {
 				for k := range h {
 					delete(h, k)
 				}
-				h.Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusInternalServerError)
-				_, _ = w.Write([]byte(`{"error":"internal error"}` + "\n"))
+				WriteError(w, http.StatusInternalServerError, "internal", "internal error")
 			}()
 			next.ServeHTTP(rw, r)
 		})

@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cosmofactory/recetas-backend/internal/api"
 	"github.com/cosmofactory/recetas-backend/internal/config"
 	"github.com/cosmofactory/recetas-backend/internal/dish"
 	"github.com/cosmofactory/recetas-backend/internal/dish/dishdb"
@@ -38,6 +39,10 @@ func main() {
 }
 
 func run(cfg config.Config, logger *slog.Logger) error {
+	if _, err := api.SpecJSON(); err != nil {
+		return fmt.Errorf("openapi spec: %w", err)
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
@@ -55,6 +60,7 @@ func run(cfg config.Config, logger *slog.Logger) error {
 	mux := http.NewServeMux()
 	handler.Register(mux)
 	health.NewHandler(pool, logger).Register(mux)
+	api.Register(mux, api.Stub{}, logger)
 
 	// MaxBody is outermost so MaxBytesReader sees net/http's own ResponseWriter and a 413 closes the connection.
 	srv := httpx.NewServer(cfg.HTTPAddr, httpx.Chain(httpx.Routed(mux),

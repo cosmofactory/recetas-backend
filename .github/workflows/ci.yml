@@ -57,6 +57,20 @@ jobs:
       - name: Go build
         run: go build ./...
 
+      - name: Generated code is up to date
+        run: |
+          make generate
+          git diff --exit-code
+          untracked=$(git ls-files --others --exclude-standard)
+          if [ -n "$untracked" ]; then
+            echo "Untracked files after make generate:" >&2
+            echo "$untracked" >&2
+            exit 1
+          fi
+
+      - name: Lint OpenAPI spec
+        run: make api-lint
+
   test:
     name: Test
     runs-on: ubuntu-latest

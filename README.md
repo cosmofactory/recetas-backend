@@ -8,14 +8,20 @@ Backend for Asadorov, a non-profit atlas of Spanish cooking. Modular Go monolith
 - **PostgreSQL 16** — pgx/v5 driver.
 - **[sqlc](https://sqlc.dev/)** — SQL-first, generates type-safe Go from `.sql` files.
 - **[goose](https://github.com/pressly/goose)** — numbered up/down migrations.
+- **[oapi-codegen](https://github.com/oapi-codegen/oapi-codegen)** — spec-first: the strict server interface is generated from `api/openapi.yaml`.
 - **Docker + Docker Compose** for local dev.
 - **GitHub Actions** for CI.
 
 ## Layout
 
 ```
+api/
+  openapi.yaml         # the API contract (OpenAPI 3.0.3), hand-written
+  oapi-codegen.yaml    # codegen config
 cmd/server/            # entry point — the only place modules are wired together
 internal/
+  api/                 # adapts the generated strict interface; serves /openapi.json
+    apigen/            # oapi-codegen output (do not edit)
   config/              # env loading
   platform/database/   # pgxpool bootstrap
   platform/logging/    # slog JSON logger
@@ -42,7 +48,7 @@ Domain modules never import each other — wiring happens only in `cmd/server/ma
 - Docker + Docker Compose (for `make docker-*` targets)
 - Optional local tools (only if you want to run outside Docker):
   - `make goose-install` — pinned goose CLI
-  - [sqlc](https://docs.sqlc.dev/en/latest/overview/install.html) — for regenerating `dishdb`
+  - nothing else: `make generate` runs the pinned oapi-codegen (go.mod `tool`) and sqlc (`go run`)
 
 ## Quick start — Docker (recommended)
 
@@ -76,6 +82,9 @@ make run                    # go run ./cmd/server
 | Test (integration tests skip) | `make test` |
 | Integration tests (compose Postgres, migrated `recetas_test` DB) | `make test-integration` |
 | Build binary → `bin/server` | `make build` |
+| Regenerate all generated code (oapi-codegen + sqlc) | `make generate` |
+| Regenerate the API server code from `api/openapi.yaml` | `make api-generate` |
+| Lint the OpenAPI spec (vacuum, fails on errors) | `make api-lint` |
 | Regenerate sqlc code | `make sqlc-generate` |
 | Apply migrations | `make migrate` |
 | Revert last migration | `make migrate-down` |
@@ -83,7 +92,17 @@ make run                    # go run ./cmd/server
 | New migration | `make migrate-create NAME=add_recipes` |
 | List all targets | `make help` |
 
-## Endpoints (iteration 1)
+## Endpoints
+
+The contract is `api/openapi.yaml`, also served as JSON at `GET /openapi.json`. The `/v1` catalog endpoints take `?lang=en|es|ru` (default `en`; anything else is a 400) and return 501 until BE-4 implements them:
+
+- `GET /v1/regions`, `GET /v1/regions/{regionKey}`
+- `GET /v1/dishes`, `GET /v1/dishes/{dishKey}`
+- `GET /v1/dishes/{dishKey}/variations/{regionKey}/recipe`
+
+Errors use `{"error":{"code":"...","message":"..."}}`. Unknown paths, and wrong methods on known ones, return a 404 in that shape.
+
+Legacy iteration-1 routes (removed in BE-3):
 
 - `POST /dishes` — create a dish (`{name, description}`)
 - `GET /dishes` — list all dishes
@@ -108,7 +127,7 @@ Inside `docker-compose.yaml`, `DATABASE_URL` is derived from `POSTGRES_*` and po
 
 See `.github/workflows/ci.yml`. Two jobs run on every PR and push, and a third on pushes to `main` and tags:
 
-1. **lint-and-vet**: `gofmt -l`, `go vet`, golangci-lint, `go build`.
+1. **lint-and-vet**: `gofmt -l`, `go vet`, golangci-lint, `go build`, `make generate` + `git diff --exit-code` (fails on stale generated code), `make api-lint`.
 2. **test**: starts `postgres:16-alpine`, applies migrations with goose, runs `go test -race`.
 
 3. **build-and-push-image**: pushes `ghcr.io/cosmofactory/recetas-backend:sha-<7>` (and `:vX.Y.Z` for a git tag), with the version baked into the binary.
