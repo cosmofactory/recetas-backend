@@ -32,6 +32,11 @@ type createDishRequest struct {
 func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 	var req createDishRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		var mbe *http.MaxBytesError
+		if errors.As(err, &mbe) {
+			h.writeError(w, http.StatusRequestEntityTooLarge, "request body too large")
+			return
+		}
 		h.writeError(w, http.StatusBadRequest, "Invalid JSON body")
 		return
 	}

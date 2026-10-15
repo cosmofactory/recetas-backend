@@ -19,6 +19,7 @@ internal/
   config/              # env loading
   platform/database/   # pgxpool bootstrap
   platform/logging/    # slog JSON logger
+  platform/httpx/      # http.Server timeouts + middleware (access log, panic recovery, body limit)
   dish/                # dish domain module
     dish.go            # domain model
     repository.go      # Repository interface + pg implementation
