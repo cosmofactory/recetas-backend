@@ -20,6 +20,7 @@ internal/
   platform/database/   # pgxpool bootstrap
   platform/logging/    # slog JSON logger
   platform/httpx/      # http.Server timeouts + middleware (access log, panic recovery, body limit)
+  platform/health/     # GET /healthz (DB ping)
   dish/                # dish domain module
     dish.go            # domain model
     repository.go      # Repository interface + pg implementation
@@ -87,6 +88,7 @@ make run                    # go run ./cmd/server
 - `GET /dishes` — list all dishes
 - `GET /dishes/{id}` — get one dish
 - `GET /dishes/total/count` — total dish count
+- `GET /healthz` — liveness + DB ping (1s timeout): 200 `{"status":"ok"}`, or 503 `{"status":"degraded","checks":{"db":"timeout|unavailable"}}`
 
 ## Configuration
 
