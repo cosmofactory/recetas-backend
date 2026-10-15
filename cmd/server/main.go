@@ -11,14 +11,17 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cosmosfactory/recetas-backend/internal/config"
-	"github.com/cosmosfactory/recetas-backend/internal/dish"
-	"github.com/cosmosfactory/recetas-backend/internal/dish/dishdb"
-	"github.com/cosmosfactory/recetas-backend/internal/platform/database"
-	"github.com/cosmosfactory/recetas-backend/internal/platform/health"
-	"github.com/cosmosfactory/recetas-backend/internal/platform/httpx"
-	"github.com/cosmosfactory/recetas-backend/internal/platform/logging"
+	"github.com/cosmofactory/recetas-backend/internal/config"
+	"github.com/cosmofactory/recetas-backend/internal/dish"
+	"github.com/cosmofactory/recetas-backend/internal/dish/dishdb"
+	"github.com/cosmofactory/recetas-backend/internal/platform/database"
+	"github.com/cosmofactory/recetas-backend/internal/platform/health"
+	"github.com/cosmofactory/recetas-backend/internal/platform/httpx"
+	"github.com/cosmofactory/recetas-backend/internal/platform/logging"
 )
+
+// version is set at build time with -ldflags "-X main.version=...".
+var version = "dev"
 
 func main() {
 	cfg, err := config.Load()
@@ -63,7 +66,7 @@ func run(cfg config.Config, logger *slog.Logger) error {
 
 	serveErr := make(chan error, 1)
 	go func() {
-		logger.Info("server starting", "app_env", cfg.AppEnv, "addr", cfg.HTTPAddr, "log_level", cfg.LogLevel)
+		logger.Info("server starting", "version", version, "app_env", cfg.AppEnv, "addr", cfg.HTTPAddr, "log_level", cfg.LogLevel)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serveErr <- err
 		}

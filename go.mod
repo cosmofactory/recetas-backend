@@ -1,4 +1,4 @@
-module github.com/cosmosfactory/recetas-backend
+module github.com/cosmofactory/recetas-backend
 
 go 1.25.3
 

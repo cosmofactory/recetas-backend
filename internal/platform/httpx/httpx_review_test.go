@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmosfactory/recetas-backend/internal/platform/httpx"
-	"github.com/cosmosfactory/recetas-backend/internal/platform/logging"
+	"github.com/cosmofactory/recetas-backend/internal/platform/httpx"
+	"github.com/cosmofactory/recetas-backend/internal/platform/logging"
 )
 
 // syncBuffer is a goroutine-safe log sink for tests that run handlers on an

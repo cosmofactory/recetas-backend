@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cosmosfactory/recetas-backend/internal/config"
+	"github.com/cosmofactory/recetas-backend/internal/config"
 )
 
 const testDSN = "postgres://u:s3cret@h:5432/db" //nolint:gosec // fake DSN used to check redaction

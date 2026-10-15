@@ -12,6 +12,7 @@ GOOSE_VERSION ?= v3.24.0
 GOLANGCI_LINT_VERSION ?= v2.12.2
 GOLANGCI_LINT ?= go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 MIGRATIONS_DIR ?= db/migrations
+VERSION ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
 
 # Integration tests opt in through TEST_DATABASE_URL, never DATABASE_URL (which
 # .env points at the dev DB). Kept out of the environment of other targets so
@@ -68,7 +69,7 @@ golangci-lint:
 	$(GOLANGCI_LINT) run ./...
 
 build:
-	CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o bin/server ./cmd/server
+	CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=$(VERSION)" -o bin/server ./cmd/server
 
 run:
 	go run ./cmd/server
@@ -117,10 +118,10 @@ endif
 # --- docker ---
 
 docker-build:
-	docker compose build
+	VERSION=$(VERSION) docker compose build
 
 docker-up:
-	docker compose up --build -d
+	VERSION=$(VERSION) docker compose up --build -d
 
 docker-down:
 	docker compose down

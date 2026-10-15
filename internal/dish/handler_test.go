@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmosfactory/recetas-backend/internal/dish"
+	"github.com/cosmofactory/recetas-backend/internal/dish"
 )
 
 const internalErrText = "pg: connection refused to 10.0.0.5 secret-detail"
