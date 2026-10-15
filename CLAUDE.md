@@ -40,7 +40,7 @@ The compose Postgres is published on `127.0.0.1:5435`, which is the `DATABASE_UR
 
 ## Conventions
 
-- Module path: `github.com/cosmosfactory/recetas-backend`. Go 1.25; dependencies are limited to pgx/v5 and godotenv. Prefer the stdlib, and justify every new dependency.
+- Module path: `github.com/cosmofactory/recetas-backend`. Go 1.25; dependencies are limited to pgx/v5 and godotenv. Prefer the stdlib, and justify every new dependency.
 - Every I/O function takes `ctx context.Context` as its first argument, and handlers pass `r.Context()`.
 - Wrap errors with `fmt.Errorf("doing x: %w", err)` at each layer boundary. Use `errors.Is` against module sentinels instead of comparing strings. Don't panic in request paths.
 - Log with `log/slog` only (JSON to stdout). The logger is built in `main.go` and injected through constructors; never use the `log` package or `slog`'s default logger. Unexpected errors log at Error with an `err` attr; client errors (4xx) don't log at Error.
@@ -53,5 +53,6 @@ The compose Postgres is published on `127.0.0.1:5435`, which is the `DATABASE_UR
 ## CI/CD (`.github/workflows/ci.yml`)
 
 - On every PR or push, the lint job runs gofmt, vet, golangci-lint and build. The test job starts `postgres:16-alpine`, applies the migrations, and runs `go test -race` with `DATABASE_URL` and `TEST_DATABASE_URL` set to it, so integration tests run there instead of skipping.
-- There is no image push or deploy yet. BE-0 adds the push to `ghcr.io/cosmofactory/recetas-backend` with immutable `sha-<7>` tags; INF-2 adds the deploy to the Contabo VPS.
+- On a push to `main` (or a tag), after lint and test pass, the image is pushed to `ghcr.io/cosmofactory/recetas-backend` with the immutable tag `sha-<7>` (plus `vX.Y.Z` for a git tag). There is no `:latest`. The binary gets the same value via `-X main.version` and logs it at startup. There is no deploy yet; INF-2 adds it.
+- In CI (`CI` set) `testdb` fails instead of skipping when `TEST_DATABASE_URL` is missing, so integration tests can't silently stop running.
 - Config the app reads: `APP_ENV` (required, `local|demo|prod`), `LOG_LEVEL` (`debug|info|warn|error`, default `info`), `DATABASE_URL` (required) and `HTTP_ADDR` (default `:8080`). The CI test job sets `APP_ENV=local`.

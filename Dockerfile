@@ -16,9 +16,11 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 COPY . .
 
+ARG VERSION=dev
+
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
-    go build -trimpath -ldflags="-s -w" -o /out/server ./cmd/server
+    go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o /out/server ./cmd/server
 
 # Pinned to match CI and `make goose-install`.
 ARG GOOSE_VERSION=v3.24.0
@@ -29,6 +31,8 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 # ---------- Runtime ----------
 FROM alpine:3.20 AS runtime
+
+LABEL org.opencontainers.image.source="https://github.com/cosmofactory/recetas-backend"
 
 RUN apk add --no-cache ca-certificates tzdata \
     && addgroup -S app \

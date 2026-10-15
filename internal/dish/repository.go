@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/cosmosfactory/recetas-backend/internal/dish/dishdb"
+	"github.com/cosmofactory/recetas-backend/internal/dish/dishdb"
 )
 
 var ErrNotFound = errors.New("dish: not found")

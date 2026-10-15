@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cosmosfactory/recetas-backend/internal/dish"
-	"github.com/cosmosfactory/recetas-backend/internal/platform/httpx"
+	"github.com/cosmofactory/recetas-backend/internal/dish"
+	"github.com/cosmofactory/recetas-backend/internal/platform/httpx"
 )
 
 // createBody returns a valid create-dish JSON object of exactly size bytes.

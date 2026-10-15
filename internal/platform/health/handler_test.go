@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmosfactory/recetas-backend/internal/platform/health"
-	"github.com/cosmosfactory/recetas-backend/internal/platform/logging"
+	"github.com/cosmofactory/recetas-backend/internal/platform/health"
+	"github.com/cosmofactory/recetas-backend/internal/platform/logging"
 )
 
 const internalErrText = "dial tcp 10.0.0.5:5432: connect: connection refused secret-detail"

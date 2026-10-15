@@ -23,12 +23,17 @@ const pingTimeout = 5 * time.Second
 
 // New returns a pool connected to TEST_DATABASE_URL and closes it when the
 // test ends. It skips the test when the variable is unset and fails it when
-// the database is configured but unreachable.
+// the database is configured but unreachable. In CI (CI set) an unset
+// variable fails the test instead of skipping it.
 func New(t testing.TB) *pgxpool.Pool {
 	t.Helper()
 
 	url := os.Getenv(EnvVar)
 	if url == "" {
+		// CI must run integration tests, never silently skip them.
+		if os.Getenv("CI") != "" {
+			t.Fatal(EnvVar + " not set in CI")
+		}
 		t.Skip(EnvVar + " not set")
 	}
 

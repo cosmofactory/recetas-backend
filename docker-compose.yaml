@@ -3,7 +3,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: cosmosfactory/recetas-backend:local
+      args:
+        VERSION: ${VERSION:-dev}
+    image: ghcr.io/cosmofactory/recetas-backend:local
     depends_on:
       database:
         condition: service_healthy

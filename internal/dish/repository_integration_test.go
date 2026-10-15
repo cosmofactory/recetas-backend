@@ -6,9 +6,9 @@ import (
 	"math"
 	"testing"
 
-	"github.com/cosmosfactory/recetas-backend/internal/dish"
-	"github.com/cosmosfactory/recetas-backend/internal/dish/dishdb"
-	"github.com/cosmosfactory/recetas-backend/internal/platform/testdb"
+	"github.com/cosmofactory/recetas-backend/internal/dish"
+	"github.com/cosmofactory/recetas-backend/internal/dish/dishdb"
+	"github.com/cosmofactory/recetas-backend/internal/platform/testdb"
 )
 
 func newTxRepo(t *testing.T) dish.Repository {

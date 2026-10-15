@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmosfactory/recetas-backend/internal/platform/httpx"
-	"github.com/cosmosfactory/recetas-backend/internal/platform/logging"
+	"github.com/cosmofactory/recetas-backend/internal/platform/httpx"
+	"github.com/cosmofactory/recetas-backend/internal/platform/logging"
 )
 
 func newLogger(t *testing.T) (*slog.Logger, *bytes.Buffer) {

@@ -106,12 +106,14 @@ Inside `docker-compose.yaml`, `DATABASE_URL` is derived from `POSTGRES_*` and po
 
 ## CI
 
-See `.github/workflows/ci.yml`. Two jobs run on every PR and push:
+See `.github/workflows/ci.yml`. Two jobs run on every PR and push, and a third on pushes to `main` and tags:
 
 1. **lint-and-vet**: `gofmt -l`, `go vet`, golangci-lint, `go build`.
 2. **test**: starts `postgres:16-alpine`, applies migrations with goose, runs `go test -race`.
 
-Publishing images to GHCR and deploying are not wired up yet (BE-0 and INF-2 in `../specs/`).
+3. **build-and-push-image**: pushes `ghcr.io/cosmofactory/recetas-backend:sha-<7>` (and `:vX.Y.Z` for a git tag), with the version baked into the binary.
+
+Deploying is not wired up yet (INF-2 in `../specs/`).
 
 ## Iteration plans
 
