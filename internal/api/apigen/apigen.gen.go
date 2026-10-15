@@ -238,6 +238,9 @@ type Recipe struct {
 
 	// TimeMinutes Total time; the frontend formats it per locale (D-BE3-1).
 	TimeMinutes int `json:"timeMinutes"`
+
+	// TimeNote Optional addition shown after the formatted time, e.g. "+ soaking". `null` for most recipes.
+	TimeNote *string `json:"timeNote"`
 }
 
 // Region defines model for Region.

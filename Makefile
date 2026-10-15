@@ -40,7 +40,7 @@ help:
 	@echo "  make generate         - api-generate + sqlc-generate"
 	@echo "  make api-generate     - regenerate internal/api/apigen from api/openapi.yaml"
 	@echo "  make api-lint         - lint api/openapi.yaml with vacuum (fails on errors)"
-	@echo "  make sqlc-generate    - regenerate dishdb from db/queries/*.sql"
+	@echo "  make sqlc-generate    - regenerate <module>db packages from db/queries/<module>/*.sql"
 	@echo ""
 	@echo "goose (migrations):"
 	@echo "  make goose-install    - go install pinned goose CLI"

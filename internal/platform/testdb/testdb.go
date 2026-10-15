@@ -3,6 +3,11 @@
 // Tests opt in through TEST_DATABASE_URL, never DATABASE_URL: `make test`
 // loads .env, whose DATABASE_URL points at the dev database, and tests must
 // not touch it implicitly. The target database must already be migrated.
+//
+// Tests must never commit to the shared database: fixtures such as
+// catalogtest.Load use fixed keys, so committed rows would break every later
+// run. Use Tx, or a throwaway database for anything that needs commits
+// (see db/migrations_test.go).
 package testdb
 
 import (

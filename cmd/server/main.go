@@ -13,8 +13,6 @@ import (
 
 	"github.com/cosmofactory/recetas-backend/internal/api"
 	"github.com/cosmofactory/recetas-backend/internal/config"
-	"github.com/cosmofactory/recetas-backend/internal/dish"
-	"github.com/cosmofactory/recetas-backend/internal/dish/dishdb"
 	"github.com/cosmofactory/recetas-backend/internal/platform/database"
 	"github.com/cosmofactory/recetas-backend/internal/platform/health"
 	"github.com/cosmofactory/recetas-backend/internal/platform/httpx"
@@ -23,6 +21,8 @@ import (
 
 // version is set at build time with -ldflags "-X main.version=...".
 var version = "dev"
+
+const shutdownTimeout = 5 * time.Second
 
 func main() {
 	cfg, err := config.Load()
@@ -52,52 +52,59 @@ func run(cfg config.Config, logger *slog.Logger) error {
 	}
 	defer pool.Close()
 
-	queries := dishdb.New(pool)
-	repo := dish.NewPGRepository(queries)
-	svc := dish.NewService(repo)
-	handler := dish.NewHandler(svc, logger)
+	srv := httpx.NewServer(cfg.HTTPAddr, newHandler(pool, logger), logger)
+	logger.Info("server starting", "version", version, "app_env", cfg.AppEnv, "addr", cfg.HTTPAddr, "log_level", cfg.LogLevel)
+	if err := serveUntilDone(ctx, srv); err != nil {
+		return fmt.Errorf("server: %w", err)
+	}
+	// Restore default signal handling so a second Ctrl-C/SIGTERM kills the process.
+	stop()
+	return shutdown(srv, logger)
+}
 
+func newHandler(db health.Pinger, logger *slog.Logger) http.Handler {
 	mux := http.NewServeMux()
-	handler.Register(mux)
-	health.NewHandler(pool, logger).Register(mux)
+	health.NewHandler(db, logger).Register(mux)
 	api.Register(mux, api.Stub{}, logger)
 
 	// MaxBody is outermost so MaxBytesReader sees net/http's own ResponseWriter and a 413 closes the connection.
-	srv := httpx.NewServer(cfg.HTTPAddr, httpx.Chain(httpx.Routed(mux),
+	return httpx.Chain(httpx.Routed(mux),
 		httpx.MaxBody(httpx.MaxBodyBytes),
 		httpx.AccessLog(logger),
 		httpx.Recover(logger),
 		httpx.Deadline(httpx.HandlerTimeout),
-	), logger)
+	)
+}
 
+// serveUntilDone returns when ctx is cancelled or the server fails to serve.
+func serveUntilDone(ctx context.Context, srv *http.Server) error {
 	serveErr := make(chan error, 1)
-	go func() {
-		logger.Info("server starting", "version", version, "app_env", cfg.AppEnv, "addr", cfg.HTTPAddr, "log_level", cfg.LogLevel)
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			serveErr <- err
-		}
-		close(serveErr)
-	}()
+	go func() { serveErr <- listenAndServe(srv) }()
 
 	select {
 	case err := <-serveErr:
-		if err != nil {
-			return fmt.Errorf("server: %w", err)
-		}
-		return nil
+		return err
 	case <-ctx.Done():
+		return nil
 	}
-	// Restore default signal handling so a second Ctrl-C/SIGTERM kills the process.
-	stop()
-	logger.Info("shutting down")
+}
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func listenAndServe(srv *http.Server) error {
+	err := srv.ListenAndServe()
+	if errors.Is(err, http.ErrServerClosed) {
+		return nil
+	}
+	return err
+}
+
+func shutdown(srv *http.Server, logger *slog.Logger) error {
+	logger.Info("shutting down")
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
-	if err := srv.Shutdown(shutdownCtx); err != nil {
+	if err := srv.Shutdown(ctx); err != nil {
 		// Closing connections cancels in-flight request contexts, so their
 		// queries abort and the deferred pool.Close doesn't block.
-		_ = srv.Close()
-		return fmt.Errorf("shutdown: %w", err)
+		return fmt.Errorf("shutdown: %w", errors.Join(err, srv.Close()))
 	}
 	logger.Info("server stopped")
 	return nil

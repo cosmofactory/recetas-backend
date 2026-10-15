@@ -483,7 +483,7 @@ components:
       type: object
       additionalProperties: false
       description: Everything the recipe page needs in one response (eyebrow, title, description, recipe).
-      required: [dishKey, dishName, regionKey, regionName, recipeKey, name, nameEs, description, timeMinutes, baseServings, ingredients, steps, photos]
+      required: [dishKey, dishName, regionKey, regionName, recipeKey, name, nameEs, description, timeMinutes, timeNote, baseServings, ingredients, steps, photos]
       properties:
         dishKey:
           $ref: '#/components/schemas/Slug'
@@ -507,6 +507,10 @@ components:
           type: integer
           minimum: 1
           description: Total time; the frontend formats it per locale (D-BE3-1).
+        timeNote:
+          type: string
+          nullable: true
+          description: Optional addition shown after the formatted time, e.g. "+ soaking". `null` for most recipes.
         baseServings:
           type: integer
           minimum: 1
