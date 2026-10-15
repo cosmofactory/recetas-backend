@@ -21,10 +21,13 @@ All `make` targets load `.env` automatically (copy from `.env.example`).
 | All tests | `make test` (`go test -race -count=1 ./...`; integration tests skip) |
 | Integration tests | `make test-integration` (compose Postgres up, creates and migrates `recetas_test`, runs all tests with `TEST_DATABASE_URL` set) |
 | Single test | `go test -race -count=1 -run '^TestName$' ./internal/dish/` |
-| Regenerate sqlc code after editing `db/queries/*.sql` or migrations | `make sqlc-generate` |
+| Regenerate all generated code (CI fails if it's stale) | `make generate` (= `api-generate` + `sqlc-generate`) |
+| Regenerate `internal/api/apigen` after editing `api/openapi.yaml` | `make api-generate` (oapi-codegen v2.8.0, pinned via the go.mod `tool` directive) |
+| Lint the OpenAPI spec | `make api-lint` (vacuum, pinned; fails on errors, not warnings) |
+| Regenerate sqlc code after editing `db/queries/*.sql` or migrations | `make sqlc-generate` (pinned sqlc via `go run`) |
 | Migrations | `make migrate`, `make migrate-down`, `make migrate-status`, `make migrate-create NAME=xyz` |
 
-The compose Postgres is published on `127.0.0.1:5435`, which is the `DATABASE_URL` in `.env.example`. Tools: `make goose-install` installs the pinned goose (v3.24.0, same as CI and the Dockerfile). sqlc has to be installed separately.
+The compose Postgres is published on `127.0.0.1:5435`, which is the `DATABASE_URL` in `.env.example`. Tools: `make goose-install` installs the pinned goose (v3.24.0, same as CI and the Dockerfile). oapi-codegen, sqlc and vacuum need no install: the make targets run pinned versions.
 
 ## Architecture
 
@@ -33,6 +36,8 @@ The compose Postgres is published on `127.0.0.1:5435`, which is the `DATABASE_UR
   - `repository.go`: a `Repository` interface plus a `pgRepository` built on the sqlc `Queries`. It maps sqlc rows to domain types (`toDomain`) and turns `pgx.ErrNoRows` into the module's sentinel `ErrNotFound`.
   - `service.go`: business logic. It depends only on the `Repository` interface, so tests can swap in a fake.
   - `handler.go`: `Register(mux)` attaches routes using Go 1.22 method+path patterns on the stdlib `http.ServeMux` (no third-party router). Handlers check input, map sentinel errors to status codes, log unexpected errors, and return a generic `{"error": "..."}`.
+- **API contract.** `api/openapi.yaml` (OpenAPI 3.0.3) is the source of truth for the public `/v1` API (spec-first: change the spec, then `make api-generate`). oapi-codegen writes models, the std-http router and the strict-server interface to `internal/api/apigen/`; never hand-edit it. `internal/api` adapts that interface: `Register(mux, impl, logger)` wires the catalog operations, `GET /openapi.json` (the embedded spec converted to JSON once by `SpecJSON`; `main.go` fails fast if it doesn't parse) and a `/` catch-all that returns the contract 404 (so a wrong method on a known path is 404, not 405). It validates the `lang` enum (the generated wrapper doesn't), maps parameter-binding errors to 400 `invalid parameter <name>` and handler errors to a logged 500. `api.Stub` returns 501 for every operation until BE-4. `/healthz` and `/openapi.json` are in the spec but excluded from codegen (`exclude-operation-ids`); they have their own handlers.
+- **Error shape.** Every error response is `{"error":{"code":"...","message":"..."}}` (the spec's `Error` schema), written with `httpx.WriteError`. Codes: `bad_request`, `not_found`, `payload_too_large`, `internal`, `not_implemented`. The legacy `/dishes` handlers still return `{"error": "..."}` except for the 413; BE-3 removes them.
 - **Wiring** happens only in `cmd/server/main.go`, which builds config → pgx pool → queries → repo → service → handler. It also handles graceful shutdown on SIGINT/SIGTERM. Modules never import each other.
 - **Shared infrastructure** lives in `internal/platform/` (`database`: pgxpool bootstrap; `logging`: `slog` JSON logger; `health`: `GET /healthz`, a 1s DB ping behind a `Pinger` interface, used by the Docker/compose healthcheck, the frontend's `/readyz` and uptime checks; `httpx`: hardened `http.Server` and the middleware chain wired in `main.go`: 64 KiB body limit (outermost, so `MaxBytesReader` sees net/http's own writer and a 413 closes the connection) → access log → panic recovery → 12s handler deadline (below the 15s `WriteTimeout`, so the error response still gets written) → `Routed(mux)`, which hands the matched route back to the access log even after a middleware clones the request) and `internal/config/` (env vars parsed by the pure `FromEnv(getenv)`; `Load()` first loads `.env` via godotenv when it exists).
 - **SQL-first data access.** Migrations in `db/migrations/` (goose) are the schema source of truth. sqlc reads them together with `db/queries/*.sql` and generates `internal/dish/dishdb/`. Never hand-edit generated code. `sqlc.yaml` currently has one `sql` entry that writes everything into `dishdb`. When you add a new module, add a separate entry (with its own queries dir and output package) so generated code stays inside its module.
@@ -40,7 +45,7 @@ The compose Postgres is published on `127.0.0.1:5435`, which is the `DATABASE_UR
 
 ## Conventions
 
-- Module path: `github.com/cosmofactory/recetas-backend`. Go 1.25; dependencies are limited to pgx/v5 and godotenv. Prefer the stdlib, and justify every new dependency.
+- Module path: `github.com/cosmofactory/recetas-backend`. Go 1.25; dependencies are limited to pgx/v5, godotenv, and for the API contract kin-openapi (spec → JSON) and oapi-codegen/runtime (used by generated code). Prefer the stdlib, and justify every new dependency.
 - Every I/O function takes `ctx context.Context` as its first argument, and handlers pass `r.Context()`.
 - Wrap errors with `fmt.Errorf("doing x: %w", err)` at each layer boundary. Use `errors.Is` against module sentinels instead of comparing strings. Don't panic in request paths.
 - Log with `log/slog` only (JSON to stdout). The logger is built in `main.go` and injected through constructors; never use the `log` package or `slog`'s default logger. Unexpected errors log at Error with an `err` attr; client errors (4xx) don't log at Error.
@@ -52,7 +57,7 @@ The compose Postgres is published on `127.0.0.1:5435`, which is the `DATABASE_UR
 
 ## CI/CD (`.github/workflows/ci.yml`)
 
-- On every PR or push, the lint job runs gofmt, vet, golangci-lint and build. The test job starts `postgres:16-alpine`, applies the migrations, and runs `go test -race` with `DATABASE_URL` and `TEST_DATABASE_URL` set to it, so integration tests run there instead of skipping.
+- On every PR or push, the lint job runs gofmt, vet, golangci-lint, build, the generated-code drift check (`make generate`, then `git diff --exit-code` and no untracked files) and `make api-lint`. The test job starts `postgres:16-alpine`, applies the migrations, and runs `go test -race` with `DATABASE_URL` and `TEST_DATABASE_URL` set to it, so integration tests run there instead of skipping.
 - On a push to `main` (or a tag), after lint and test pass, the image is pushed to `ghcr.io/cosmofactory/recetas-backend` with the immutable tag `sha-<7>` (plus `vX.Y.Z` for a git tag). There is no `:latest`. The binary gets the same value via `-X main.version` and logs it at startup. There is no deploy yet; INF-2 adds it.
 - In CI (`CI` set) `testdb` fails instead of skipping when `TEST_DATABASE_URL` is missing, so integration tests can't silently stop running.
 - Config the app reads: `APP_ENV` (required, `local|demo|prod`), `LOG_LEVEL` (`debug|info|warn|error`, default `info`), `DATABASE_URL` (required) and `HTTP_ADDR` (default `:8080`). The CI test job sets `APP_ENV=local`.

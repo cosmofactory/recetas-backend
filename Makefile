@@ -1,5 +1,5 @@
 .PHONY: help fmt vet lint golangci-lint build run test test-integration tidy \
-	sqlc-generate goose-install \
+	generate api-generate api-lint sqlc-generate goose-install \
 	migrate migrate-down migrate-status migrate-create \
 	docker-build docker-up docker-down docker-logs
 
@@ -11,6 +11,11 @@ endif
 GOOSE_VERSION ?= v3.24.0
 GOLANGCI_LINT_VERSION ?= v2.12.2
 GOLANGCI_LINT ?= go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+SQLC_VERSION ?= v1.31.1
+# sqlc v1.31.1 needs Go 1.26; GOTOOLCHAIN=auto lets go run fetch it.
+SQLC ?= GOTOOLCHAIN=auto go run github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION)
+VACUUM_VERSION ?= v0.30.6
+VACUUM ?= go run github.com/daveshanley/vacuum@$(VACUUM_VERSION)
 MIGRATIONS_DIR ?= db/migrations
 VERSION ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
 
@@ -31,7 +36,10 @@ help:
 	@echo "  make test-integration - compose Postgres + migrated recetas_test DB, then go test -race ./..."
 	@echo "  make tidy             - go mod tidy"
 	@echo ""
-	@echo "sqlc:"
+	@echo "Code generation:"
+	@echo "  make generate         - api-generate + sqlc-generate"
+	@echo "  make api-generate     - regenerate internal/api/apigen from api/openapi.yaml"
+	@echo "  make api-lint         - lint api/openapi.yaml with vacuum (fails on errors)"
 	@echo "  make sqlc-generate    - regenerate dishdb from db/queries/*.sql"
 	@echo ""
 	@echo "goose (migrations):"
@@ -89,10 +97,18 @@ test-integration:
 tidy:
 	go mod tidy
 
-# --- sqlc ---
+# --- code generation ---
+
+generate: api-generate sqlc-generate
+
+api-generate:
+	go tool oapi-codegen -config api/oapi-codegen.yaml api/openapi.yaml
+
+api-lint:
+	$(VACUUM) lint --details --fail-severity error api/openapi.yaml
 
 sqlc-generate:
-	sqlc generate
+	$(SQLC) generate
 
 # --- goose ---
 

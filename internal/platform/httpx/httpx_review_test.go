@@ -176,7 +176,7 @@ func TestRecover_DiscardsHeadersSetBeforePanic(t *testing.T) {
 	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
 		t.Errorf("got Content-Type %q, want application/json", ct)
 	}
-	if got, want := strings.TrimSpace(rec.Body.String()), `{"error":"internal error"}`; got != want {
+	if got, want := strings.TrimSpace(rec.Body.String()), `{"error":{"code":"internal","message":"internal error"}}`; got != want {
 		t.Errorf("got body %q, want %q", got, want)
 	}
 }
@@ -334,7 +334,7 @@ func TestMaxBody_Outermost413ClosesConnection(t *testing.T) {
 		if errors.As(err, &mbe) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusRequestEntityTooLarge)
-			_, _ = io.WriteString(w, `{"error":"request body too large"}`)
+			_, _ = io.WriteString(w, `{"error":{"code":"payload_too_large","message":"request body too large"}}`)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)

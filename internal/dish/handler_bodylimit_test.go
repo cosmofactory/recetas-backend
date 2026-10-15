@@ -1,7 +1,9 @@
 package dish_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,6 +12,15 @@ import (
 	"github.com/cosmofactory/recetas-backend/internal/dish"
 	"github.com/cosmofactory/recetas-backend/internal/platform/httpx"
 )
+
+type contractErrorDetail struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+type contractError struct {
+	Error contractErrorDetail `json:"error"`
+}
 
 // createBody returns a valid create-dish JSON object of exactly size bytes.
 func createBody(t *testing.T, size int) string {
@@ -70,9 +81,15 @@ func TestHandler_CreateBodyLimit(t *testing.T) {
 			if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
 				t.Errorf("got Content-Type %q, want application/json", ct)
 			}
-			body := decodeErrorBody(t, rec)
-			if len(body) != 1 || body["error"] != "request body too large" {
-				t.Errorf("got body %v, want %v", body, map[string]string{"error": "request body too large"})
+			dec := json.NewDecoder(bytes.NewReader(rec.Body.Bytes()))
+			dec.DisallowUnknownFields()
+			var body contractError
+			if err := dec.Decode(&body); err != nil {
+				t.Fatalf("body is not the contract Error shape: %v (body=%q)", err, rec.Body.String())
+			}
+			want := contractError{Error: contractErrorDetail{Code: "payload_too_large", Message: "request body too large"}}
+			if body != want {
+				t.Errorf("got body %+v, want %+v", body, want)
 			}
 		})
 	}

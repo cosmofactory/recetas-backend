@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: apigen
+output: internal/api/apigen/apigen.gen.go
+generate:
+  std-http-server: true
+  strict-server: true
+  models: true
+output-options:
+  # /healthz and /openapi.json have their own handlers; they stay in the spec
+  # for documentation only.
+  exclude-operation-ids:
+    - getHealth
+    - getOpenAPI
