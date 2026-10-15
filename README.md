@@ -18,6 +18,7 @@ cmd/server/            # entry point — the only place modules are wired togeth
 internal/
   config/              # env loading
   platform/database/   # pgxpool bootstrap
+  platform/logging/    # slog JSON logger
   dish/                # dish domain module
     dish.go            # domain model
     repository.go      # Repository interface + pg implementation
@@ -88,10 +89,12 @@ make run                    # go run ./cmd/server
 
 ## Configuration
 
-All config comes from environment variables (with `.env` loaded automatically). See `.env.example` for the full list. The only two the app itself reads:
+All config comes from environment variables (with `.env` loaded automatically). See `.env.example` for the full list. The app itself reads:
 
 | Var | Default | Purpose |
 |-----|---------|---------|
+| `APP_ENV` | required | `local`, `demo` or `prod`; anything else fails at startup |
+| `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error` |
 | `DATABASE_URL` | required | Postgres DSN, e.g. `postgres://user:pass@host:5432/db?sslmode=disable` |
 | `HTTP_ADDR` | `:8080` | Bind address for the HTTP server |
 

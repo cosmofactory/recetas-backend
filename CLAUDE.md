@@ -33,7 +33,7 @@ The compose Postgres is published on `127.0.0.1:5435`, which is the `DATABASE_UR
   - `service.go`: business logic. It depends only on the `Repository` interface, so tests can swap in a fake.
   - `handler.go`: `Register(mux)` attaches routes using Go 1.22 method+path patterns on the stdlib `http.ServeMux` (no third-party router). Handlers check input, map sentinel errors to status codes, log unexpected errors, and return a generic `{"error": "..."}`.
 - **Wiring** happens only in `cmd/server/main.go`, which builds config → pgx pool → queries → repo → service → handler. It also handles graceful shutdown on SIGINT/SIGTERM. Modules never import each other.
-- **Shared infrastructure** lives in `internal/platform/` (the pgxpool bootstrap) and `internal/config/` (env vars; `.env` is loaded via godotenv when it exists).
+- **Shared infrastructure** lives in `internal/platform/` (`database`: pgxpool bootstrap; `logging`: `slog` JSON logger) and `internal/config/` (env vars parsed by the pure `FromEnv(getenv)`; `Load()` first loads `.env` via godotenv when it exists).
 - **SQL-first data access.** Migrations in `db/migrations/` (goose) are the schema source of truth. sqlc reads them together with `db/queries/*.sql` and generates `internal/dish/dishdb/`. Never hand-edit generated code. `sqlc.yaml` currently has one `sql` entry that writes everything into `dishdb`. When you add a new module, add a separate entry (with its own queries dir and output package) so generated code stays inside its module.
 - **Migrations run at container start.** `docker/entrypoint.sh` runs `goose up` and then `exec`s the server. In production, a migration is applied before the new binary takes over, while the previous container may still be serving. Keep migrations backward-compatible with the running release (expand/contract), and always write a working `-- +goose Down`.
 
@@ -42,6 +42,7 @@ The compose Postgres is published on `127.0.0.1:5435`, which is the `DATABASE_UR
 - Module path: `github.com/cosmosfactory/recetas-backend`. Go 1.25; dependencies are limited to pgx/v5 and godotenv. Prefer the stdlib, and justify every new dependency.
 - Every I/O function takes `ctx context.Context` as its first argument, and handlers pass `r.Context()`.
 - Wrap errors with `fmt.Errorf("doing x: %w", err)` at each layer boundary. Use `errors.Is` against module sentinels instead of comparing strings. Don't panic in request paths.
+- Log with `log/slog` only (JSON to stdout). The logger is built in `main.go` and injected through constructors; never use the `log` package or `slog`'s default logger. Unexpected errors log at Error with an `err` attr; client errors (4xx) don't log at Error.
 - Never leak internal error text to clients. 5xx responses get a generic message, and the detail goes to the log.
 - Handlers and services never touch `*pgxpool.Pool` or `dishdb` directly. Everything goes through the repository.
 - Code must pass `make lint` (gofmt-clean) and `make test` before it's done. CI runs exactly these checks.
@@ -50,4 +51,4 @@ The compose Postgres is published on `127.0.0.1:5435`, which is the `DATABASE_UR
 
 - On every PR or push, the lint job runs gofmt, vet, golangci-lint and build. The test job starts `postgres:16-alpine`, applies the migrations, and runs `go test -race` with `DATABASE_URL` set. Integration tests can therefore rely on a migrated database through `DATABASE_URL`.
 - There is no image push or deploy yet. BE-0 adds the push to `ghcr.io/cosmofactory/recetas-backend` with immutable `sha-<7>` tags; INF-2 adds the deploy to the Contabo VPS.
-- Config the app reads: `DATABASE_URL` (required) and `HTTP_ADDR` (default `:8080`).
+- Config the app reads: `APP_ENV` (required, `local|demo|prod`), `LOG_LEVEL` (`debug|info|warn|error`, default `info`), `DATABASE_URL` (required) and `HTTP_ADDR` (default `:8080`). The CI test job sets `APP_ENV=local`.
