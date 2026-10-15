@@ -15,6 +15,7 @@ import (
 	"github.com/cosmosfactory/recetas-backend/internal/dish"
 	"github.com/cosmosfactory/recetas-backend/internal/dish/dishdb"
 	"github.com/cosmosfactory/recetas-backend/internal/platform/database"
+	"github.com/cosmosfactory/recetas-backend/internal/platform/httpx"
 	"github.com/cosmosfactory/recetas-backend/internal/platform/logging"
 )
 
@@ -50,12 +51,13 @@ func run(cfg config.Config, logger *slog.Logger) error {
 	mux := http.NewServeMux()
 	handler.Register(mux)
 
-	srv := &http.Server{
-		Addr:              cfg.HTTPAddr,
-		Handler:           mux,
-		ReadHeaderTimeout: 5 * time.Second,
-		ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
-	}
+	// MaxBody is outermost so MaxBytesReader sees net/http's own ResponseWriter and a 413 closes the connection.
+	srv := httpx.NewServer(cfg.HTTPAddr, httpx.Chain(httpx.Routed(mux),
+		httpx.MaxBody(httpx.MaxBodyBytes),
+		httpx.AccessLog(logger),
+		httpx.Recover(logger),
+		httpx.Deadline(httpx.HandlerTimeout),
+	), logger)
 
 	serveErr := make(chan error, 1)
 	go func() {
