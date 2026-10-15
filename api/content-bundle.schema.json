@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asadorov.es/schemas/content-bundle.schema.json",
+  "title": "Asadorov content bundle",
+  "description": "The full desired state of the catalog, loaded by /app/import. Semantic rules (unique keys, references, photo paths) are checked after this schema; see docs/content-import.md.",
+  "type": "object",
+  "required": ["schemaVersion", "regions", "dishes", "recipes"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "description": "Bundle format version. This backend accepts exactly 1.",
+      "const": 1
+    },
+    "regions": {
+      "description": "Regions in editorial order (the map and every region-ordered list).",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/region" }
+    },
+    "dishes": {
+      "description": "Dishes in editorial order.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "items": { "$ref": "#/$defs/dish" }
+    },
+    "recipes": {
+      "description": "Exactly one recipe per variation, matched by recipeKey.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": { "$ref": "#/$defs/recipe" }
+    }
+  },
+  "$defs": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 64
+    },
+    "textFields": {
+      "required": ["en", "es", "ru"],
+      "additionalProperties": false,
+      "properties": {
+        "en": { "$ref": "#/$defs/localizedString" },
+        "es": { "$ref": "#/$defs/localizedString" },
+        "ru": { "$ref": "#/$defs/localizedString" }
+      }
+    },
+    "localizedString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "text": {
+      "description": "A human-readable text in every locale; none may be blank.",
+      "type": "object",
+      "$ref": "#/$defs/textFields"
+    },
+    "nullableText": {
+      "type": ["object", "null"],
+      "$ref": "#/$defs/textFields"
+    },
+    "photoKey": {
+      "description": "CDN-relative key prefix: dishes/<dishKey>[/<regionKey>]/<role>-<hash>, hash 8-64 lowercase hex digits.",
+      "type": ["string", "null"],
+      "maxLength": 256
+    },
+    "photos": {
+      "description": "One key prefix per role; null or a missing role means no photo yet.",
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "thumb": { "$ref": "#/$defs/photoKey" },
+        "card": { "$ref": "#/$defs/photoKey" },
+        "hero": { "$ref": "#/$defs/photoKey" }
+      }
+    },
+    "region": {
+      "type": "object",
+      "required": ["key", "tileColor", "name", "mapLabel", "description", "regionalDishes"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "$ref": "#/$defs/slug" },
+        "tileColor": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "name": { "$ref": "#/$defs/text" },
+        "mapLabel": { "$ref": "#/$defs/text" },
+        "description": { "$ref": "#/$defs/text" },
+        "regionalDishes": {
+          "description": "Spanish proper names, not translated.",
+          "type": "array",
+          "maxItems": 20,
+          "items": { "type": "string", "minLength": 1, "maxLength": 200 }
+        }
+      }
+    },
+    "flags": {
+      "type": "object",
+      "required": ["vegetarian", "seafood", "pork", "quick", "slowCooked"],
+      "additionalProperties": false,
+      "properties": {
+        "vegetarian": { "type": "boolean" },
+        "seafood": { "type": "boolean" },
+        "pork": { "type": "boolean" },
+        "quick": { "type": "boolean" },
+        "slowCooked": { "type": "boolean" }
+      }
+    },
+    "dish": {
+      "type": "object",
+      "required": ["key", "name", "description", "flags", "course", "season", "variations"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "$ref": "#/$defs/slug" },
+        "name": { "$ref": "#/$defs/text" },
+        "description": { "$ref": "#/$defs/text" },
+        "flags": { "$ref": "#/$defs/flags" },
+        "course": { "enum": ["tapas", "mains", "desserts"] },
+        "season": { "enum": ["summer", "winter", "easter", "all"] },
+        "photos": { "$ref": "#/$defs/photos" },
+        "variations": {
+          "description": "At most one per region; listed in region order whatever the order here.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/variation" }
+        }
+      }
+    },
+    "variation": {
+      "type": "object",
+      "required": ["regionKey", "recipeKey", "name", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "regionKey": { "$ref": "#/$defs/slug" },
+        "recipeKey": { "$ref": "#/$defs/slug" },
+        "name": { "$ref": "#/$defs/text" },
+        "description": { "$ref": "#/$defs/text" },
+        "photos": { "$ref": "#/$defs/photos" }
+      }
+    },
+    "recipe": {
+      "type": "object",
+      "required": ["recipeKey", "timeMinutes", "baseServings", "ingredients", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "recipeKey": { "$ref": "#/$defs/slug" },
+        "timeMinutes": { "type": "integer", "minimum": 1, "maximum": 10080 },
+        "timeNote": {
+          "description": "Optional text after the time, e.g. \"+ soaking\".",
+          "$ref": "#/$defs/nullableText"
+        },
+        "baseServings": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "ingredients": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/ingredient" }
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/text" }
+        }
+      }
+    },
+    "ingredient": {
+      "type": "object",
+      "required": ["quantity", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "quantity": {
+          "description": "For baseServings; rounded to 3 decimal places on import.",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 9999999
+        },
+        "unit": {
+          "description": "null (or missing) is a counted item.",
+          "enum": ["g", "ml", "tsp", null]
+        },
+        "name": { "$ref": "#/$defs/text" }
+      }
+    }
+  }
+}

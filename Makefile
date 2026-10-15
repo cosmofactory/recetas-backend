@@ -1,5 +1,5 @@
 .PHONY: help fmt vet lint golangci-lint build run test test-integration tidy \
-	generate api-generate api-lint sqlc-generate goose-install \
+	generate api-generate api-lint sqlc-generate goose-install seed design-bundle \
 	migrate migrate-down migrate-status migrate-create \
 	docker-build docker-up docker-down docker-logs
 
@@ -18,6 +18,9 @@ VACUUM_VERSION ?= v0.30.6
 VACUUM ?= go run github.com/daveshanley/vacuum@$(VACUUM_VERSION)
 MIGRATIONS_DIR ?= db/migrations
 VERSION ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
+DESIGN_CONTENT ?= ../design/design_handoff_asadorov_desktop/content.json
+SEED_BUNDLE ?= testdata/content.design.json
+LDFLAGS = -s -w -X main.version=$(VERSION)
 
 # Integration tests opt in through TEST_DATABASE_URL, never DATABASE_URL (which
 # .env points at the dev DB). Kept out of the environment of other targets so
@@ -30,8 +33,10 @@ help:
 	@echo "  make fmt              - gofmt every Go file in place"
 	@echo "  make vet              - go vet ./..."
 	@echo "  make lint             - fmt check + vet + golangci-lint + build"
-	@echo "  make build            - build the server binary into ./bin/server"
+	@echo "  make build            - build the server and import binaries into ./bin/"
 	@echo "  make run              - go run ./cmd/server (uses .env)"
+	@echo "  make seed             - import testdata/content.design.json into DATABASE_URL"
+	@echo "  make design-bundle    - regenerate testdata/content.design.json from the design content.json"
 	@echo "  make test             - go test -race ./... (integration tests skip)"
 	@echo "  make test-integration - compose Postgres + migrated recetas_test DB, then go test -race ./..."
 	@echo "  make tidy             - go mod tidy"
@@ -77,10 +82,19 @@ golangci-lint:
 	$(GOLANGCI_LINT) run ./...
 
 build:
-	CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=$(VERSION)" -o bin/server ./cmd/server
+	CGO_ENABLED=0 go build -trimpath -ldflags="$(LDFLAGS)" -o bin/server ./cmd/server
+	CGO_ENABLED=0 go build -trimpath -ldflags="$(LDFLAGS)" -o bin/import ./cmd/import
 
 run:
 	go run ./cmd/server
+
+# --- content ---
+
+seed:
+	go run ./cmd/import --source design-seed --file $(SEED_BUNDLE)
+
+design-bundle:
+	go run ./scripts/designbundle -in $(DESIGN_CONTENT) -out $(SEED_BUNDLE)
 
 test:
 	go test -race -count=1 ./...

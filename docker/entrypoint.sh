@@ -6,8 +6,8 @@ if [ -z "${DATABASE_URL:-}" ]; then
     exit 1
 fi
 
-echo "entrypoint: applying migrations"
+echo "entrypoint: applying migrations" >&2
 goose -dir /app/migrations postgres "$DATABASE_URL" up
 
-echo "entrypoint: launching $*"
+echo "entrypoint: launching $*" >&2
 exec "$@"
