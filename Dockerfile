@@ -20,7 +20,8 @@ ARG VERSION=dev
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
-    go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o /out/server ./cmd/server
+    go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o /out/server ./cmd/server \
+    && go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o /out/import ./cmd/import
 
 # Pinned to match CI and `make goose-install`.
 ARG GOOSE_VERSION=v3.24.0
@@ -41,6 +42,7 @@ RUN apk add --no-cache ca-certificates tzdata \
 WORKDIR /app
 
 COPY --from=builder /out/server        /app/server
+COPY --from=builder /out/import        /app/import
 COPY --from=builder /go/bin/goose      /usr/local/bin/goose
 COPY --chown=app:app db/migrations     /app/migrations
 COPY --chown=app:app docker/entrypoint.sh /app/entrypoint.sh

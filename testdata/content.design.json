@@ -1,0 +1,2890 @@
+{
+  "schemaVersion": 1,
+  "regions": [
+    {
+      "key": "gal",
+      "tileColor": "#9A9A5E",
+      "name": {
+        "en": "Galicia",
+        "es": "Galicia",
+        "ru": "Галисия"
+      },
+      "mapLabel": {
+        "en": "Galicia",
+        "es": "Galicia",
+        "ru": "Галисия"
+      },
+      "description": {
+        "en": "Atlantic seafood, pilgrim fare and Spain’s best-loved octopus.",
+        "es": "Marisco atlántico, cocina de peregrinos y el pulpo más querido de España.",
+        "ru": "Атлантические морепродукты, еда паломников и самый любимый осьминог Испании."
+      },
+      "regionalDishes": [
+        "Pulpo á feira",
+        "Empanada gallega",
+        "Lacón con grelos"
+      ]
+    },
+    {
+      "key": "ast",
+      "tileColor": "#C97B4A",
+      "name": {
+        "en": "Asturias",
+        "es": "Asturias",
+        "ru": "Астурия"
+      },
+      "mapLabel": {
+        "en": "Asturias",
+        "es": "Asturias",
+        "ru": "Астурия"
+      },
+      "description": {
+        "en": "Bean stews, cider houses and mountain cheeses from the green north.",
+        "es": "Potes de fabes, sidrerías y quesos de montaña del norte verde.",
+        "ru": "Фасолевые рагу, сидрерии и горные сыры зелёного севера."
+      },
+      "regionalDishes": [
+        "Fabada asturiana",
+        "Cachopo",
+        "Arroz con leche"
+      ]
+    },
+    {
+      "key": "bas",
+      "tileColor": "#C4552E",
+      "name": {
+        "en": "Basque Country",
+        "es": "País Vasco",
+        "ru": "Страна Басков"
+      },
+      "mapLabel": {
+        "en": "Euskadi",
+        "es": "Euskadi",
+        "ru": "Баскония"
+      },
+      "description": {
+        "en": "Pintxo counters and a fierce culture of eating well.",
+        "es": "Barras de pintxos y una cultura feroz del buen comer.",
+        "ru": "Барные стойки с пинчос и настоящий культ хорошей еды."
+      },
+      "regionalDishes": [
+        "Bacalao al pil-pil",
+        "Marmitako",
+        "Txuleta"
+      ]
+    },
+    {
+      "key": "cat",
+      "tileColor": "#D9A441",
+      "name": {
+        "en": "Catalonia",
+        "es": "Cataluña",
+        "ru": "Каталония"
+      },
+      "mapLabel": {
+        "en": "Catalunya",
+        "es": "Catalunya",
+        "ru": "Каталония"
+      },
+      "description": {
+        "en": "From calçotadas to seafood stews along the Costa Brava.",
+        "es": "De las calçotadas a los suquets de la Costa Brava.",
+        "ru": "От кальсотад до рыбных рагу Коста-Бравы."
+      },
+      "regionalDishes": [
+        "Pa amb tomàquet",
+        "Escalivada",
+        "Crema catalana"
+      ]
+    },
+    {
+      "key": "cyl",
+      "tileColor": "#C3A574",
+      "name": {
+        "en": "Castilla y León",
+        "es": "Castilla y León",
+        "ru": "Кастилия и Леон"
+      },
+      "mapLabel": {
+        "en": "C. y León",
+        "es": "C. y León",
+        "ru": "Кастилия-Леон"
+      },
+      "description": {
+        "en": "Wood-oven roasts and hearty soups of the high plateau.",
+        "es": "Asados de horno de leña y sopas contundentes de la meseta.",
+        "ru": "Жаркое из дровяной печи и сытные супы высокогорья."
+      },
+      "regionalDishes": [
+        "Lechazo asado",
+        "Morcilla de Burgos",
+        "Sopa castellana"
+      ]
+    },
+    {
+      "key": "mad",
+      "tileColor": "#A8632F",
+      "name": {
+        "en": "Madrid",
+        "es": "Madrid",
+        "ru": "Мадрид"
+      },
+      "mapLabel": {
+        "en": "Madrid",
+        "es": "Madrid",
+        "ru": "Мадрид"
+      },
+      "description": {
+        "en": "Three-course cocido, taverns and the bocadillo de calamares.",
+        "es": "Cocido en tres vuelcos, tabernas y el bocadillo de calamares.",
+        "ru": "Косидо в три подачи, таверны и бутерброд с кальмарами."
+      },
+      "regionalDishes": [
+        "Cocido madrileño",
+        "Bocadillo de calamares",
+        "Callos a la madrileña"
+      ]
+    },
+    {
+      "key": "ara",
+      "tileColor": "#B98A5E",
+      "name": {
+        "en": "Aragón",
+        "es": "Aragón",
+        "ru": "Арагон"
+      },
+      "mapLabel": {
+        "en": "Aragón",
+        "es": "Aragón",
+        "ru": "Арагон"
+      },
+      "description": {
+        "en": "Roast lamb, migas and garden borage from the Ebro valley.",
+        "es": "Ternasco, migas y borraja de huerta del valle del Ebro.",
+        "ru": "Запечённый ягнёнок, мигас и огородный бурачник из долины Эбро."
+      },
+      "regionalDishes": [
+        "Ternasco asado",
+        "Migas aragonesas",
+        "Borraja con patatas"
+      ]
+    },
+    {
+      "key": "val",
+      "tileColor": "#C4552E",
+      "name": {
+        "en": "Valencia",
+        "es": "Comunidad Valenciana",
+        "ru": "Валенсия"
+      },
+      "mapLabel": {
+        "en": "València",
+        "es": "València",
+        "ru": "Валенсия"
+      },
+      "description": {
+        "en": "Rice traditions, orchards and the paella everyone argues about.",
+        "es": "Tradición arrocera, huertas y la paella por la que todos discuten.",
+        "ru": "Рисовые традиции, сады и паэлья, о которой спорят все."
+      },
+      "regionalDishes": [
+        "Paella valenciana",
+        "Fideuà",
+        "Esgarraet"
+      ]
+    },
+    {
+      "key": "ext",
+      "tileColor": "#9A9A5E",
+      "name": {
+        "en": "Extremadura",
+        "es": "Extremadura",
+        "ru": "Эстремадура"
+      },
+      "mapLabel": {
+        "en": "Extremadura",
+        "es": "Extremadura",
+        "ru": "Эстремадура"
+      },
+      "description": {
+        "en": "Shepherd cooking, dehesa ham and the mighty Torta del Casar.",
+        "es": "Cocina pastoril, jamón de dehesa y la gran Torta del Casar.",
+        "ru": "Пастушья кухня, хамон с дехесы и знаменитая Торта-дель-Касар."
+      },
+      "regionalDishes": [
+        "Migas extremeñas",
+        "Torta del Casar",
+        "Caldereta de cordero"
+      ]
+    },
+    {
+      "key": "clm",
+      "tileColor": "#C3A574",
+      "name": {
+        "en": "Castilla-La Mancha",
+        "es": "Castilla-La Mancha",
+        "ru": "Кастилия — Ла-Манча"
+      },
+      "mapLabel": {
+        "en": "La Mancha",
+        "es": "La Mancha",
+        "ru": "Ла-Манча"
+      },
+      "description": {
+        "en": "Quixote country: saffron, manchego and slow vegetable stews.",
+        "es": "Tierra del Quijote: azafrán, queso manchego y guisos lentos de verdura.",
+        "ru": "Земля Дон Кихота: шафран, манчего и неспешные овощные рагу."
+      },
+      "regionalDishes": [
+        "Pisto manchego",
+        "Migas manchegas",
+        "Atascaburras"
+      ]
+    },
+    {
+      "key": "mur",
+      "tileColor": "#C97B4A",
+      "name": {
+        "en": "Murcia",
+        "es": "Región de Murcia",
+        "ru": "Мурсия"
+      },
+      "mapLabel": {
+        "en": "Murcia",
+        "es": "Murcia",
+        "ru": "Мурсия"
+      },
+      "description": {
+        "en": "Market-garden produce and rice cooked over driftwood fires.",
+        "es": "Productos de la huerta y arroz cocinado al fuego.",
+        "ru": "Овощи с огородов и рис, приготовленный на открытом огне."
+      },
+      "regionalDishes": [
+        "Caldero murciano",
+        "Zarangollo",
+        "Marineras"
+      ]
+    },
+    {
+      "key": "and",
+      "tileColor": "#C4552E",
+      "name": {
+        "en": "Andalucía",
+        "es": "Andalucía",
+        "ru": "Андалусия"
+      },
+      "mapLabel": {
+        "en": "Andalucía",
+        "es": "Andalucía",
+        "ru": "Андалусия"
+      },
+      "description": {
+        "en": "Cold soups, fried fish and eight provinces of contrasts.",
+        "es": "Sopas frías, pescaíto frito y ocho provincias de contrastes.",
+        "ru": "Холодные супы, жареная рыба и восемь непохожих провинций."
+      },
+      "regionalDishes": [
+        "Gazpacho andaluz",
+        "Salmorejo cordobés",
+        "Pescaíto frito"
+      ]
+    },
+    {
+      "key": "bal",
+      "tileColor": "#9A9A5E",
+      "name": {
+        "en": "Illes Balears",
+        "es": "Illes Balears",
+        "ru": "Балеарские острова"
+      },
+      "mapLabel": {
+        "en": "Balears",
+        "es": "Balears",
+        "ru": "Балеары"
+      },
+      "description": {
+        "en": "Island baking, sobrasada and slow-cooked vegetable tumbet.",
+        "es": "Repostería isleña, sobrasada y tumbet a fuego lento.",
+        "ru": "Островная выпечка, собрасада и томлёный овощной тумбет."
+      },
+      "regionalDishes": [
+        "Ensaïmada",
+        "Tumbet",
+        "Sobrasada"
+      ]
+    },
+    {
+      "key": "can",
+      "tileColor": "#A8632F",
+      "name": {
+        "en": "Canarias",
+        "es": "Canarias",
+        "ru": "Канарские острова"
+      },
+      "mapLabel": {
+        "en": "Canarias",
+        "es": "Canarias",
+        "ru": "Канары"
+      },
+      "description": {
+        "en": "Volcanic islands: red and green mojos, gofio and Atlantic fish.",
+        "es": "Islas volcánicas: mojo rojo y verde, gofio y pescado atlántico.",
+        "ru": "Вулканические острова: красный и зелёный мохо, гофио и атлантическая рыба."
+      },
+      "regionalDishes": [
+        "Papas arrugadas",
+        "Sancocho canario",
+        "Gofio escaldado"
+      ]
+    }
+  ],
+  "dishes": [
+    {
+      "key": "tortilla",
+      "name": {
+        "en": "Tortilla de patatas",
+        "es": "Tortilla de patatas",
+        "ru": "Тортилья"
+      },
+      "description": {
+        "en": "One dish, two centuries of argument. Onion or none is only where it starts.",
+        "es": "Un plato, dos siglos de discusión. Con o sin cebolla es solo el principio.",
+        "ru": "Одно блюдо — два века споров. С луком или без — это только начало."
+      },
+      "flags": {
+        "vegetarian": true,
+        "seafood": false,
+        "pork": false,
+        "quick": true,
+        "slowCooked": false
+      },
+      "course": "tapas",
+      "season": "all",
+      "photos": null,
+      "variations": [
+        {
+          "regionKey": "gal",
+          "recipeKey": "tortilla-gal",
+          "name": {
+            "en": "Betanzos-style runny",
+            "es": "Estilo Betanzos, jugosa",
+            "ru": "По-бетансосски, жидкая внутри"
+          },
+          "description": {
+            "en": "Barely-set centre, no onion, eaten with bread",
+            "es": "Centro apenas cuajado, sin cebolla, con pan",
+            "ru": "Едва схваченная серединка, без лука, едят с хлебом"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "ast",
+          "recipeKey": "tortilla-ast",
+          "name": {
+            "en": "With chorizo",
+            "es": "Con chorizo",
+            "ru": "С чорисо"
+          },
+          "description": {
+            "en": "Chorizo fat colours the potato",
+            "es": "La grasa del chorizo tiñe la patata",
+            "ru": "Жир чорисо окрашивает картофель"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "bas",
+          "recipeKey": "tortilla-bas",
+          "name": {
+            "en": "With piquillo peppers",
+            "es": "Con pimientos del piquillo",
+            "ru": "С перцем пикильо"
+          },
+          "description": {
+            "en": "Sweet roast peppers folded in, cut for pintxos",
+            "es": "Pimientos asados y dulces, cortada en pintxos",
+            "ru": "Сладкий печёный перец, нарезают на пинчос"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "cat",
+          "recipeKey": "tortilla-cat",
+          "name": {
+            "en": "With escalivada",
+            "es": "Con escalivada",
+            "ru": "С эскаливадой"
+          },
+          "description": {
+            "en": "Layered with smoky aubergine and pepper",
+            "es": "En capas con berenjena y pimiento asados",
+            "ru": "Слоями с печёными баклажанами и перцем"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "cyl",
+          "recipeKey": "tortilla-cyl",
+          "name": {
+            "en": "Deep, fully cooked",
+            "es": "Alta y bien cuajada",
+            "ru": "Высокая, хорошо прожаренная"
+          },
+          "description": {
+            "en": "Five eggs, tall as a cake, no pink centre",
+            "es": "Cinco huevos, alta como un pastel, sin centro crudo",
+            "ru": "Пять яиц, высокая как торт, без сырой серединки"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "mad",
+          "recipeKey": "tortilla-mad",
+          "name": {
+            "en": "Bar-counter wedge",
+            "es": "Pincho de barra",
+            "ru": "Барный кусок"
+          },
+          "description": {
+            "en": "Made at dawn, eaten warm in a bocadillo",
+            "es": "Hecha al amanecer, se come templada en bocadillo",
+            "ru": "Готовят на рассвете, едят тёплой в бутерброде"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "ara",
+          "recipeKey": "tortilla-ara",
+          "name": {
+            "en": "With borage",
+            "es": "Con borraja",
+            "ru": "С бурачником"
+          },
+          "description": {
+            "en": "Garden borage stalks replace half the potato",
+            "es": "Tallos de borraja en lugar de media patata",
+            "ru": "Стебли бурачника вместо половины картофеля"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "val",
+          "recipeKey": "tortilla-val",
+          "name": {
+            "en": "With onion, soft",
+            "es": "Con cebolla, jugosa",
+            "ru": "С луком, мягкая"
+          },
+          "description": {
+            "en": "Onion cooked slow until sweet, loose set",
+            "es": "Cebolla pochada hasta endulzar, cuajado suave",
+            "ru": "Лук томят до сладости, мягкое схватывание"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "ext",
+          "recipeKey": "tortilla-ext",
+          "name": {
+            "en": "Fried in pork lard",
+            "es": "Frita en manteca",
+            "ru": "На свином сале"
+          },
+          "description": {
+            "en": "Lard instead of oil, heavier crumb",
+            "es": "Manteca de cerdo en lugar de aceite, miga más densa",
+            "ru": "Сало вместо масла, плотнее текстура"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "clm",
+          "recipeKey": "tortilla-clm",
+          "name": {
+            "en": "Fried in manchego oil",
+            "es": "Con aceite manchego",
+            "ru": "На масле из Ла-Манчи"
+          },
+          "description": {
+            "en": "Cornicabra oil, potato sliced thick",
+            "es": "Aceite de cornicabra, patata en rodajas gruesas",
+            "ru": "Масло корникабра, картофель нарезан толсто"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "mur",
+          "recipeKey": "tortilla-mur",
+          "name": {
+            "en": "With zarangollo",
+            "es": "Con zarangollo",
+            "ru": "С саранголльо"
+          },
+          "description": {
+            "en": "Courgette and onion folded through",
+            "es": "Calabacín y cebolla mezclados",
+            "ru": "С кабачком и луком"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "and",
+          "recipeKey": "tortilla-and",
+          "name": {
+            "en": "Thin, olive-oil heavy",
+            "es": "Fina, con mucho aceite",
+            "ru": "Тонкая, на оливковом масле"
+          },
+          "description": {
+            "en": "Wide and thin, generous picual oil",
+            "es": "Ancha y fina, generosa en aceite picual",
+            "ru": "Широкая и тонкая, щедро масла пикуаль"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "bal",
+          "recipeKey": "tortilla-bal",
+          "name": {
+            "en": "With sobrasada",
+            "es": "Con sobrasada",
+            "ru": "С собрасадой"
+          },
+          "description": {
+            "en": "Sobrasada melts into the egg",
+            "es": "La sobrasada se funde en el huevo",
+            "ru": "Собрасада тает в яйце"
+          },
+          "photos": null
+        }
+      ]
+    },
+    {
+      "key": "paella",
+      "name": {
+        "en": "Rice dishes",
+        "es": "Arroces",
+        "ru": "Блюда из риса"
+      },
+      "description": {
+        "en": "Valencia claims the original; every coast cooks rice its own way.",
+        "es": "Valencia reclama el original; cada costa cocina el arroz a su manera.",
+        "ru": "Валенсия считает оригинал своим, но на каждом побережье рис готовят по-своему."
+      },
+      "flags": {
+        "vegetarian": false,
+        "seafood": true,
+        "pork": false,
+        "quick": false,
+        "slowCooked": true
+      },
+      "course": "mains",
+      "season": "all",
+      "photos": null,
+      "variations": [
+        {
+          "regionKey": "val",
+          "recipeKey": "paella-val",
+          "name": {
+            "en": "Paella valenciana",
+            "es": "Paella valenciana",
+            "ru": "Paella valenciana"
+          },
+          "description": {
+            "en": "Rabbit, chicken and garrofó — never chorizo",
+            "es": "Conejo, pollo y garrofó; nunca chorizo",
+            "ru": "Кролик, курица и фасоль гаррофо — никогда не чорисо"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "cat",
+          "recipeKey": "paella-cat",
+          "name": {
+            "en": "Arròs negre",
+            "es": "Arròs negre",
+            "ru": "Arròs negre"
+          },
+          "description": {
+            "en": "Squid ink, served with allioli",
+            "es": "Tinta de calamar, con allioli",
+            "ru": "Чернила кальмара, подают с айоли"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "mur",
+          "recipeKey": "paella-mur",
+          "name": {
+            "en": "Caldero murciano",
+            "es": "Caldero murciano",
+            "ru": "Caldero murciano"
+          },
+          "description": {
+            "en": "Cooked in fish broth with ñora pepper",
+            "es": "Cocido en caldo de pescado con ñora",
+            "ru": "Варят в рыбном бульоне с перцем ньора"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "and",
+          "recipeKey": "paella-and",
+          "name": {
+            "en": "Arroz caldoso de marisco",
+            "es": "Arroz caldoso de marisco",
+            "ru": "Arroz caldoso de marisco"
+          },
+          "description": {
+            "en": "Soupy — spooned, not forked",
+            "es": "Caldoso: se come con cuchara",
+            "ru": "Жидкий — едят ложкой, а не вилкой"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "bal",
+          "recipeKey": "paella-bal",
+          "name": {
+            "en": "Arròs brut",
+            "es": "Arròs brut",
+            "ru": "Arròs brut"
+          },
+          "description": {
+            "en": "Peppery, with game and snails",
+            "es": "Especiado, con caza y caracoles",
+            "ru": "Пряный, с дичью и улитками"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "ara",
+          "recipeKey": "paella-ara",
+          "name": {
+            "en": "Arroz con conejo",
+            "es": "Arroz con conejo",
+            "ru": "Arroz con conejo"
+          },
+          "description": {
+            "en": "Inland rabbit and snails, no seafood",
+            "es": "Conejo y caracoles de interior, sin marisco",
+            "ru": "Кролик и улитки, без морепродуктов"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "can",
+          "recipeKey": "paella-can",
+          "name": {
+            "en": "Arroz a la cubana",
+            "es": "Arroz a la cubana",
+            "ru": "Arroz a la cubana"
+          },
+          "description": {
+            "en": "Fried egg, fried banana, tomato sauce",
+            "es": "Huevo frito, plátano frito y tomate",
+            "ru": "Жареное яйцо, жареный банан, томатный соус"
+          },
+          "photos": null
+        }
+      ]
+    },
+    {
+      "key": "cocido",
+      "name": {
+        "en": "Cocido & stews",
+        "es": "Cocidos y guisos",
+        "ru": "Косидо и рагу"
+      },
+      "description": {
+        "en": "The Sunday pot. Chickpeas, beans or cabbage depending on the latitude.",
+        "es": "La olla del domingo. Garbanzos, alubias o berza según la latitud.",
+        "ru": "Воскресный котёл. Нут, фасоль или капуста — в зависимости от широты."
+      },
+      "flags": {
+        "vegetarian": false,
+        "seafood": false,
+        "pork": true,
+        "quick": false,
+        "slowCooked": true
+      },
+      "course": "mains",
+      "season": "winter",
+      "photos": null,
+      "variations": [
+        {
+          "regionKey": "mad",
+          "recipeKey": "cocido-mad",
+          "name": {
+            "en": "Cocido madrileño",
+            "es": "Cocido madrileño",
+            "ru": "Cocido madrileño"
+          },
+          "description": {
+            "en": "Served in three courses, soup first",
+            "es": "Se sirve en tres vuelcos, primero la sopa",
+            "ru": "Подают в три этапа, сначала суп"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "ast",
+          "recipeKey": "cocido-ast",
+          "name": {
+            "en": "Fabada asturiana",
+            "es": "Fabada asturiana",
+            "ru": "Fabada asturiana"
+          },
+          "description": {
+            "en": "Fabes de la Granja, no vegetables",
+            "es": "Fabes de la Granja, sin verduras",
+            "ru": "Фасоль фабес-де-ла-гранха, без овощей"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "cat",
+          "recipeKey": "cocido-cat",
+          "name": {
+            "en": "Escudella i carn d’olla",
+            "es": "Escudella i carn d’olla",
+            "ru": "Escudella i carn d’olla"
+          },
+          "description": {
+            "en": "Giant pilota meatball, eaten at Christmas",
+            "es": "Pilota gigante, se come en Navidad",
+            "ru": "Огромная фрикаделька пилота, едят на Рождество"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "gal",
+          "recipeKey": "cocido-gal",
+          "name": {
+            "en": "Cocido gallego",
+            "es": "Cocido gallego",
+            "ru": "Cocido gallego"
+          },
+          "description": {
+            "en": "Grelos, pork shoulder and cachelos",
+            "es": "Grelos, lacón y cachelos",
+            "ru": "Грелос, свиная лопатка и отварной картофель"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "and",
+          "recipeKey": "cocido-and",
+          "name": {
+            "en": "Puchero andaluz",
+            "es": "Puchero andaluz",
+            "ru": "Puchero andaluz"
+          },
+          "description": {
+            "en": "Chickpeas and mint, pringá spread on bread",
+            "es": "Garbanzos y hierbabuena, pringá untada en pan",
+            "ru": "Нут и мята, «прингá» намазывают на хлеб"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "clm",
+          "recipeKey": "cocido-clm",
+          "name": {
+            "en": "Cocido manchego",
+            "es": "Cocido manchego",
+            "ru": "Cocido manchego"
+          },
+          "description": {
+            "en": "Saffron in the broth",
+            "es": "Azafrán en el caldo",
+            "ru": "Шафран в бульоне"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "ext",
+          "recipeKey": "cocido-ext",
+          "name": {
+            "en": "Cocido extremeño",
+            "es": "Cocido extremeño",
+            "ru": "Cocido extremeño"
+          },
+          "description": {
+            "en": "Paprika-heavy pork",
+            "es": "Cerdo con mucho pimentón",
+            "ru": "Свинина с обилием паприки"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "can",
+          "recipeKey": "cocido-can",
+          "name": {
+            "en": "Puchero canario",
+            "es": "Puchero canario",
+            "ru": "Puchero canario"
+          },
+          "description": {
+            "en": "Seven vegetables, gofio kneaded into the broth",
+            "es": "Siete verduras, gofio amasado con el caldo",
+            "ru": "Семь овощей, гофио замешивают на бульоне"
+          },
+          "photos": null
+        }
+      ]
+    },
+    {
+      "key": "gazpacho",
+      "name": {
+        "en": "Cold soups",
+        "es": "Sopas frías",
+        "ru": "Холодные супы"
+      },
+      "description": {
+        "en": "Bread, oil and whatever the garden gives. Not only Andalucía.",
+        "es": "Pan, aceite y lo que dé la huerta. No solo en Andalucía.",
+        "ru": "Хлеб, масло и всё, что дал огород. Не только в Андалусии."
+      },
+      "flags": {
+        "vegetarian": true,
+        "seafood": false,
+        "pork": false,
+        "quick": true,
+        "slowCooked": false
+      },
+      "course": "tapas",
+      "season": "summer",
+      "photos": null,
+      "variations": [
+        {
+          "regionKey": "and",
+          "recipeKey": "gazpacho-and",
+          "name": {
+            "en": "Gazpacho andaluz",
+            "es": "Gazpacho andaluz",
+            "ru": "Gazpacho andaluz"
+          },
+          "description": {
+            "en": "Thickened with bread, drunk from a glass",
+            "es": "Espesado con pan, se bebe en vaso",
+            "ru": "Загущают хлебом, пьют из стакана"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "clm",
+          "recipeKey": "gazpacho-clm",
+          "name": {
+            "en": "Gazpacho manchego (hot)",
+            "es": "Gazpacho manchego (caliente)",
+            "ru": "Gazpacho manchego (горячий)"
+          },
+          "description": {
+            "en": "Not a soup at all — game stew on flatbread",
+            "es": "No es una sopa: guiso de caza sobre torta",
+            "ru": "Вовсе не суп — рагу из дичи на лепёшке"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "ext",
+          "recipeKey": "gazpacho-ext",
+          "name": {
+            "en": "Ajoblanco extremeño",
+            "es": "Ajoblanco extremeño",
+            "ru": "Ajoblanco extremeño"
+          },
+          "description": {
+            "en": "Almond and garlic, no tomato",
+            "es": "Almendra y ajo, sin tomate",
+            "ru": "Миндаль и чеснок, без помидоров"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "val",
+          "recipeKey": "gazpacho-val",
+          "name": {
+            "en": "Ajoblanco con uvas",
+            "es": "Ajoblanco con uvas",
+            "ru": "Ajoblanco con uvas"
+          },
+          "description": {
+            "en": "Muscat grapes floated on top",
+            "es": "Con uvas moscatel por encima",
+            "ru": "С виноградом мускат сверху"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "mur",
+          "recipeKey": "gazpacho-mur",
+          "name": {
+            "en": "Gazpacho de Murcia",
+            "es": "Gazpacho de Murcia",
+            "ru": "Gazpacho de Murcia"
+          },
+          "description": {
+            "en": "Extra cucumber, less bread",
+            "es": "Más pepino, menos pan",
+            "ru": "Больше огурца, меньше хлеба"
+          },
+          "photos": null
+        }
+      ]
+    },
+    {
+      "key": "croquetas",
+      "name": {
+        "en": "Croquetas",
+        "es": "Croquetas",
+        "ru": "Крокеты"
+      },
+      "description": {
+        "en": "The universal leftovers technology. The filling tells you where you are.",
+        "es": "La tecnología universal de las sobras. El relleno te dice dónde estás.",
+        "ru": "Универсальный способ доесть остатки. Начинка подскажет, где вы."
+      },
+      "flags": {
+        "vegetarian": false,
+        "seafood": false,
+        "pork": true,
+        "quick": true,
+        "slowCooked": false
+      },
+      "course": "tapas",
+      "season": "all",
+      "photos": null,
+      "variations": [
+        {
+          "regionKey": "mad",
+          "recipeKey": "croquetas-mad",
+          "name": {
+            "en": "De jamón",
+            "es": "De jamón",
+            "ru": "De jamón"
+          },
+          "description": {
+            "en": "Ibérico trimmings, béchamel rested overnight",
+            "es": "Recortes de ibérico, bechamel reposada una noche",
+            "ru": "Обрезки иберико, бешамель отдыхает ночь"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "bas",
+          "recipeKey": "croquetas-bas",
+          "name": {
+            "en": "De bacalao",
+            "es": "De bacalao",
+            "ru": "De bacalao"
+          },
+          "description": {
+            "en": "Salt cod flaked into the roux",
+            "es": "Bacalao desmigado en el roux",
+            "ru": "Солёная треска в заправке"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "gal",
+          "recipeKey": "croquetas-gal",
+          "name": {
+            "en": "De marisco",
+            "es": "De marisco",
+            "ru": "De marisco"
+          },
+          "description": {
+            "en": "Built on leftover shellfish stock",
+            "es": "Sobre caldo de marisco sobrante",
+            "ru": "На бульоне от морепродуктов"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "cat",
+          "recipeKey": "croquetas-cat",
+          "name": {
+            "en": "De rostit",
+            "es": "De rostit",
+            "ru": "De rostit"
+          },
+          "description": {
+            "en": "Sunday roast meat minced in",
+            "es": "Carne picada del asado del domingo",
+            "ru": "Мясо воскресного жаркого"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "ast",
+          "recipeKey": "croquetas-ast",
+          "name": {
+            "en": "De cabrales",
+            "es": "De cabrales",
+            "ru": "De cabrales"
+          },
+          "description": {
+            "en": "Blue cheese cut with cream",
+            "es": "Queso azul suavizado con nata",
+            "ru": "Голубой сыр, смягчённый сливками"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "and",
+          "recipeKey": "croquetas-and",
+          "name": {
+            "en": "De puchero",
+            "es": "De puchero",
+            "ru": "De puchero"
+          },
+          "description": {
+            "en": "Made from yesterday’s pringá",
+            "es": "Hechas con la pringá de ayer",
+            "ru": "Из вчерашней «прингá»"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "val",
+          "recipeKey": "croquetas-val",
+          "name": {
+            "en": "De sepia",
+            "es": "De sepia",
+            "ru": "De sepia"
+          },
+          "description": {
+            "en": "Cuttlefish and a little ink",
+            "es": "Sepia y un poco de tinta",
+            "ru": "Каракатица и немного чернил"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "bal",
+          "recipeKey": "croquetas-bal",
+          "name": {
+            "en": "De sobrasada",
+            "es": "De sobrasada",
+            "ru": "De sobrasada"
+          },
+          "description": {
+            "en": "Sweet paprika sausage, honey drizzle",
+            "es": "Embutido de pimentón dulce, hilo de miel",
+            "ru": "Колбаса со сладкой паприкой, капля мёда"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "can",
+          "recipeKey": "croquetas-can",
+          "name": {
+            "en": "De gofio",
+            "es": "De gofio",
+            "ru": "De gofio"
+          },
+          "description": {
+            "en": "Toasted grain flour in the béchamel",
+            "es": "Harina de grano tostado en la bechamel",
+            "ru": "Мука из обжаренного зерна в бешамели"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "cyl",
+          "recipeKey": "croquetas-cyl",
+          "name": {
+            "en": "De morcilla",
+            "es": "De morcilla",
+            "ru": "De morcilla"
+          },
+          "description": {
+            "en": "Burgos blood sausage with rice",
+            "es": "Morcilla de Burgos con arroz",
+            "ru": "Бургосская кровяная колбаса с рисом"
+          },
+          "photos": null
+        }
+      ]
+    },
+    {
+      "key": "torrijas",
+      "name": {
+        "en": "Fried sweets",
+        "es": "Dulces fritos",
+        "ru": "Жареные сладости"
+      },
+      "description": {
+        "en": "Stale bread, milk and oil — the cheapest dessert in Spain, everywhere at Easter.",
+        "es": "Pan duro, leche y aceite: el postre más barato de España, en todas partes por Semana Santa.",
+        "ru": "Чёрствый хлеб, молоко и масло — самый дешёвый десерт Испании, на Пасху он повсюду."
+      },
+      "flags": {
+        "vegetarian": false,
+        "seafood": false,
+        "pork": false,
+        "quick": true,
+        "slowCooked": false
+      },
+      "course": "desserts",
+      "season": "easter",
+      "photos": null,
+      "variations": [
+        {
+          "regionKey": "mad",
+          "recipeKey": "torrijas-mad",
+          "name": {
+            "en": "Torrijas de leche",
+            "es": "Torrijas de leche",
+            "ru": "Torrijas de leche"
+          },
+          "description": {
+            "en": "Soaked in cinnamon milk, fried in olive oil",
+            "es": "Empapadas en leche con canela, fritas en aceite de oliva",
+            "ru": "Вымочены в молоке с корицей, жарят на оливковом масле"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "and",
+          "recipeKey": "torrijas-and",
+          "name": {
+            "en": "Torrijas de vino",
+            "es": "Torrijas de vino",
+            "ru": "Torrijas de vino"
+          },
+          "description": {
+            "en": "Sweet wine instead of milk, honey poured over",
+            "es": "Vino dulce en lugar de leche, con miel",
+            "ru": "Сладкое вино вместо молока, политы мёдом"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "cyl",
+          "recipeKey": "torrijas-cyl",
+          "name": {
+            "en": "Leche frita",
+            "es": "Leche frita",
+            "ru": "Leche frita"
+          },
+          "description": {
+            "en": "Set custard squares, fried and sugared",
+            "es": "Cuadrados de crema cuajada, fritos y azucarados",
+            "ru": "Кубики застывшего крема, обжаренные и в сахаре"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "cat",
+          "recipeKey": "torrijas-cat",
+          "name": {
+            "en": "Bunyols de Quaresma",
+            "es": "Bunyols de Quaresma",
+            "ru": "Bunyols de Quaresma"
+          },
+          "description": {
+            "en": "Yeasted, orange zest, sugar-rolled",
+            "es": "Con levadura, ralladura de naranja y azúcar",
+            "ru": "Дрожжевые, с апельсиновой цедрой, в сахаре"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "gal",
+          "recipeKey": "torrijas-gal",
+          "name": {
+            "en": "Filloas",
+            "es": "Filloas",
+            "ru": "Filloas"
+          },
+          "description": {
+            "en": "Thin crêpes, sometimes made with broth",
+            "es": "Crepes finas, a veces hechas con caldo",
+            "ru": "Тонкие блинчики, иногда на бульоне"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "can",
+          "recipeKey": "torrijas-can",
+          "name": {
+            "en": "Truchas de batata",
+            "es": "Truchas de batata",
+            "ru": "Truchas de batata"
+          },
+          "description": {
+            "en": "Sweet-potato pastries, almond and lemon",
+            "es": "Empanadillas de batata, almendra y limón",
+            "ru": "Пирожки с бататом, миндалём и лимоном"
+          },
+          "photos": null
+        }
+      ]
+    },
+    {
+      "key": "arrozleche",
+      "name": {
+        "en": "Milk puddings",
+        "es": "Postres de leche",
+        "ru": "Молочные десерты"
+      },
+      "description": {
+        "en": "Rice, milk and patience. Burnt top or not is the local argument.",
+        "es": "Arroz, leche y paciencia. Requemado o no: esa es la discusión local.",
+        "ru": "Рис, молоко и терпение. Карамельная корочка или нет — главный местный спор."
+      },
+      "flags": {
+        "vegetarian": true,
+        "seafood": false,
+        "pork": false,
+        "quick": false,
+        "slowCooked": true
+      },
+      "course": "desserts",
+      "season": "all",
+      "photos": null,
+      "variations": [
+        {
+          "regionKey": "ast",
+          "recipeKey": "arrozleche-ast",
+          "name": {
+            "en": "Arroz con leche requemado",
+            "es": "Arroz con leche requemado",
+            "ru": "Arroz con leche requemado"
+          },
+          "description": {
+            "en": "Sugar burnt to glass on top",
+            "es": "Azúcar quemado como cristal por encima",
+            "ru": "Сахар сверху обожжён до стекла"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "cat",
+          "recipeKey": "arrozleche-cat",
+          "name": {
+            "en": "Crema catalana",
+            "es": "Crema catalana",
+            "ru": "Crema catalana"
+          },
+          "description": {
+            "en": "Egg-yolk custard, cracked caramel crust",
+            "es": "Crema de yemas, costra de caramelo crujiente",
+            "ru": "Крем на желтках, хрустящая карамельная корочка"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "bas",
+          "recipeKey": "arrozleche-bas",
+          "name": {
+            "en": "Goxua",
+            "es": "Goxua",
+            "ru": "Goxua"
+          },
+          "description": {
+            "en": "Layered cream, sponge and caramel",
+            "es": "Capas de nata, bizcocho y caramelo",
+            "ru": "Слои сливок, бисквита и карамели"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "cyl",
+          "recipeKey": "arrozleche-cyl",
+          "name": {
+            "en": "Arroz con leche de Sanabria",
+            "es": "Arroz con leche de Sanabria",
+            "ru": "Arroz con leche de Sanabria"
+          },
+          "description": {
+            "en": "Cinnamon-heavy, served cold",
+            "es": "Mucha canela, se sirve frío",
+            "ru": "Много корицы, подают холодным"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "val",
+          "recipeKey": "arrozleche-val",
+          "name": {
+            "en": "Arnadí",
+            "es": "Arnadí",
+            "ru": "Arnadí"
+          },
+          "description": {
+            "en": "Pumpkin and almond, baked not boiled",
+            "es": "Calabaza y almendra, al horno, no hervido",
+            "ru": "Тыква и миндаль, запекают, а не варят"
+          },
+          "photos": null
+        }
+      ]
+    }
+  ],
+  "recipes": [
+    {
+      "recipeKey": "tortilla-gal",
+      "timeMinutes": 25,
+      "timeNote": null,
+      "baseServings": 2,
+      "ingredients": [
+        {
+          "quantity": 4,
+          "unit": null,
+          "name": {
+            "en": "Eggs",
+            "es": "Huevos",
+            "ru": "Яйца"
+          }
+        },
+        {
+          "quantity": 400,
+          "unit": "g",
+          "name": {
+            "en": "Waxy potatoes",
+            "es": "Patatas de carne firme",
+            "ru": "Плотный картофель"
+          }
+        },
+        {
+          "quantity": 250,
+          "unit": "ml",
+          "name": {
+            "en": "Olive oil, for confit",
+            "es": "Aceite de oliva, para confitar",
+            "ru": "Оливковое масло для конфи"
+          }
+        },
+        {
+          "quantity": 1,
+          "unit": "tsp",
+          "name": {
+            "en": "Salt",
+            "es": "Sal",
+            "ru": "Соль"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Peel the potatoes and slice them very thin.",
+          "es": "Pela las patatas y córtalas muy finas.",
+          "ru": "Очистите картофель и нарежьте очень тонко."
+        },
+        {
+          "en": "Confit in the oil over low heat for 15 minutes, until soft but not coloured. Drain and keep the oil.",
+          "es": "Confítalas en el aceite a fuego bajo 15 minutos, tiernas pero sin dorar. Escúrrelas y guarda el aceite.",
+          "ru": "Томите в масле на слабом огне 15 минут, до мягкости, не обжаривая. Откиньте картофель, масло сохраните."
+        },
+        {
+          "en": "Beat the eggs with the salt, fold in the hot potatoes and rest for 5 minutes.",
+          "es": "Bate los huevos con la sal, añade las patatas calientes y deja reposar 5 minutos.",
+          "ru": "Взбейте яйца с солью, вмешайте горячий картофель и оставьте на 5 минут."
+        },
+        {
+          "en": "Heat a spoon of the oil in a small pan until very hot. Pour in and cook for 40 seconds.",
+          "es": "Calienta una cucharada del aceite en una sartén pequeña hasta que esté muy caliente. Vierte y cuaja 40 segundos.",
+          "ru": "Сильно разогрейте ложку масла в маленькой сковороде. Вылейте смесь и жарьте 40 секунд."
+        },
+        {
+          "en": "Flip with a plate, cook 20 seconds more and serve at once — the centre should run.",
+          "es": "Dale la vuelta con un plato, 20 segundos más y sirve enseguida: el centro debe quedar jugoso.",
+          "ru": "Переверните с помощью тарелки, жарьте ещё 20 секунд и сразу подавайте — серединка должна остаться жидкой."
+        }
+      ]
+    },
+    {
+      "recipeKey": "tortilla-ast",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "tortilla-bas",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "tortilla-cat",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "tortilla-cyl",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "tortilla-mad",
+      "timeMinutes": 50,
+      "timeNote": null,
+      "baseServings": 6,
+      "ingredients": [
+        {
+          "quantity": 8,
+          "unit": null,
+          "name": {
+            "en": "Eggs",
+            "es": "Huevos",
+            "ru": "Яйца"
+          }
+        },
+        {
+          "quantity": 1000,
+          "unit": "g",
+          "name": {
+            "en": "Potatoes",
+            "es": "Patatas",
+            "ru": "Картофель"
+          }
+        },
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Onion",
+            "es": "Cebolla",
+            "ru": "Лук"
+          }
+        },
+        {
+          "quantity": 400,
+          "unit": "ml",
+          "name": {
+            "en": "Olive oil",
+            "es": "Aceite de oliva",
+            "ru": "Оливковое масло"
+          }
+        },
+        {
+          "quantity": 1.5,
+          "unit": "tsp",
+          "name": {
+            "en": "Salt",
+            "es": "Sal",
+            "ru": "Соль"
+          }
+        },
+        {
+          "quantity": 6,
+          "unit": null,
+          "name": {
+            "en": "Bread rolls, to serve",
+            "es": "Panecillos, para servir",
+            "ru": "Булочки для подачи"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Slice the potatoes and onion thinly and fry gently in the oil for 25 minutes until tender.",
+          "es": "Corta las patatas y la cebolla finas y fríelas suavemente en el aceite 25 minutos, hasta que estén tiernas.",
+          "ru": "Тонко нарежьте картофель и лук и медленно обжаривайте в масле 25 минут до мягкости."
+        },
+        {
+          "en": "Drain well, season and mix into the beaten eggs.",
+          "es": "Escúrrelas bien, sala y mézclalas con los huevos batidos.",
+          "ru": "Хорошо откиньте, посолите и смешайте со взбитыми яйцами."
+        },
+        {
+          "en": "Cook in a deep pan over medium-low heat for 8 minutes, shaking so it doesn’t stick.",
+          "es": "Cuaja en una sartén honda a fuego medio-bajo 8 minutos, moviéndola para que no se pegue.",
+          "ru": "Готовьте в глубокой сковороде на среднем огне 8 минут, встряхивая, чтобы не пригорело."
+        },
+        {
+          "en": "Flip and cook 5 minutes more until fully set.",
+          "es": "Dale la vuelta y cocina 5 minutos más, hasta que esté bien cuajada.",
+          "ru": "Переверните и готовьте ещё 5 минут, пока тортилья полностью не схватится."
+        },
+        {
+          "en": "Cool slightly, cut into wedges and serve in a roll or on its own.",
+          "es": "Deja templar, corta en cuñas y sírvela en bocadillo o sola.",
+          "ru": "Слегка остудите, нарежьте клиньями и подавайте в булочке или отдельно."
+        }
+      ]
+    },
+    {
+      "recipeKey": "tortilla-ara",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "tortilla-val",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "tortilla-ext",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "tortilla-clm",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "tortilla-mur",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "tortilla-and",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "tortilla-bal",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "paella-val",
+      "timeMinutes": 75,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 400,
+          "unit": "g",
+          "name": {
+            "en": "Bomba rice",
+            "es": "Arroz bomba",
+            "ru": "Рис бомба"
+          }
+        },
+        {
+          "quantity": 600,
+          "unit": "g",
+          "name": {
+            "en": "Chicken, in pieces",
+            "es": "Pollo troceado",
+            "ru": "Курица, кусочками"
+          }
+        },
+        {
+          "quantity": 300,
+          "unit": "g",
+          "name": {
+            "en": "Rabbit, in pieces",
+            "es": "Conejo troceado",
+            "ru": "Кролик, кусочками"
+          }
+        },
+        {
+          "quantity": 200,
+          "unit": "g",
+          "name": {
+            "en": "Flat green beans",
+            "es": "Judía verde plana",
+            "ru": "Плоская стручковая фасоль"
+          }
+        },
+        {
+          "quantity": 150,
+          "unit": "g",
+          "name": {
+            "en": "Garrofó beans",
+            "es": "Garrofó",
+            "ru": "Фасоль гаррофо"
+          }
+        },
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Ripe tomato, grated",
+            "es": "Tomate maduro rallado",
+            "ru": "Спелый помидор, натёртый"
+          }
+        },
+        {
+          "quantity": 1,
+          "unit": "tsp",
+          "name": {
+            "en": "Sweet pimentón",
+            "es": "Pimentón dulce",
+            "ru": "Сладкая паприка"
+          }
+        },
+        {
+          "quantity": 1200,
+          "unit": "ml",
+          "name": {
+            "en": "Water",
+            "es": "Agua",
+            "ru": "Вода"
+          }
+        },
+        {
+          "quantity": 80,
+          "unit": "ml",
+          "name": {
+            "en": "Olive oil",
+            "es": "Aceite de oliva",
+            "ru": "Оливковое масло"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Brown the chicken and rabbit in the oil across the whole paella pan, about 15 minutes.",
+          "es": "Dora el pollo y el conejo en el aceite, repartidos por toda la paella, unos 15 minutos.",
+          "ru": "Обжарьте курицу и кролика в масле по всей сковороде, около 15 минут."
+        },
+        {
+          "en": "Add the beans and garrofó, then the tomato and pimentón. Cook for 2 minutes.",
+          "es": "Añade la judía y el garrofó, luego el tomate y el pimentón. Sofríe 2 minutos.",
+          "ru": "Добавьте стручковую фасоль и гаррофо, затем помидор и паприку. Жарьте 2 минуты."
+        },
+        {
+          "en": "Pour in the water, add saffron and salt, and simmer for 20 minutes.",
+          "es": "Vierte el agua, añade el azafrán y la sal, y cuece 20 minutos.",
+          "ru": "Влейте воду, добавьте шафран и соль, варите 20 минут."
+        },
+        {
+          "en": "Scatter the rice evenly. Do not stir from this point. Cook 10 minutes on high, 8 on low.",
+          "es": "Reparte el arroz de forma uniforme. A partir de aquí no se remueve. 10 minutos a fuego fuerte y 8 a fuego bajo.",
+          "ru": "Равномерно распределите рис. С этого момента не мешайте. 10 минут на сильном огне, 8 — на слабом."
+        },
+        {
+          "en": "Rest 5 minutes off the heat. Listen for the crackle of the socarrat.",
+          "es": "Reposa 5 minutos fuera del fuego. Escucha el crujido del socarrat.",
+          "ru": "Дайте постоять 5 минут без огня. Прислушайтесь к потрескиванию сокаррата."
+        }
+      ]
+    },
+    {
+      "recipeKey": "paella-cat",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "paella-mur",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "paella-and",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "paella-bal",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "paella-ara",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "paella-can",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "cocido-mad",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "cocido-ast",
+      "timeMinutes": 180,
+      "timeNote": {
+        "en": "+ soaking",
+        "es": "+ remojo",
+        "ru": "+ замачивание"
+      },
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 500,
+          "unit": "g",
+          "name": {
+            "en": "Fabes de la Granja",
+            "es": "Fabes de la Granja",
+            "ru": "Фасоль фабес-де-ла-гранха"
+          }
+        },
+        {
+          "quantity": 2,
+          "unit": null,
+          "name": {
+            "en": "Asturian chorizo",
+            "es": "Chorizo asturiano",
+            "ru": "Астурийский чорисо"
+          }
+        },
+        {
+          "quantity": 2,
+          "unit": null,
+          "name": {
+            "en": "Asturian morcilla",
+            "es": "Morcilla asturiana",
+            "ru": "Астурийская морсилья"
+          }
+        },
+        {
+          "quantity": 150,
+          "unit": "g",
+          "name": {
+            "en": "Panceta",
+            "es": "Panceta",
+            "ru": "Панчетта"
+          }
+        },
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Pinch of saffron",
+            "es": "Una pizca de azafrán",
+            "ru": "Щепотка шафрана"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Soak the beans overnight in cold water.",
+          "es": "Pon las fabes en remojo en agua fría la noche anterior.",
+          "ru": "Замочите фасоль на ночь в холодной воде."
+        },
+        {
+          "en": "Cover beans and meats with fresh water and bring slowly to a boil. Skim.",
+          "es": "Cubre las fabes y el compango con agua fresca y lleva a ebullición despacio. Espuma.",
+          "ru": "Залейте фасоль и мясо свежей водой и медленно доведите до кипения. Снимите пену."
+        },
+        {
+          "en": "Simmer very gently for 2½–3 hours, adding cold water to “scare” the beans when it boils.",
+          "es": "Cuece muy suave 2½–3 horas, «asustando» las fabes con agua fría cuando hierva.",
+          "ru": "Томите на очень слабом огне 2½–3 часа, «пугая» фасоль холодной водой, когда закипит."
+        },
+        {
+          "en": "Add saffron halfway. Never stir — shake the pot instead.",
+          "es": "Añade el azafrán a mitad de cocción. Nunca remuevas: mueve la olla.",
+          "ru": "На полпути добавьте шафран. Никогда не мешайте — встряхивайте кастрюлю."
+        },
+        {
+          "en": "Rest an hour before serving. Better the next day.",
+          "es": "Reposa una hora antes de servir. Mejor al día siguiente.",
+          "ru": "Дайте постоять час перед подачей. На следующий день ещё вкуснее."
+        }
+      ]
+    },
+    {
+      "recipeKey": "cocido-cat",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "cocido-gal",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "cocido-and",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "cocido-clm",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "cocido-ext",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "cocido-can",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "gazpacho-and",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "gazpacho-clm",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "gazpacho-ext",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "gazpacho-val",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "gazpacho-mur",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "croquetas-mad",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "croquetas-bas",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "croquetas-gal",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "croquetas-cat",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "croquetas-ast",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "croquetas-and",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "croquetas-val",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "croquetas-bal",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "croquetas-can",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "croquetas-cyl",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "torrijas-mad",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "torrijas-and",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "torrijas-cyl",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "torrijas-cat",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "torrijas-gal",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "torrijas-can",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "arrozleche-ast",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "arrozleche-cat",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "arrozleche-bas",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "arrozleche-cyl",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "arrozleche-val",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 1,
+          "unit": null,
+          "name": {
+            "en": "Placeholder ingredient",
+            "es": "Ingrediente provisional",
+            "ru": "Ингредиент-заглушка"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Placeholder: the real recipe arrives with the content pipeline.",
+          "es": "Provisional: la receta real llegará con el canal de contenidos.",
+          "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    }
+  ]
+}

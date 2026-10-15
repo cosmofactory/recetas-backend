@@ -18,7 +18,9 @@ Backend for Asadorov, a non-profit atlas of Spanish cooking. Modular Go monolith
 api/
   openapi.yaml         # the API contract (OpenAPI 3.0.3), hand-written
   oapi-codegen.yaml    # codegen config
+  content-bundle.schema.json  # JSON Schema of a content import bundle
 cmd/server/            # entry point — the only place modules are wired together
+cmd/import/            # content import CLI (/app/import in the image)
 internal/
   api/                 # adapts the generated strict interface; serves /openapi.json
     apigen/            # oapi-codegen output (do not edit)
@@ -30,11 +32,15 @@ internal/
   catalog/             # catalog module: regions, dishes, variations, recipes
     catalogdb/         # sqlc-generated code (do not edit)
     catalogtest/       # test-only fixture loader
+    importer/          # content bundle parse, validate, diff and apply
 db/
   migrations/          # goose .sql files (schema: docs/schema.md)
   queries/<module>/    # sqlc .sql inputs, one dir per module
 docker/
-  entrypoint.sh        # runs migrations then execs the server
+  entrypoint.sh        # runs migrations then execs the server (or /app/import)
+scripts/designbundle/  # converts the design content.json into testdata/content.design.json
+testdata/
+  content.design.json  # the design content as an import bundle (make seed)
 ```
 
 Domain modules never import each other — wiring happens only in `cmd/server/main.go`.
@@ -78,7 +84,9 @@ make run                    # go run ./cmd/server
 | Lint (fmt-check + vet + golangci-lint + build) | `make lint` |
 | Test (integration tests skip) | `make test` |
 | Integration tests (compose Postgres, migrated `recetas_test` DB) | `make test-integration` |
-| Build binary → `bin/server` | `make build` |
+| Build binaries → `bin/server`, `bin/import` | `make build` |
+| Import the design content into `DATABASE_URL` (idempotent) | `make seed` |
+| Regenerate `testdata/content.design.json` from the design | `make design-bundle` |
 | Regenerate all generated code (oapi-codegen + sqlc) | `make generate` |
 | Regenerate the API server code from `api/openapi.yaml` | `make api-generate` |
 | Lint the OpenAPI spec (vacuum, fails on errors) | `make api-lint` |
@@ -99,7 +107,7 @@ The contract is `api/openapi.yaml`, also served as JSON at `GET /openapi.json`. 
 - `GET /v1/dishes/{dishKey}`: one dish with its variations
 - `GET /v1/dishes/{dishKey}/variations/{regionKey}/recipe`: the recipe of that variation
 
-Before the first content import the lists are `[]` and the details 404. Unknown or malformed keys are a 404 `not_found`. Responses carry a weak `ETag` (`W/"<contentVersion>-<locale>"`, or `W/"<contentVersion>-<locale>-<dish>-<region>"` for a recipe) and `Cache-Control: public, max-age=60, stale-while-revalidate=600`; a matching `If-None-Match` gets a 304.
+Before the first content import the lists are `[]` and the details 404; `make seed` loads the design content. Content arrives only through the import CLI, never through the API: see `docs/content-import.md` (bundle format, validation, `ssh <vps> docker compose run --rm -T backend /app/import --source <label> < bundle.json`, dry runs, exit codes). Unknown or malformed keys are a 404 `not_found`. Responses carry a weak `ETag` (`W/"<contentVersion>-<locale>"`, or `W/"<contentVersion>-<locale>-<dish>-<region>"` for a recipe) and `Cache-Control: public, max-age=60, stale-while-revalidate=600`; a matching `If-None-Match` gets a 304.
 
 Errors use `{"error":{"code":"...","message":"..."}}`. Unknown paths, and wrong methods on known ones, return a 404 in that shape.
 
