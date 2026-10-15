@@ -11,7 +11,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/cosmofactory/recetas-backend/internal/api"
+	"github.com/cosmofactory/recetas-backend/internal/catalog"
 	"github.com/cosmofactory/recetas-backend/internal/config"
 	"github.com/cosmofactory/recetas-backend/internal/platform/database"
 	"github.com/cosmofactory/recetas-backend/internal/platform/health"
@@ -62,10 +65,11 @@ func run(cfg config.Config, logger *slog.Logger) error {
 	return shutdown(srv, logger)
 }
 
-func newHandler(db health.Pinger, logger *slog.Logger) http.Handler {
+func newHandler(pool *pgxpool.Pool, logger *slog.Logger) http.Handler {
 	mux := http.NewServeMux()
-	health.NewHandler(db, logger).Register(mux)
-	api.Register(mux, api.Stub{}, logger)
+	health.NewHandler(pool, logger).Register(mux)
+	catalogHandler := catalog.NewHandler(catalog.NewService(catalog.NewPGRepository(pool)), logger)
+	api.Register(mux, catalogHandler, logger)
 
 	// MaxBody is outermost so MaxBytesReader sees net/http's own ResponseWriter and a 413 closes the connection.
 	return httpx.Chain(httpx.Routed(mux),

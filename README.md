@@ -25,7 +25,7 @@ internal/
   config/              # env loading
   platform/database/   # pgxpool bootstrap
   platform/logging/    # slog JSON logger
-  platform/httpx/      # http.Server timeouts + middleware (access log, panic recovery, body limit)
+  platform/httpx/      # http.Server timeouts + middleware (access log, panic recovery, body limit, conditional GET)
   platform/health/     # GET /healthz (DB ping)
   catalog/             # catalog module: regions, dishes, variations, recipes
     catalogdb/         # sqlc-generated code (do not edit)
@@ -91,11 +91,15 @@ make run                    # go run ./cmd/server
 
 ## Endpoints
 
-The contract is `api/openapi.yaml`, also served as JSON at `GET /openapi.json`. The `/v1` catalog endpoints take `?lang=en|es|ru` (default `en`; anything else is a 400) and return 501 until BE-4 implements them:
+The contract is `api/openapi.yaml`, also served as JSON at `GET /openapi.json`. The `/v1` catalog endpoints take `?lang=en|es|ru` (default `en`; anything else is a 400):
 
-- `GET /v1/regions`, `GET /v1/regions/{regionKey}`
-- `GET /v1/dishes`, `GET /v1/dishes/{dishKey}`
-- `GET /v1/dishes/{dishKey}/variations/{regionKey}/recipe`
+- `GET /v1/regions`: every region in map order, with `nameEs` and its regional dishes
+- `GET /v1/regions/{regionKey}`: one region with every dish's variation there, in dish order
+- `GET /v1/dishes`: every dish in dish order, with its variations in region order
+- `GET /v1/dishes/{dishKey}`: one dish with its variations
+- `GET /v1/dishes/{dishKey}/variations/{regionKey}/recipe`: the recipe of that variation
+
+Before the first content import the lists are `[]` and the details 404. Unknown or malformed keys are a 404 `not_found`. Responses carry a weak `ETag` (`W/"<contentVersion>-<locale>"`, or `W/"<contentVersion>-<locale>-<dish>-<region>"` for a recipe) and `Cache-Control: public, max-age=60, stale-while-revalidate=600`; a matching `If-None-Match` gets a 304.
 
 Errors use `{"error":{"code":"...","message":"..."}}`. Unknown paths, and wrong methods on known ones, return a 404 in that shape.
 

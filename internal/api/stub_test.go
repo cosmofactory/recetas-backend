@@ -8,7 +8,8 @@ import (
 	"github.com/cosmofactory/recetas-backend/internal/platform/httpx"
 )
 
-// Stub answers every catalog operation with 501 until BE-4 implements them.
+// Stub answers every catalog operation with 501, for tests of the adapter
+// that need an implementation but no catalog.
 type Stub struct{}
 
 var _ apigen.StrictServerInterface = Stub{}

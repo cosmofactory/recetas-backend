@@ -1,0 +1,30 @@
+[
+  {
+    "description": "Атлантические морепродукты, еда паломников и самый любимый осьминог Испании.",
+    "key": "gal",
+    "mapLabel": "Галисия",
+    "name": "Галисия",
+    "nameEs": "Galicia",
+    "order": 1,
+    "regionalDishes": [
+      "Pulpo á feira",
+      "Empanada gallega",
+      "Lacón con grelos"
+    ],
+    "tileColor": "#9A9A5E"
+  },
+  {
+    "description": "Фасолевые рагу, сидрерии и горные сыры зелёного севера.",
+    "key": "ast",
+    "mapLabel": "Астурия",
+    "name": "Астурия",
+    "nameEs": "Asturias",
+    "order": 2,
+    "regionalDishes": [
+      "Fabada asturiana",
+      "Cachopo",
+      "Arroz con leche"
+    ],
+    "tileColor": "#C97B4A"
+  }
+]
