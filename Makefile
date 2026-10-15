@@ -1,4 +1,4 @@
-.PHONY: help fmt vet lint golangci-lint build run test tidy \
+.PHONY: help fmt vet lint golangci-lint build run test test-integration tidy \
 	sqlc-generate goose-install \
 	migrate migrate-down migrate-status migrate-create \
 	docker-build docker-up docker-down docker-logs
@@ -13,6 +13,12 @@ GOLANGCI_LINT_VERSION ?= v2.12.2
 GOLANGCI_LINT ?= go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 MIGRATIONS_DIR ?= db/migrations
 
+# Integration tests opt in through TEST_DATABASE_URL, never DATABASE_URL (which
+# .env points at the dev DB). Kept out of the environment of other targets so
+# `make test` always skips them; test-integration passes it explicitly.
+TEST_DATABASE_URL ?= postgres://$(or $(POSTGRES_USER),recetas):$(or $(POSTGRES_PASSWORD),recetas_dev)@127.0.0.1:$(or $(DB_HOST_PORT),5435)/recetas_test?sslmode=disable
+unexport TEST_DATABASE_URL
+
 help:
 	@echo "Common targets:"
 	@echo "  make fmt              - gofmt every Go file in place"
@@ -20,7 +26,8 @@ help:
 	@echo "  make lint             - fmt check + vet + golangci-lint + build"
 	@echo "  make build            - build the server binary into ./bin/server"
 	@echo "  make run              - go run ./cmd/server (uses .env)"
-	@echo "  make test             - go test -race ./..."
+	@echo "  make test             - go test -race ./... (integration tests skip)"
+	@echo "  make test-integration - compose Postgres + migrated recetas_test DB, then go test -race ./..."
 	@echo "  make tidy             - go mod tidy"
 	@echo ""
 	@echo "sqlc:"
@@ -68,6 +75,15 @@ run:
 
 test:
 	go test -race -count=1 ./...
+
+test-integration:
+	docker compose up -d --wait database
+	docker compose exec -T database psql -U "$${POSTGRES_USER:-recetas}" -d postgres -tAc \
+		"SELECT 1 FROM pg_database WHERE datname = 'recetas_test'" | grep -q 1 || \
+	docker compose exec -T database psql -U "$${POSTGRES_USER:-recetas}" -d postgres -c \
+		"CREATE DATABASE recetas_test"
+	go run github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION) -dir $(MIGRATIONS_DIR) postgres "$(TEST_DATABASE_URL)" up
+	TEST_DATABASE_URL="$(TEST_DATABASE_URL)" go test -race -count=1 ./...
 
 tidy:
 	go mod tidy

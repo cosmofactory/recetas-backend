@@ -73,7 +73,8 @@ make run                    # go run ./cmd/server
 |------|---------|
 | Format | `make fmt` |
 | Lint (fmt-check + vet + golangci-lint + build) | `make lint` |
-| Test | `make test` |
+| Test (integration tests skip) | `make test` |
+| Integration tests (compose Postgres, migrated `recetas_test` DB) | `make test-integration` |
 | Build binary → `bin/server` | `make build` |
 | Regenerate sqlc code | `make sqlc-generate` |
 | Apply migrations | `make migrate` |

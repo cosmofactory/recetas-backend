@@ -18,7 +18,8 @@ All `make` targets load `.env` automatically (copy from `.env.example`).
 | Run server bare-metal (needs reachable `DATABASE_URL`) | `make run` |
 | CI lint gate: `gofmt -l` + `go vet` + golangci-lint (pinned, `.golangci.yml`) + `go build` | `make lint` |
 | Format | `make fmt` |
-| All tests | `make test` (`go test -race -count=1 ./...`) |
+| All tests | `make test` (`go test -race -count=1 ./...`; integration tests skip) |
+| Integration tests | `make test-integration` (compose Postgres up, creates and migrates `recetas_test`, runs all tests with `TEST_DATABASE_URL` set) |
 | Single test | `go test -race -count=1 -run '^TestName$' ./internal/dish/` |
 | Regenerate sqlc code after editing `db/queries/*.sql` or migrations | `make sqlc-generate` |
 | Migrations | `make migrate`, `make migrate-down`, `make migrate-status`, `make migrate-create NAME=xyz` |
@@ -46,10 +47,11 @@ The compose Postgres is published on `127.0.0.1:5435`, which is the `DATABASE_UR
 - Never leak internal error text to clients. 5xx responses get a generic message, and the detail goes to the log.
 - Panics are recovered by `httpx.Recover` into a generic 500 (stack goes to the log). The access log records the route pattern, never the raw path, query string or body. Handlers that decode a body map `*http.MaxBytesError` to 413.
 - Handlers and services never touch `*pgxpool.Pool` or `dishdb` directly. Everything goes through the repository.
+- Integration tests use `testdb.Tx(t)` (`internal/platform/testdb`), a transaction rolled back in `t.Cleanup`; they skip without `TEST_DATABASE_URL`. They never read `DATABASE_URL`, because `make test` loads `.env`, which points it at the dev DB. Don't assume an empty table: measure deltas or look up the rows you created.
 - Code must pass `make lint` (gofmt-clean) and `make test` before it's done. CI runs exactly these checks.
 
 ## CI/CD (`.github/workflows/ci.yml`)
 
-- On every PR or push, the lint job runs gofmt, vet, golangci-lint and build. The test job starts `postgres:16-alpine`, applies the migrations, and runs `go test -race` with `DATABASE_URL` set. Integration tests can therefore rely on a migrated database through `DATABASE_URL`.
+- On every PR or push, the lint job runs gofmt, vet, golangci-lint and build. The test job starts `postgres:16-alpine`, applies the migrations, and runs `go test -race` with `DATABASE_URL` and `TEST_DATABASE_URL` set to it, so integration tests run there instead of skipping.
 - There is no image push or deploy yet. BE-0 adds the push to `ghcr.io/cosmofactory/recetas-backend` with immutable `sha-<7>` tags; INF-2 adds the deploy to the Contabo VPS.
 - Config the app reads: `APP_ENV` (required, `local|demo|prod`), `LOG_LEVEL` (`debug|info|warn|error`, default `info`), `DATABASE_URL` (required) and `HTTP_ADDR` (default `:8080`). The CI test job sets `APP_ENV=local`.
