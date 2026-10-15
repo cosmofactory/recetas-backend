@@ -4,6 +4,7 @@ linters:
   default: none
   enable:
     - errcheck
+    - funlen
     - gosec
     - govet
     - ineffassign
@@ -15,7 +16,17 @@ linters:
     paths:
       - internal/catalog/catalogdb
       - internal/api/apigen
+    rules:
+      # Test functions hold long case tables; the reviewer checks test logic.
+      - path: _test\.go
+        linters:
+          - funlen
   settings:
+    # Clean-code limits from the root CLAUDE.md.
+    funlen:
+      lines: 30
+      statements: -1
+      ignore-comments: true
     revive:
       enable-default-rules: true
       rules:
@@ -24,3 +35,7 @@ linters:
           disabled: true
         - name: package-comments
           disabled: true
+        - name: argument-limit
+          arguments: [4]
+        - name: max-control-nesting
+          arguments: [2]

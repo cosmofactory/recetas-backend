@@ -16,7 +16,7 @@ All `make` targets load `.env` automatically (copy from `.env.example`).
 |------|---------|
 | Full local stack (Postgres + backend, migrations run on start) | `make docker-up` / `make docker-down` / `make docker-logs` |
 | Run server bare-metal (needs reachable `DATABASE_URL`) | `make run` |
-| CI lint gate: `gofmt -l` + `go vet` + golangci-lint (pinned, `.golangci.yml`) + `go build` | `make lint` |
+| CI lint gate: `gofmt -l` + `go vet` + golangci-lint (pinned, `.golangci.yml`; enforces the clean-code limits: `funlen` 30 lines, revive `argument-limit` 4 and `max-control-nesting` 2) + `go build` | `make lint` |
 | Format | `make fmt` |
 | All tests | `make test` (`go test -race -count=1 ./...`; integration tests skip) |
 | Integration tests | `make test-integration` (compose Postgres up, creates and migrates `recetas_test`, runs all tests with `TEST_DATABASE_URL` set) |

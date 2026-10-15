@@ -20,6 +20,7 @@ env:
   GO_VERSION: "1.25"
   GOOSE_VERSION: "v3.24.0"
   GOLANGCI_LINT_VERSION: "v2.12.2"
+  SQLC_CLI_VERSION: "1.31.1" # keep in sync with SQLC_VERSION in the Makefile
   IMAGE: ghcr.io/cosmofactory/recetas-backend
 
 jobs:
@@ -57,9 +58,15 @@ jobs:
       - name: Go build
         run: go build ./...
 
+      # Prebuilt sqlc binary: building it with go run takes minutes in CI.
+      - name: Set up sqlc
+        uses: sqlc-dev/setup-sqlc@v5
+        with:
+          sqlc-version: ${{ env.SQLC_CLI_VERSION }}
+
       - name: Generated code is up to date
         run: |
-          make generate
+          make generate SQLC=sqlc
           git diff --exit-code
           untracked=$(git ls-files --others --exclude-standard)
           if [ -n "$untracked" ]; then
