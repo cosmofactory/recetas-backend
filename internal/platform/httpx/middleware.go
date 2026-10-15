@@ -61,45 +61,59 @@ type routeHolder struct {
 
 type routeHolderKey struct{}
 
+const unmatchedRoute = "unmatched"
+
 func AccessLog(logger *slog.Logger) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			start := time.Now()
-			rw := &responseWriter{ResponseWriter: w}
-			holder := &routeHolder{}
-			r = r.WithContext(context.WithValue(r.Context(), routeHolderKey{}, holder))
+			entry := &accessEntry{start: time.Now(), rw: &responseWriter{ResponseWriter: w}, route: &routeHolder{}}
+			r = r.WithContext(context.WithValue(r.Context(), routeHolderKey{}, entry.route))
 			completed := false
 			defer func() {
-				var v any
-				if !completed {
-					v = recover()
+				if completed {
+					entry.log(logger, r, false)
+					return
 				}
-				route := holder.pattern
-				if route == "" {
-					route = r.Pattern
-				}
-				if route == "" {
-					route = "unmatched"
-				}
-				attrs := []any{
-					"method", r.Method,
-					"route", route,
-					"status", rw.statusCode(),
-					"duration_ms", time.Since(start).Milliseconds(),
-					"bytes", rw.bytes,
-				}
-				if !completed {
-					attrs = append(attrs, "aborted", true)
-				}
-				logger.InfoContext(r.Context(), "request", attrs...)
-				if !completed {
-					panic(v)
-				}
+				v := recover()
+				entry.log(logger, r, true)
+				panic(v)
 			}()
-			next.ServeHTTP(rw, r)
+			next.ServeHTTP(entry.rw, r)
 			completed = true
 		})
 	}
+}
+
+// accessEntry collects what AccessLog records about one request.
+type accessEntry struct {
+	start time.Time
+	rw    *responseWriter
+	route *routeHolder
+}
+
+func (e *accessEntry) log(logger *slog.Logger, r *http.Request, aborted bool) {
+	attrs := []any{
+		"method", r.Method,
+		"route", e.routeName(r),
+		"status", e.rw.statusCode(),
+		"duration_ms", time.Since(e.start).Milliseconds(),
+		"bytes", e.rw.bytes,
+	}
+	if aborted {
+		attrs = append(attrs, "aborted", true)
+	}
+	logger.InfoContext(r.Context(), "request", attrs...)
+}
+
+// routeName prefers the pattern Routed recorded, then the request's own.
+func (e *accessEntry) routeName(r *http.Request) string {
+	if e.route.pattern != "" {
+		return e.route.pattern
+	}
+	if r.Pattern != "" {
+		return r.Pattern
+	}
+	return unmatchedRoute
 }
 
 // Routed serves mux and records the matched pattern for AccessLog, which

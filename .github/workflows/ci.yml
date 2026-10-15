@@ -20,6 +20,8 @@ env:
   GO_VERSION: "1.25"
   GOOSE_VERSION: "v3.24.0"
   GOLANGCI_LINT_VERSION: "v2.12.2"
+  SQLC_CLI_VERSION: "1.31.1" # keep in sync with SQLC_VERSION in the Makefile
+  VACUUM_CLI_VERSION: "0.30.6" # keep in sync with VACUUM_VERSION in the Makefile
   IMAGE: ghcr.io/cosmofactory/recetas-backend
 
 jobs:
@@ -57,9 +59,15 @@ jobs:
       - name: Go build
         run: go build ./...
 
+      # Prebuilt sqlc binary: building it with go run takes minutes in CI.
+      - name: Set up sqlc
+        uses: sqlc-dev/setup-sqlc@v5
+        with:
+          sqlc-version: ${{ env.SQLC_CLI_VERSION }}
+
       - name: Generated code is up to date
         run: |
-          make generate
+          make generate SQLC=sqlc
           git diff --exit-code
           untracked=$(git ls-files --others --exclude-standard)
           if [ -n "$untracked" ]; then
@@ -68,8 +76,19 @@ jobs:
             exit 1
           fi
 
+      # Prebuilt vacuum release: go run builds it from source (~3 min).
+      - name: Install vacuum
+        run: |
+          v="${VACUUM_CLI_VERSION}"
+          base="https://github.com/daveshanley/vacuum/releases/download/v${v}"
+          curl -fsSLo vacuum.tgz "${base}/vacuum_${v}_linux_x86_64.tar.gz"
+          curl -fsSLo checksums.txt "${base}/checksums.txt"
+          grep " vacuum_${v}_linux_x86_64.tar.gz$" checksums.txt | sed 's/vacuum_.*/vacuum.tgz/' | sha256sum -c -
+          tar -xzf vacuum.tgz -C "$RUNNER_TEMP" vacuum
+          rm vacuum.tgz checksums.txt
+
       - name: Lint OpenAPI spec
-        run: make api-lint
+        run: make api-lint VACUUM="$RUNNER_TEMP/vacuum"
 
   test:
     name: Test
