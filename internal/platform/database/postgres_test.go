@@ -2,12 +2,19 @@ package database_test
 
 // The production API these tests pin:
 //
-//	func ParseConfig(url string, tp trace.TracerProvider) (*pgxpool.Config, error)
-//	    pool settings plus ConnConfig.Tracer = an *otelpgx.Tracer on tp that
+//	type PoolSize struct{ MaxConns, MinConns int32 }
+//	type Options struct {
+//	    URL            string
+//	    TracerProvider trace.TracerProvider
+//	    Size           PoolSize
+//	}
+//	func ParseConfig(opts Options) (*pgxpool.Config, error)
+//	    pool settings (MaxConns/MinConns from opts.Size) plus
+//	    ConnConfig.Tracer = an *otelpgx.Tracer on opts.TracerProvider that
 //	    names spans "query <Query>" / "prepare <Query>" from the sqlc
 //	    "-- name: <Query>" comment, sets db.operation.name to the bare
 //	    <Query>, and never records query arguments.
-//	func NewPool(ctx context.Context, url string, tp trace.TracerProvider) (*pgxpool.Pool, error)
+//	func NewPool(ctx context.Context, opts Options) (*pgxpool.Pool, error)
 //	    ParseConfig, connect, ping (as today).
 
 import (
@@ -38,7 +45,7 @@ const (
 func TestParseConfig_InstallsOtelpgxTracer(t *testing.T) {
 	t.Parallel()
 	tp, _ := spantest.New(t)
-	cfg, err := database.ParseConfig(offlineURL, tp)
+	cfg, err := database.ParseConfig(offlineOptions(tp))
 	if err != nil {
 		t.Fatalf("got error %v, want nil", err)
 	}
@@ -47,10 +54,77 @@ func TestParseConfig_InstallsOtelpgxTracer(t *testing.T) {
 	}
 }
 
+// defaultSize is the documented default (DB_MAX_CONNS 10, DB_MIN_CONNS 1).
+var defaultSize = database.PoolSize{MaxConns: 10, MinConns: 1}
+
+func offlineOptions(tp trace.TracerProvider) database.Options {
+	return database.Options{URL: offlineURL, TracerProvider: tp, Size: defaultSize}
+}
+
+func TestParseConfig_AppliesPoolSize(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name string
+		size database.PoolSize
+	}{
+		{name: "defaults", size: defaultSize},
+		{name: "custom", size: database.PoolSize{MaxConns: 25, MinConns: 3}},
+		{name: "smallest", size: database.PoolSize{MaxConns: 1, MinConns: 0}},
+		{name: "largest, min equals max", size: database.PoolSize{MaxConns: 100, MinConns: 100}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			tp, _ := spantest.New(t)
+			opts := offlineOptions(tp)
+			opts.Size = tt.size
+
+			cfg, err := database.ParseConfig(opts)
+			if err != nil {
+				t.Fatalf("got error %v, want nil", err)
+			}
+			if cfg.MaxConns != tt.size.MaxConns || cfg.MinConns != tt.size.MinConns {
+				t.Errorf("got MaxConns %d MinConns %d, want %d %d", cfg.MaxConns, cfg.MinConns, tt.size.MaxConns, tt.size.MinConns)
+			}
+		})
+	}
+}
+
+func TestParseConfig_ZeroSizeIsTheDefault(t *testing.T) {
+	t.Parallel()
+	tp, _ := spantest.New(t)
+	cfg, err := database.ParseConfig(database.Options{URL: offlineURL, TracerProvider: tp})
+	if err != nil {
+		t.Fatalf("got error %v, want nil", err)
+	}
+	want := database.DefaultPoolSize()
+	if cfg.MaxConns != want.MaxConns || cfg.MinConns != want.MinConns {
+		t.Errorf("got MaxConns %d MinConns %d, want %d %d", cfg.MaxConns, cfg.MinConns, want.MaxConns, want.MinConns)
+	}
+}
+
+// A pool_max_conns in the URL must not override the configured size, so
+// DB_MAX_CONNS is the one place the pool is sized.
+func TestParseConfig_PoolSizeWinsOverURLParameters(t *testing.T) {
+	t.Parallel()
+	tp, _ := spantest.New(t)
+	opts := offlineOptions(tp)
+	opts.URL += "&pool_max_conns=50&pool_min_conns=5"
+	opts.Size = database.PoolSize{MaxConns: 7, MinConns: 2}
+
+	cfg, err := database.ParseConfig(opts)
+	if err != nil {
+		t.Fatalf("got error %v, want nil", err)
+	}
+	if cfg.MaxConns != 7 || cfg.MinConns != 2 {
+		t.Errorf("got MaxConns %d MinConns %d, want 7 2", cfg.MaxConns, cfg.MinConns)
+	}
+}
+
 func TestParseConfig_MalformedURLIsAnError(t *testing.T) {
 	t.Parallel()
 	tp, _ := spantest.New(t)
-	if _, err := database.ParseConfig("postgres://%zz", tp); err == nil {
+	if _, err := database.ParseConfig(database.Options{URL: "postgres://%zz", TracerProvider: tp, Size: defaultSize}); err == nil {
 		t.Error("got nil error for a malformed URL, want one")
 	}
 }
@@ -60,7 +134,7 @@ func TestParseConfig_MalformedURLIsAnError(t *testing.T) {
 func tracedPool(t *testing.T, tp trace.TracerProvider) *pgxpool.Pool {
 	t.Helper()
 	url := testdb.New(t).Config().ConnConfig.ConnString()
-	pool, err := database.NewPool(context.Background(), url, tp)
+	pool, err := database.NewPool(context.Background(), database.Options{URL: url, TracerProvider: tp, Size: defaultSize})
 	if err != nil {
 		t.Fatalf("got NewPool error %v, want nil", err)
 	}

@@ -1,4 +1,4 @@
-.PHONY: help fmt vet lint golangci-lint build run test test-integration tidy \
+.PHONY: help fmt vet lint golangci-lint vulncheck vulncheck-image build run test test-integration tidy \
 	generate api-generate api-lint sqlc-generate goose-install seed design-bundle \
 	migrate migrate-down migrate-status migrate-create \
 	docker-build docker-up docker-down docker-logs
@@ -8,12 +8,13 @@ ifneq (,$(wildcard .env))
 	export
 endif
 
-GOOSE_VERSION ?= v3.24.0
-GOLANGCI_LINT_VERSION ?= v2.12.2
+GOOSE_VERSION ?= v3.29.0
+GOLANGCI_LINT_VERSION ?= v2.15.0
 GOLANGCI_LINT ?= go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 SQLC_VERSION ?= v1.31.1
-# sqlc v1.31.1 needs Go 1.26; GOTOOLCHAIN=auto lets go run fetch it.
-SQLC ?= GOTOOLCHAIN=auto go run github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION)
+SQLC ?= go run github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION)
+GOVULNCHECK_VERSION ?= v1.9.0
+GOVULNCHECK ?= go run golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION)
 VACUUM_VERSION ?= v0.30.6
 VACUUM ?= go run github.com/daveshanley/vacuum@$(VACUUM_VERSION)
 MIGRATIONS_DIR ?= db/migrations
@@ -33,6 +34,8 @@ help:
 	@echo "  make fmt              - gofmt every Go file in place"
 	@echo "  make vet              - go vet ./..."
 	@echo "  make lint             - fmt check + vet + golangci-lint + build"
+	@echo "  make vulncheck        - govulncheck ./... (fails on vulnerabilities in reachable code)"
+	@echo "  make vulncheck-image IMAGE_REF=img - govulncheck -mode=binary on the image's server and import"
 	@echo "  make build            - build the server and import binaries into ./bin/"
 	@echo "  make run              - go run ./cmd/server (uses .env)"
 	@echo "  make seed             - import testdata/content.design.json into DATABASE_URL"
@@ -80,6 +83,21 @@ lint:
 
 golangci-lint:
 	$(GOLANGCI_LINT) run ./...
+
+# Source mode reports the stdlib of the Go toolchain running it, too.
+vulncheck:
+	$(GOVULNCHECK) ./...
+
+# Binary mode checks what an image actually ships (its Go and dependencies).
+vulncheck-image:
+ifndef IMAGE_REF
+	$(error IMAGE_REF is required, e.g. make vulncheck-image IMAGE_REF=recetas-backend:scan)
+endif
+	@dir=$$(mktemp -d); trap 'rm -rf "$$dir"' EXIT; \
+	id=$$(docker create "$(IMAGE_REF)") || exit 1; \
+	docker cp "$$id:/app/server" "$$dir/server" && docker cp "$$id:/app/import" "$$dir/import"; \
+	copied=$$?; docker rm "$$id" >/dev/null; [ $$copied -eq 0 ] || exit 1; \
+	$(GOVULNCHECK) -mode=binary "$$dir/server" && $(GOVULNCHECK) -mode=binary "$$dir/import"
 
 build:
 	CGO_ENABLED=0 go build -trimpath -ldflags="$(LDFLAGS)" -o bin/server ./cmd/server

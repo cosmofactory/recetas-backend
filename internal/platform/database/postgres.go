@@ -12,9 +12,16 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+// The default pool size (DB_MAX_CONNS/DB_MIN_CONNS when unset). Ten
+// connections serve millisecond-scale catalog reads at well above the
+// target load and leave most of Postgres' default max_connections (100)
+// to the import CLI and operators.
 const (
-	maxConns        = 10
-	minConns        = 1
+	DefaultMaxConns = 10
+	DefaultMinConns = 1
+)
+
+const (
 	maxConnLifetime = time.Hour
 	maxConnIdleTime = 30 * time.Minute
 	pingTimeout     = 5 * time.Second
@@ -23,21 +30,44 @@ const (
 // sqlcNamePrefix starts the comment sqlc puts before every query.
 const sqlcNamePrefix = "-- name: "
 
-// ParseConfig returns the pool settings with query tracing on tp. Spans are
+// PoolSize bounds the number of open connections.
+type PoolSize struct {
+	MaxConns int32
+	MinConns int32
+}
+
+func DefaultPoolSize() PoolSize {
+	return PoolSize{MaxConns: DefaultMaxConns, MinConns: DefaultMinConns}
+}
+
+// Options configures a pool. Size wins over any pool_* parameters in URL; a
+// zero Size means DefaultPoolSize.
+type Options struct {
+	URL            string
+	TracerProvider trace.TracerProvider
+	Size           PoolSize
+}
+
+// ParseConfig returns the pool settings with query tracing on the tracer
+// provider. Spans are
 // named "query <Name>", "prepare <Name>" (pgx's statement cache) or "batch
 // query <Name>"; db.operation.name is the bare name. Query arguments are
 // never recorded.
-func ParseConfig(url string, tp trace.TracerProvider) (*pgxpool.Config, error) {
-	cfg, err := pgxpool.ParseConfig(url)
+func ParseConfig(opts Options) (*pgxpool.Config, error) {
+	cfg, err := pgxpool.ParseConfig(opts.URL)
 	if err != nil {
 		return nil, fmt.Errorf("parse postgres url: %w", err)
 	}
-	cfg.MaxConns = maxConns
-	cfg.MinConns = minConns
+	size := opts.Size
+	if size == (PoolSize{}) {
+		size = DefaultPoolSize()
+	}
+	cfg.MaxConns = size.MaxConns
+	cfg.MinConns = size.MinConns
 	cfg.MaxConnLifetime = maxConnLifetime
 	cfg.MaxConnIdleTime = maxConnIdleTime
 	cfg.ConnConfig.Tracer = otelpgx.NewTracer(
-		otelpgx.WithTracerProvider(tp),
+		otelpgx.WithTracerProvider(opts.TracerProvider),
 		otelpgx.WithMeterProvider(metricnoop.NewMeterProvider()),
 		otelpgx.WithSpanNameFunc(queryName),
 		otelpgx.WithQuerySpanNamePrefix(),
@@ -45,8 +75,8 @@ func ParseConfig(url string, tp trace.TracerProvider) (*pgxpool.Config, error) {
 	return cfg, nil
 }
 
-func NewPool(ctx context.Context, url string, tp trace.TracerProvider) (*pgxpool.Pool, error) {
-	cfg, err := ParseConfig(url, tp)
+func NewPool(ctx context.Context, opts Options) (*pgxpool.Pool, error) {
+	cfg, err := ParseConfig(opts)
 	if err != nil {
 		return nil, err
 	}

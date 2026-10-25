@@ -71,7 +71,10 @@ func TestRun_LogsStartingBeforeConnectingToDatabase(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var stdout bytes.Buffer
-			cfg := config.Config{AppEnv: config.EnvDemo, LogLevel: slog.LevelInfo, DatabaseURL: tt.url, HTTPAddr: "127.0.0.1:0"}
+			cfg := config.Config{
+				AppEnv: config.EnvDemo, LogLevel: slog.LevelInfo, DatabaseURL: tt.url, HTTPAddr: "127.0.0.1:0",
+				Pool: database.PoolSize{MaxConns: 10, MinConns: 1},
+			}
 
 			if err := run(cfg, &stdout); err == nil {
 				t.Fatal("got nil error from run with a broken database, want one")
@@ -103,7 +106,9 @@ func assertStartupLines(t *testing.T, lines []map[string]any) {
 func newTracedHandler(t *testing.T, tp trace.TracerProvider) http.Handler {
 	t.Helper()
 	url := testdb.New(t).Config().ConnConfig.ConnString()
-	pool, err := database.NewPool(context.Background(), url, tp)
+	pool, err := database.NewPool(context.Background(), database.Options{
+		URL: url, TracerProvider: tp, Size: database.PoolSize{MaxConns: 10, MinConns: 1},
+	})
 	if err != nil {
 		t.Fatalf("got NewPool error %v, want nil", err)
 	}

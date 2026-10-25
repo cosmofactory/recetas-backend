@@ -16,12 +16,14 @@ concurrency:
 permissions:
   contents: read
 
+# Every setup-go step reads go.mod, so CI runs the `toolchain` patch release,
+# the same one as the digest-pinned builder image in the Dockerfile.
 env:
-  GO_VERSION: "1.25"
-  GOOSE_VERSION: "v3.24.0"
-  GOLANGCI_LINT_VERSION: "v2.12.2"
+  GOOSE_VERSION: "v3.29.0"
+  GOLANGCI_LINT_VERSION: "v2.15.0"
   SQLC_CLI_VERSION: "1.31.1" # keep in sync with SQLC_VERSION in the Makefile
   VACUUM_CLI_VERSION: "0.30.6" # keep in sync with VACUUM_VERSION in the Makefile
+  GOVULNCHECK_VERSION: "v1.9.0" # keep in sync with GOVULNCHECK_VERSION in the Makefile
   IMAGE: ghcr.io/cosmofactory/recetas-backend
 
 jobs:
@@ -36,7 +38,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go.mod
           cache: true
 
       - name: Check formatting
@@ -122,7 +124,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go.mod
           cache: true
 
       - name: Install goose
@@ -134,13 +136,31 @@ jobs:
       - name: Run tests
         run: go test -race -count=1 ./...
 
-  build-and-push-image:
-    name: Build And Push Image
+  vulncheck:
+    name: Vulnerability Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # Fails only on vulnerabilities in code the module actually calls.
+      - name: govulncheck
+        run: make vulncheck GOVULNCHECK_VERSION="${GOVULNCHECK_VERSION}"
+
+  image:
+    name: Build, Scan And Push Image
     runs-on: ubuntu-latest
     needs:
       - lint-and-vet
       - test
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+      - vulncheck
     permissions:
       contents: read
       packages: write
@@ -163,29 +183,64 @@ jobs:
           fi
           {
             echo "version=${version}"
+            echo "ref=${IMAGE}:${sha_tag}"
             echo "tags<<EOF"
             echo "${tags}"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # Built once and loaded into the runner's Docker; the scans below and
+      # the push all use this image.
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          build-args: |
+            VERSION=${{ steps.tags.outputs.version }}
+          tags: ${{ steps.tags.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Pinned by commit: trivy-action tags were force-pushed in 2026. Only
+      # fixable CRITICAL findings fail, so an unfixed upstream CVE doesn't
+      # block every PR.
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.tags.outputs.ref }}
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      # Checks the stdlib and dependencies compiled into the shipped binaries.
+      - name: govulncheck the image binaries
+        run: make vulncheck-image IMAGE_REF="${{ steps.tags.outputs.ref }}" GOVULNCHECK_VERSION="${GOVULNCHECK_VERSION}"
+
       - name: Log in to GHCR
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push backend image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          build-args: |
-            VERSION=${{ steps.tags.outputs.version }}
-          tags: ${{ steps.tags.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Push backend image
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        env:
+          TAGS: ${{ steps.tags.outputs.tags }}
+        run: |
+          while IFS= read -r tag; do
+            docker push "$tag"
+          done <<< "$TAGS"
