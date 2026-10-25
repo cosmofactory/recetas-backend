@@ -99,16 +99,20 @@ The CLI reads only `DATABASE_URL`, the same DSN the server uses. It also loads `
 
 ### Demo and prod
 
-The bundle goes over SSH on stdin, so nothing is copied to the VM. `-T` disables the TTY so stdin passes through. `<env>` is `demo` or `prod`, the directory holding that environment's compose file:
+The bundle goes over SSH on stdin, so nothing is copied to the VM. `-T` disables the TTY so stdin passes through. Each environment is the compose project `recetas-<env>` in `/srv/recetas/<env>` (as planned in INF-2 and INF-5). Always pass `-p recetas-<env>`: a bare `docker compose` there takes the directory name as the project and would import into a different, empty database. Prod's image tags live in `versions.env` (INF-5), so prod also names both env files; without them the image tag interpolates blank.
 
 ```bash
-ssh <vps> 'cd /srv/recetas/<env> && docker compose run --rm -T backend /app/import --source pipeline-<run-id> --dry-run' < bundle.json
-ssh <vps> 'cd /srv/recetas/<env> && docker compose run --rm -T backend /app/import --source pipeline-<run-id>' < bundle.json
+# demo
+ssh <vps> 'cd /srv/recetas/demo && docker compose -p recetas-demo run --rm -T backend /app/import --source pipeline-<run-id> --dry-run' < bundle.json
+ssh <vps> 'cd /srv/recetas/demo && docker compose -p recetas-demo run --rm -T backend /app/import --source pipeline-<run-id>' < bundle.json
+# prod
+ssh <vps> 'cd /srv/recetas/prod && docker compose -p recetas-prod --env-file .env --env-file versions.env run --rm -T backend /app/import --source pipeline-<run-id> --dry-run' < bundle.json
+ssh <vps> 'cd /srv/recetas/prod && docker compose -p recetas-prod --env-file .env --env-file versions.env run --rm -T backend /app/import --source pipeline-<run-id>' < bundle.json
 ```
 
 Quote the whole remote command once, as above. ssh joins its arguments into one string and the remote shell splits it again, so local quotes around an argument are lost: `--source "pipeline $RUN_ID"` arrives as two words and the import fails with a usage error. Keep the label a single token without spaces or shell metacharacters, such as `pipeline-<run-id>`. The `<` stays outside the quotes, because the bundle is read locally.
 
-To seed demo with the design content, use the same command with `--source design-seed` and `< testdata/content.design.json`.
+To seed demo with the design content, use the demo command with `--source design-seed` and `< testdata/content.design.json`.
 
 ### Dry-run workflow
 
