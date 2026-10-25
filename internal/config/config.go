@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
+
+	"github.com/cosmofactory/recetas-backend/internal/platform/telemetry"
 )
 
 type AppEnv string
@@ -22,7 +25,14 @@ type Config struct {
 	LogLevel    slog.Level
 	DatabaseURL string
 	HTTPAddr    string
+	Telemetry   telemetry.Config
 }
+
+const (
+	defaultHTTPAddr    = ":8080"
+	defaultServiceName = "recetas-backend"
+	endpointVar        = "OTEL_EXPORTER_OTLP_ENDPOINT"
+)
 
 func Load() (Config, error) {
 	_ = godotenv.Load()
@@ -45,17 +55,47 @@ func FromEnv(getenv func(string) string) (Config, error) {
 		return Config{}, errors.New("DATABASE_URL is required")
 	}
 
-	addr := getenv("HTTP_ADDR")
-	if addr == "" {
-		addr = ":8080"
+	tel, err := parseTelemetry(getenv, appEnv)
+	if err != nil {
+		return Config{}, err
 	}
 
 	return Config{
 		AppEnv:      appEnv,
 		LogLevel:    level,
 		DatabaseURL: dbURL,
-		HTTPAddr:    addr,
+		HTTPAddr:    withDefault(getenv("HTTP_ADDR"), defaultHTTPAddr),
+		Telemetry:   tel,
 	}, nil
+}
+
+// parseTelemetry reads nothing else when LOGFIRE_TOKEN is blank, so local
+// development needs no telemetry settings.
+func parseTelemetry(getenv func(string) string, appEnv AppEnv) (telemetry.Config, error) {
+	token := strings.TrimSpace(getenv("LOGFIRE_TOKEN"))
+	if token == "" {
+		return telemetry.Config{}, nil
+	}
+	endpoint := strings.TrimSpace(getenv(endpointVar))
+	if endpoint == "" {
+		return telemetry.Config{}, errors.New(endpointVar + " is required when LOGFIRE_TOKEN is set")
+	}
+	if err := telemetry.ValidateEndpoint(endpoint); err != nil {
+		return telemetry.Config{}, fmt.Errorf("%s %w", endpointVar, err)
+	}
+	return telemetry.Config{
+		Token:       token,
+		Endpoint:    endpoint,
+		ServiceName: withDefault(strings.TrimSpace(getenv("OTEL_SERVICE_NAME")), defaultServiceName),
+		Environment: string(appEnv),
+	}, nil
+}
+
+func withDefault(v, fallback string) string {
+	if v == "" {
+		return fallback
+	}
+	return v
 }
 
 func parseAppEnv(v string) (AppEnv, error) {
@@ -84,10 +124,25 @@ func parseLogLevel(v string) (slog.Level, error) {
 	}
 }
 
+// String and LogValue never render the DSN or the telemetry token.
 func (c Config) String() string {
-	dsn := "unset"
-	if c.DatabaseURL != "" {
-		dsn = "set"
+	return fmt.Sprintf("Config{AppEnv: %s, LogLevel: %s, HTTPAddr: %s, DatabaseURL: %s, Telemetry: %s}",
+		c.AppEnv, c.LogLevel, c.HTTPAddr, c.databaseURLState(), c.Telemetry)
+}
+
+func (c Config) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("app_env", string(c.AppEnv)),
+		slog.String("log_level", c.LogLevel.String()),
+		slog.String("http_addr", c.HTTPAddr),
+		slog.String("database_url", c.databaseURLState()),
+		slog.Any("telemetry", c.Telemetry),
+	)
+}
+
+func (c Config) databaseURLState() string {
+	if c.DatabaseURL == "" {
+		return "unset"
 	}
-	return fmt.Sprintf("Config{AppEnv: %s, LogLevel: %s, HTTPAddr: %s, DatabaseURL: %s}", c.AppEnv, c.LogLevel, c.HTTPAddr, dsn)
+	return "set"
 }

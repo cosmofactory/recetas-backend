@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	tracenoop "go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/cosmofactory/recetas-backend/internal/platform/database"
 )
@@ -43,7 +44,7 @@ func (p *lazyPool) Begin(ctx context.Context) (pgx.Tx, error) {
 		if p.url == "" {
 			return nil, fmt.Errorf("DATABASE_URL is required")
 		}
-		pool, err := database.NewPool(ctx, p.url)
+		pool, err := database.NewPool(ctx, p.url, tracenoop.NewTracerProvider())
 		if err != nil {
 			return nil, err
 		}

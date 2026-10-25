@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/cosmofactory/recetas-backend/internal/api/apigen"
+	"github.com/cosmofactory/recetas-backend/internal/platform/telemetry"
 )
 
 // defaultLocale serves requests without a lang parameter; the generated
@@ -118,8 +119,10 @@ func (h *Handler) GetRecipe(ctx context.Context, req apigen.GetRecipeRequestObje
 	}, nil
 }
 
-// logFailure records an unexpected error; the client only gets internalBody.
+// logFailure records an unexpected error in the log and on the request span;
+// the client only gets internalBody.
 func (h *Handler) logFailure(ctx context.Context, op string, err error) {
+	telemetry.RecordError(ctx, err)
 	h.logger.ErrorContext(ctx, "catalog request failed", "op", op, "err", err)
 }
 
