@@ -4,7 +4,7 @@ Backend for Asadorov, a non-profit atlas of Spanish cooking. Modular Go monolith
 
 ## Stack
 
-- **Go 1.25** — `net/http.ServeMux` with method+path routing, no third-party router.
+- **Go 1.27** — `net/http.ServeMux` with method+path routing, no third-party router.
 - **PostgreSQL 16** — pgx/v5 driver.
 - **[sqlc](https://sqlc.dev/)** — SQL-first, generates type-safe Go from `.sql` files.
 - **[goose](https://github.com/pressly/goose)** — numbered up/down migrations.
@@ -47,7 +47,7 @@ Domain modules never import each other — wiring happens only in `cmd/server/ma
 
 ## Prerequisites
 
-- Go 1.25+
+- Go 1.27+
 - Docker + Docker Compose (for `make docker-*` targets)
 - Optional local tools (only if you want to run outside Docker):
   - `make goose-install` — pinned goose CLI

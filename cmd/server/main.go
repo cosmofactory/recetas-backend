@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	otellog "go.opentelemetry.io/otel/log"
@@ -28,14 +27,6 @@ import (
 
 // version is set at build time with -ldflags "-X main.version=...".
 var version = "dev"
-
-const (
-	// shutdownTimeout is the whole graceful-shutdown budget: draining the
-	// server, then flushing telemetry with a fresh context of flushReserve.
-	shutdownTimeout = 5 * time.Second
-	flushReserve    = time.Second
-	drainTimeout    = shutdownTimeout - flushReserve
-)
 
 func main() {
 	cfg, err := config.Load()
@@ -59,15 +50,7 @@ func run(cfg config.Config, stdout io.Writer) error {
 	logger := newLogger(cfg, stdout, tel.LoggerProvider)
 	logStartup(logger, cfg)
 
-	err = serve(cfg, logger, tel)
-	if err != nil {
-		logger.Error("server exited with error", "err", err)
-	}
-	if flushErr := flushTelemetry(tel.Shutdown); flushErr != nil {
-		logger.Error("flush telemetry failed", "err", flushErr)
-		err = errors.Join(err, flushErr)
-	}
-	return err
+	return serve(cfg, tel.TracerProvider, shutdownSteps{flush: tel.Shutdown, closePool: func() {}, logger: logger})
 }
 
 func telemetryConfig(cfg config.Config) telemetry.Config {
@@ -92,28 +75,31 @@ func logStartup(logger *slog.Logger, cfg config.Config) {
 	}
 }
 
-func serve(cfg config.Config, logger *slog.Logger, tel telemetry.Providers) error {
+// serve fills in the server and pool steps as it opens them, so every exit
+// flushes telemetry and then closes whatever pool is open.
+func serve(cfg config.Config, tp trace.TracerProvider, steps shutdownSteps) error {
 	if _, err := api.SpecJSON(); err != nil {
-		return fmt.Errorf("openapi spec: %w", err)
+		return abort(steps, fmt.Errorf("openapi spec: %w", err))
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	pool, err := database.NewPool(ctx, cfg.DatabaseURL, tel.TracerProvider)
+	pool, err := database.NewPool(ctx, database.Options{URL: cfg.DatabaseURL, TracerProvider: tp, Size: cfg.Pool})
 	if err != nil {
-		return fmt.Errorf("database: %w", err)
+		return abort(steps, fmt.Errorf("database: %w", err))
 	}
-	defer pool.Close()
+	steps.closePool = pool.Close
 
-	srv := httpx.NewServer(cfg.HTTPAddr, newHandler(pool, logger, tel.TracerProvider), logger)
-	logger.Info("server starting", "addr", cfg.HTTPAddr, "log_level", cfg.LogLevel)
+	srv := httpx.NewServer(cfg.HTTPAddr, newHandler(pool, steps.logger, tp), steps.logger)
+	steps.logger.Info("server starting", "addr", cfg.HTTPAddr, "log_level", cfg.LogLevel)
 	if err := serveUntilDone(ctx, srv); err != nil {
-		return fmt.Errorf("server: %w", err)
+		return abort(steps, fmt.Errorf("server: %w", err))
 	}
 	// Restore default signal handling so a second Ctrl-C/SIGTERM kills the process.
 	stop()
-	return shutdown(srv, logger)
+	steps.server = srv
+	return gracefulShutdown(steps)
 }
 
 func newHandler(pool *pgxpool.Pool, logger *slog.Logger, tp trace.TracerProvider) http.Handler {
@@ -143,30 +129,4 @@ func listenAndServe(srv *http.Server) error {
 		return nil
 	}
 	return err
-}
-
-// shutdown drains the server within drainTimeout, leaving flushReserve of
-// the budget for the telemetry flush in run.
-func shutdown(srv *http.Server, logger *slog.Logger) error {
-	logger.Info("shutting down")
-	ctx, cancel := context.WithTimeout(context.Background(), drainTimeout)
-	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		// Closing connections cancels in-flight request contexts, so their
-		// queries abort and the deferred pool.Close doesn't block.
-		return fmt.Errorf("shutdown: %w", errors.Join(err, srv.Close()))
-	}
-	logger.Info("server stopped")
-	return nil
-}
-
-// flushTelemetry gives the exporters a fresh context, so a drain that used
-// up its own timeout can't leave them without one.
-func flushTelemetry(flush func(context.Context) error) error {
-	ctx, cancel := context.WithTimeout(context.Background(), flushReserve)
-	defer cancel()
-	if err := flush(ctx); err != nil {
-		return fmt.Errorf("flush telemetry: %w", err)
-	}
-	return nil
 }

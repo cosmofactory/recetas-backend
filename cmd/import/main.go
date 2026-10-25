@@ -44,7 +44,9 @@ func (p *lazyPool) Begin(ctx context.Context) (pgx.Tx, error) {
 		if p.url == "" {
 			return nil, fmt.Errorf("DATABASE_URL is required")
 		}
-		pool, err := database.NewPool(ctx, p.url, tracenoop.NewTracerProvider())
+		pool, err := database.NewPool(ctx, database.Options{
+			URL: p.url, TracerProvider: tracenoop.NewTracerProvider(), Size: database.DefaultPoolSize(),
+		})
 		if err != nil {
 			return nil, err
 		}

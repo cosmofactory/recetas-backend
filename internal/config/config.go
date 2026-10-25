@@ -9,6 +9,7 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"github.com/cosmofactory/recetas-backend/internal/platform/database"
 	"github.com/cosmofactory/recetas-backend/internal/platform/telemetry"
 )
 
@@ -25,6 +26,7 @@ type Config struct {
 	LogLevel    slog.Level
 	DatabaseURL string
 	HTTPAddr    string
+	Pool        database.PoolSize
 	Telemetry   telemetry.Config
 }
 
@@ -50,9 +52,9 @@ func FromEnv(getenv func(string) string) (Config, error) {
 		return Config{}, err
 	}
 
-	dbURL := getenv("DATABASE_URL")
-	if dbURL == "" {
-		return Config{}, errors.New("DATABASE_URL is required")
+	dbURL, pool, err := parseDatabase(getenv)
+	if err != nil {
+		return Config{}, err
 	}
 
 	tel, err := parseTelemetry(getenv, appEnv)
@@ -65,8 +67,21 @@ func FromEnv(getenv func(string) string) (Config, error) {
 		LogLevel:    level,
 		DatabaseURL: dbURL,
 		HTTPAddr:    withDefault(getenv("HTTP_ADDR"), defaultHTTPAddr),
+		Pool:        pool,
 		Telemetry:   tel,
 	}, nil
+}
+
+func parseDatabase(getenv func(string) string) (string, database.PoolSize, error) {
+	dbURL := getenv("DATABASE_URL")
+	if dbURL == "" {
+		return "", database.PoolSize{}, errors.New("DATABASE_URL is required")
+	}
+	pool, err := parsePool(getenv)
+	if err != nil {
+		return "", database.PoolSize{}, err
+	}
+	return dbURL, pool, nil
 }
 
 // parseTelemetry reads nothing else when LOGFIRE_TOKEN is blank, so local
@@ -126,8 +141,8 @@ func parseLogLevel(v string) (slog.Level, error) {
 
 // String and LogValue never render the DSN or the telemetry token.
 func (c Config) String() string {
-	return fmt.Sprintf("Config{AppEnv: %s, LogLevel: %s, HTTPAddr: %s, DatabaseURL: %s, Telemetry: %s}",
-		c.AppEnv, c.LogLevel, c.HTTPAddr, c.databaseURLState(), c.Telemetry)
+	return fmt.Sprintf("Config{AppEnv: %s, LogLevel: %s, HTTPAddr: %s, DatabaseURL: %s, Pool: %+v, Telemetry: %s}",
+		c.AppEnv, c.LogLevel, c.HTTPAddr, c.databaseURLState(), c.Pool, c.Telemetry)
 }
 
 func (c Config) LogValue() slog.Value {
@@ -136,6 +151,10 @@ func (c Config) LogValue() slog.Value {
 		slog.String("log_level", c.LogLevel.String()),
 		slog.String("http_addr", c.HTTPAddr),
 		slog.String("database_url", c.databaseURLState()),
+		slog.Group("pool",
+			slog.Int("max_conns", int(c.Pool.MaxConns)),
+			slog.Int("min_conns", int(c.Pool.MinConns)),
+		),
 		slog.Any("telemetry", c.Telemetry),
 	)
 }

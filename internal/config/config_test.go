@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/cosmofactory/recetas-backend/internal/config"
+	"github.com/cosmofactory/recetas-backend/internal/platform/database"
 )
 
 const testDSN = "postgres://u:s3cret@h:5432/db" //nolint:gosec // fake DSN used to check redaction
@@ -194,6 +195,8 @@ func TestFromEnv_FullValidEnv(t *testing.T) {
 		"LOG_LEVEL":    "warn",
 		"DATABASE_URL": testDSN,
 		"HTTP_ADDR":    ":9090",
+		"DB_MAX_CONNS": "20",
+		"DB_MIN_CONNS": "2",
 	}))
 	if err != nil {
 		t.Fatalf("got error %v, want nil", err)
@@ -203,9 +206,10 @@ func TestFromEnv_FullValidEnv(t *testing.T) {
 		LogLevel:    slog.LevelWarn,
 		DatabaseURL: testDSN,
 		HTTPAddr:    ":9090",
+		Pool:        database.PoolSize{MaxConns: 20, MinConns: 2},
 	}
 	if cfg != want {
-		t.Errorf("got %+v, want %+v", cfg, want)
+		t.Errorf("got %#v, want %#v", cfg, want)
 	}
 }
 

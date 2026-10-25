@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/cosmofactory/recetas-backend/internal/config"
+	"github.com/cosmofactory/recetas-backend/internal/platform/database"
 	"github.com/cosmofactory/recetas-backend/internal/platform/telemetry"
 )
 
@@ -169,6 +170,7 @@ func TestFromEnv_FullValidEnvWithTelemetry(t *testing.T) {
 		LogLevel:    slog.LevelDebug,
 		DatabaseURL: testDSN,
 		HTTPAddr:    ":9090",
+		Pool:        database.PoolSize{MaxConns: 10, MinConns: 1},
 		Telemetry: telemetry.Config{
 			Token:       testToken,
 			Endpoint:    testEndpoint,
