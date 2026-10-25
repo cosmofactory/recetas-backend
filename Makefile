@@ -1,7 +1,7 @@
 .PHONY: help fmt vet lint golangci-lint vulncheck vulncheck-image build run test test-integration tidy \
 	generate api-generate api-lint sqlc-generate goose-install seed design-bundle \
 	migrate migrate-down migrate-status migrate-create \
-	docker-build docker-up docker-down docker-logs
+	docker-build docker-up docker-down docker-logs load
 
 ifneq (,$(wildcard .env))
 	include .env
@@ -21,6 +21,9 @@ MIGRATIONS_DIR ?= db/migrations
 VERSION ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
 DESIGN_CONTENT ?= ../design/design_handoff_asadorov_desktop/content.json
 SEED_BUNDLE ?= testdata/content.design.json
+# Bump the tag and digest together: docker buildx imagetools inspect grafana/k6:<tag>
+K6_IMAGE ?= grafana/k6:2.3.0@sha256:2dd4756ec6e14e62778916e1eb850108e4b499304c02df56760fa0bdb0fba0b8
+LOAD_NETWORK ?= host
 LDFLAGS = -s -w -X main.version=$(VERSION)
 
 # Integration tests opt in through TEST_DATABASE_URL, never DATABASE_URL (which
@@ -62,6 +65,9 @@ help:
 	@echo "  make docker-up        - docker compose up --build -d"
 	@echo "  make docker-down      - docker compose down"
 	@echo "  make docker-logs      - docker compose logs -f backend"
+	@echo ""
+	@echo "Load test (k6 in Docker, scripts/load/README.md):"
+	@echo "  make load BASE_URL=url [RATE=20] [DURATION=2m] [TARGET=api|pages]"
 
 # --- Go toolchain ---
 
@@ -176,3 +182,15 @@ docker-down:
 
 docker-logs:
 	docker compose logs -f backend
+
+# --- load test ---
+
+# The script goes in on stdin, so nothing is mounted. RATE, DURATION and TARGET
+# pass through when set; the script owns their defaults.
+load:
+ifndef BASE_URL
+	$(error BASE_URL is required, e.g. make load BASE_URL=http://localhost:8080)
+endif
+	docker run --rm -i --network $(LOAD_NETWORK) \
+		-e BASE_URL="$(BASE_URL)" -e RATE -e DURATION -e TARGET \
+		$(K6_IMAGE) run --quiet - < scripts/load/catalog.js
