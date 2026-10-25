@@ -14,6 +14,7 @@ import (
 	apispec "github.com/cosmofactory/recetas-backend/api"
 	"github.com/cosmofactory/recetas-backend/internal/api/apigen"
 	"github.com/cosmofactory/recetas-backend/internal/platform/httpx"
+	"github.com/cosmofactory/recetas-backend/internal/platform/telemetry"
 )
 
 var specJSON = sync.OnceValues(func() ([]byte, error) {
@@ -41,15 +42,7 @@ func SpecJSON() ([]byte, error) {
 // Catalog operations answer If-None-Match through httpx.ConditionalGET, since
 // the strict interface can't see request headers.
 func Register(mux *http.ServeMux, impl apigen.StrictServerInterface, logger *slog.Logger) {
-	strict := apigen.NewStrictHandlerWithOptions(impl, nil, apigen.StrictHTTPServerOptions{
-		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, _ error) {
-			httpx.WriteError(w, http.StatusBadRequest, "bad_request", "invalid request")
-		},
-		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
-			logger.ErrorContext(r.Context(), "api handler failed", "route", r.Pattern, "err", err)
-			httpx.WriteError(w, http.StatusInternalServerError, "internal", "internal error")
-		},
-	})
+	strict := apigen.NewStrictHandlerWithOptions(impl, nil, strictOptions(logger))
 	apigen.HandlerWithOptions(strict, apigen.StdHTTPServerOptions{
 		BaseRouter:  mux,
 		Middlewares: []apigen.MiddlewareFunc{validateLang, httpx.ConditionalGET},
@@ -71,6 +64,21 @@ func Register(mux *http.ServeMux, impl apigen.StrictServerInterface, logger *slo
 	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		httpx.WriteError(w, http.StatusNotFound, "not_found", "not found")
 	})
+}
+
+// strictOptions answers request errors with 400 and handler errors with a
+// generic 500, logged and recorded on the request span.
+func strictOptions(logger *slog.Logger) apigen.StrictHTTPServerOptions {
+	return apigen.StrictHTTPServerOptions{
+		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, _ error) {
+			httpx.WriteError(w, http.StatusBadRequest, "bad_request", "invalid request")
+		},
+		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			logger.ErrorContext(r.Context(), "api handler failed", "route", r.Pattern, "err", err)
+			telemetry.RecordError(r.Context(), err)
+			httpx.WriteError(w, http.StatusInternalServerError, "internal", "internal error")
+		},
+	}
 }
 
 // paramErrorMessage names the offending parameter without echoing the

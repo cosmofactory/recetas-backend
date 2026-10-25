@@ -7,6 +7,11 @@ import (
 	"net/http"
 	"runtime/debug"
 	"time"
+
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/cosmofactory/recetas-backend/internal/platform/logging"
+	"github.com/cosmofactory/recetas-backend/internal/platform/telemetry"
 )
 
 const MaxBodyBytes int64 = 64 << 10
@@ -25,34 +30,48 @@ func Chain(h http.Handler, mws ...Middleware) http.Handler {
 	return h
 }
 
+// Recover turns a panic into a generic 500, logs it with the stack and
+// records it on the request span.
 func Recover(logger *slog.Logger) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			rw := &responseWriter{ResponseWriter: w}
 			defer func() {
-				v := recover()
-				if v == nil {
-					return
+				if v := recover(); v != nil {
+					handlePanic(logger, rw, r, v)
 				}
-				if v == http.ErrAbortHandler {
-					panic(v)
-				}
-				logger.ErrorContext(r.Context(), "panic recovered",
-					"panic", fmt.Sprint(v),
-					"stack", string(debug.Stack()),
-				)
-				if rw.wroteHeader {
-					panic(http.ErrAbortHandler)
-				}
-				h := w.Header()
-				for k := range h {
-					delete(h, k)
-				}
-				WriteError(w, http.StatusInternalServerError, "internal", "internal error")
 			}()
 			next.ServeHTTP(rw, r)
 		})
 	}
+}
+
+func handlePanic(logger *slog.Logger, rw *responseWriter, r *http.Request, v any) {
+	if v == http.ErrAbortHandler {
+		panic(v)
+	}
+	logger.ErrorContext(r.Context(), "panic recovered",
+		"panic", fmt.Sprint(v),
+		"stack", string(debug.Stack()),
+	)
+	telemetry.RecordError(r.Context(), fmt.Errorf("panic: %v", v), trace.WithStackTrace(true))
+	if rw.wroteHeader {
+		panic(http.ErrAbortHandler)
+	}
+	writePanicResponse(rw.ResponseWriter, r)
+}
+
+// writePanicResponse drops whatever headers the handler set, keeping only the
+// request ID.
+func writePanicResponse(w http.ResponseWriter, r *http.Request) {
+	h := w.Header()
+	for k := range h {
+		delete(h, k)
+	}
+	if id := logging.RequestIDFrom(r.Context()); id != "" {
+		h.Set(RequestIDHeader, id)
+	}
+	WriteError(w, http.StatusInternalServerError, "internal", "internal error")
 }
 
 type routeHolder struct {
@@ -102,7 +121,17 @@ func (e *accessEntry) log(logger *slog.Logger, r *http.Request, aborted bool) {
 	if aborted {
 		attrs = append(attrs, "aborted", true)
 	}
-	logger.InfoContext(r.Context(), "request", attrs...)
+	logger.Log(r.Context(), e.level(r), "request", attrs...)
+}
+
+// level keeps successful health probes out of the INFO log; failing ones
+// still show.
+func (e *accessEntry) level(r *http.Request) slog.Level {
+	status := e.rw.statusCode()
+	if isHealthProbe(r) && status >= http.StatusOK && status < http.StatusMultipleChoices {
+		return slog.LevelDebug
+	}
+	return slog.LevelInfo
 }
 
 // routeName prefers the pattern Routed recorded, then the request's own.
@@ -116,15 +145,21 @@ func (e *accessEntry) routeName(r *http.Request) string {
 	return unmatchedRoute
 }
 
-// Routed serves mux and records the matched pattern for AccessLog, which
-// cannot see r.Pattern once a middleware in between has cloned the request.
+// Routed serves mux, then hands the matched pattern to AccessLog and names
+// the server span by it. Neither can see r.Pattern once a middleware in
+// between has cloned the request.
 func Routed(mux http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if holder, ok := r.Context().Value(routeHolderKey{}).(*routeHolder); ok {
-			defer func() { holder.pattern = r.Pattern }()
-		}
+		defer recordRoute(r)
 		mux.ServeHTTP(w, r)
 	})
+}
+
+func recordRoute(r *http.Request) {
+	if holder, ok := r.Context().Value(routeHolderKey{}).(*routeHolder); ok {
+		holder.pattern = r.Pattern
+	}
+	nameServerSpan(r.Context(), r.Method, r.Pattern)
 }
 
 func Deadline(d time.Duration) Middleware {

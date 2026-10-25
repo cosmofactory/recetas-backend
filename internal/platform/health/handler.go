@@ -11,6 +11,9 @@ import (
 
 const DBTimeout = time.Second
 
+// Path is probed by Docker, the frontend's /readyz and uptime checks.
+const Path = "/healthz"
+
 type Pinger interface {
 	Ping(ctx context.Context) error
 }
@@ -30,7 +33,7 @@ func NewHandlerWithTimeout(db Pinger, logger *slog.Logger, timeout time.Duration
 }
 
 func (h *Handler) Register(mux *http.ServeMux) {
-	mux.HandleFunc("GET /healthz", h.healthz)
+	mux.HandleFunc(http.MethodGet+" "+Path, h.healthz)
 }
 
 type response struct {
