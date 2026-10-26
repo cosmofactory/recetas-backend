@@ -99,20 +99,22 @@ The CLI reads only `DATABASE_URL`, the same DSN the server uses. It also loads `
 
 ### Demo and prod
 
-The bundle goes over SSH on stdin, so nothing is copied to the VM. `-T` disables the TTY so stdin passes through. Each environment is the compose project `recetas-<env>` in `/srv/recetas/<env>` (as planned in INF-2 and INF-5). Always pass `-p recetas-<env>`: a bare `docker compose` there takes the directory name as the project and would import into a different, empty database. Prod's image tags live in `versions.env` (INF-5), so prod also names both env files; without them the image tag interpolates blank.
+The bundle goes over SSH on stdin, so nothing is copied to the VM. `-T` disables the TTY so stdin passes through. Each environment is the compose project `recetas-<env>` in `/srv/recetas/<env>` (demo: INF-2; prod as planned in INF-5). Always pass `-p recetas-<env>`: a bare `docker compose` there takes the directory name as the project and would import into a different, empty database. The image tags live in a second env file, demo's `tags.env` (written only by `deploy-service.sh`) and prod's `versions.env` (as planned in INF-5), so name both env files; without it the image tag is missing and compose refuses to start.
+
+The owner logs in as `admin` (`ssh <vps>`, the owner's unrestricted key) and runs the import as `deploy`, which owns `/srv/recetas/*`: `ssh <vps> "sudo -u deploy bash -c '<command>'" < bundle.json`. stdin passes through sudo to the import. This repo's `demo` deploy key is restricted on the VM to `deploy-service.sh demo backend sha-<7>` (recetas-infra's `ssh-gate.sh`), so it can't run an import or `goose`.
 
 ```bash
 # demo
-ssh <vps> 'cd /srv/recetas/demo && docker compose -p recetas-demo run --rm -T backend /app/import --source pipeline-<run-id> --dry-run' < bundle.json
-ssh <vps> 'cd /srv/recetas/demo && docker compose -p recetas-demo run --rm -T backend /app/import --source pipeline-<run-id>' < bundle.json
-# prod
-ssh <vps> 'cd /srv/recetas/prod && docker compose -p recetas-prod --env-file .env --env-file versions.env run --rm -T backend /app/import --source pipeline-<run-id> --dry-run' < bundle.json
-ssh <vps> 'cd /srv/recetas/prod && docker compose -p recetas-prod --env-file .env --env-file versions.env run --rm -T backend /app/import --source pipeline-<run-id>' < bundle.json
+ssh <vps> "sudo -u deploy bash -c 'cd /srv/recetas/demo && docker compose -p recetas-demo --env-file .env --env-file tags.env run --rm -T backend /app/import --source pipeline-<run-id> --dry-run'" < bundle.json
+ssh <vps> "sudo -u deploy bash -c 'cd /srv/recetas/demo && docker compose -p recetas-demo --env-file .env --env-file tags.env run --rm -T backend /app/import --source pipeline-<run-id>'" < bundle.json
+# prod (as planned in INF-5)
+ssh <vps> "sudo -u deploy bash -c 'cd /srv/recetas/prod && docker compose -p recetas-prod --env-file .env --env-file versions.env run --rm -T backend /app/import --source pipeline-<run-id> --dry-run'" < bundle.json
+ssh <vps> "sudo -u deploy bash -c 'cd /srv/recetas/prod && docker compose -p recetas-prod --env-file .env --env-file versions.env run --rm -T backend /app/import --source pipeline-<run-id>'" < bundle.json
 ```
 
-Quote the whole remote command once, as above. ssh joins its arguments into one string and the remote shell splits it again, so local quotes around an argument are lost: `--source "pipeline $RUN_ID"` arrives as two words and the import fails with a usage error. Keep the label a single token without spaces or shell metacharacters, such as `pipeline-<run-id>`. The `<` stays outside the quotes, because the bundle is read locally.
+Quote the command as above: double quotes around the whole remote command, single quotes around what `bash -c` runs as `deploy`. ssh joins its arguments into one string and the remote shell splits it again, so local quotes around an argument are lost: `--source "pipeline $RUN_ID"` arrives as two words and the import fails with a usage error. Keep the label a single token without spaces or shell metacharacters, such as `pipeline-<run-id>`. The `<` stays outside the quotes, because the bundle is read locally.
 
-To seed demo with the design content, use the demo command with `--source design-seed` and `< testdata/content.design.json`.
+To seed demo with the design content, use recetas-infra's `/srv/recetas/scripts/reseed-demo.sh` (dry run first, `--source design-seed`; its RUNBOOK.md, Demo → Reseed), with `testdata/content.design.json` from this repo at the deployed tag on stdin.
 
 ### Dry-run workflow
 

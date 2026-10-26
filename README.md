@@ -103,12 +103,31 @@ scripts/load/          k6 load test
 
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every PR and push:
 
-1. **Lint And Vet**: gofmt, vet, golangci-lint, build, generated-code drift (`make generate` + `git diff`), OpenAPI lint.
+1. **Lint And Vet**: gofmt, vet, golangci-lint, build, generated-code drift (`make generate` + `git diff`), OpenAPI lint, workflow lint (`make lint-actions`).
 2. **Test**: Postgres 16, migrations, `go test -race` with the integration tests on.
 3. **Vulnerability Check**: govulncheck on the source.
 4. **Build, Scan And Push Image**: builds the image, scans it with Trivy (fails on fixable CRITICAL) and govulncheck in binary mode, and on `main` or a tag pushes `ghcr.io/cosmofactory/recetas-backend:sha-<7>` (plus `vX.Y.Z` for a tag). There's no `:latest`.
 
-Deploying to demo and prod is INF-2 and INF-5 in `../specs/`.
+5. **Deploy Demo** (push to `main` only, once the repository variable `DEPLOY_ENABLED` is `true`): runs `deploy-service.sh demo backend sha-<7>` on the VM over ssh, then `curl -fsS` against `https://demo.asadorov.es/` and `/readyz` (bounded retries). The job fails when the new image doesn't turn healthy (the VM brings the previous tag back) or the smoke fails.
+
+`make lint-actions` runs that workflow lint locally: actionlint in Docker, the same pinned image as recetas-infra.
+
+### Deploy
+
+The `demo` key is restricted on the VM to recetas-infra's `ssh-gate.sh backend demo`, which runs only `/srv/recetas/scripts/deploy-service.sh demo backend sha-<7>`; a failed rollout's container logs stay in `/srv/recetas/demo/deploy.log` on the VM. Rollback: re-run the `Deploy Demo` job of an older commit, or run `deploy-service.sh` with the old tag as the owner (logged in as `admin`, then `sudo -iu deploy`) ([`docs/runbook.md`](docs/runbook.md)). Owner setup, once the VM exists (INF-0):
+
+- GitHub environment **`demo`** (Settings → Environments), deployment branches limited to `main`, with the secrets:
+
+  | Secret | Value |
+  |--------|-------|
+  | `SSH_HOST` | Terraform output `vm_ipv4` |
+  | `SSH_USER` | `deploy` |
+  | `SSH_PRIVATE_KEY` | Private half of `backend_demo_deploy_ssh_public_key` (this repo's own key, gated on the VM) |
+  | `SSH_KNOWN_HOSTS` | `ssh-keyscan <vm>` output, taken from a trusted machine |
+
+- Repository variable **`DEPLOY_ENABLED=true`** (Settings → Secrets and variables → Actions → Variables). Until then the job is skipped. Set it only once recetas-infra's first demo deploy has installed `/srv/recetas/scripts` and `/srv/recetas/demo/tags.env` names both `BACKEND_IMAGE_TAG` and `FRONTEND_IMAGE_TAG` (recetas-infra README, First demo deploy, step 3): the demo compose file requires both (`${FRONTEND_IMAGE_TAG:?}`), so a backend deploy with the frontend tag missing fails at compose validation.
+
+Prod deploys are INF-5 in `../specs/`.
 
 ## Docs
 
