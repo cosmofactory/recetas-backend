@@ -2,13 +2,13 @@
 
 Operating recetas-backend on demo and prod. INF-6's `recetas-infra/RUNBOOK.md` links here for the backend; deploys, backups and restores live there.
 
-Each environment is a compose project `recetas-<env>` in `/srv/recetas/<env>`, with the services `database`, `backend` and `frontend`, and `<env>` is `demo` or `prod`. Demo's stack is `recetas-infra/envs/demo/compose.yaml` (INF-2): the networks `app` (frontend and backend) and `data` (`internal: true`, backend and database only), no published ports. The VM itself doesn't exist yet (INF-0), and prod is planned in INF-5. The VM scripts live in `/srv/recetas/scripts/`. Every command runs on the VM unless it starts with `ssh <vps>`.
+Each environment is a compose project `recetas-<env>` in `/srv/recetas/<env>`, with the services `database`, `backend` and `frontend`, and `<env>` is `demo` or `prod`. Demo's stack is `recetas-infra/envs/demo/compose.yaml` (INF-2): the networks `app` (frontend and backend) and `data` (`internal: true`, backend and database only), no published ports. Prod's stack is `recetas-infra/envs/prod/compose.yaml` (INF-5), the same shape with its own networks and volume. The VM itself doesn't exist yet (INF-0). The VM scripts live in `/srv/recetas/scripts/`. Every command runs on the VM unless it starts with `ssh <vps>`.
 
 **Who runs what.** `ssh <vps>` is the owner logging in as `admin` with the owner's unrestricted key. `/srv/recetas/*` belongs to `deploy` (`.env` is 0600), so every command runs as `deploy`: interactively `ssh <vps>`, then `sudo -iu deploy`; as a one-liner from your machine, `ssh <vps> "sudo -u deploy bash -c '<command>'"` (stdin passes through sudo, so a bundle can follow with `< bundle.json`). This repo's `demo` deploy key is restricted on the VM to `ssh-gate.sh backend demo`: it can run `deploy-service.sh demo backend sha-<7>` and nothing else, so imports, `goose` and every other command below need the owner's login.
 
 **Always name the project and both env files.** A bare `docker compose` run in `/srv/recetas/<env>` takes the directory name (`demo`, `prod`) as the project, so it talks to a different, empty stack: an import there would go into a fresh, empty database and report success. Demo's compose file sets `name: recetas-demo` as well, but the commands here don't rely on it. Demo reads two env files: `.env` (0600; the secrets, written by recetas-infra's `Demo` workflow from its `DEMO_*` repository secrets on every run, so edits on the VM are overwritten) and `tags.env` (`BACKEND_IMAGE_TAG`, `FRONTEND_IMAGE_TAG`, written only by `deploy-service.sh`). Passing `--env-file` replaces the default `.env`, so name both; without `tags.env` the image tag is missing and compose refuses to start.
 
-**Prod** is planned to take its tags from `versions.env` (INF-5, D-INF5-1); INF-5 still has to settle between that and `tags.env`, which `deploy-service.sh` already accepts for prod. Follow whatever INF-5 settles on.
+**Prod** reads `.env` (0600; written by recetas-infra's `Prod` workflow from its `PROD_*` secrets) and `versions.env` instead of `tags.env`: the same two variables, pinned in git as `recetas-infra/envs/prod/versions.env` and synced only by the `Prod` workflow (INF-5, D-INF5-1). `deploy-service.sh` refuses prod, and this repo has no prod deploy key. Never edit either file on the VM.
 
 Set `dc` once per shell; every command below uses it:
 
@@ -17,9 +17,9 @@ ssh <vps>
 sudo -iu deploy
 cd /srv/recetas/<env>
 dc="docker compose -p recetas-demo --env-file .env --env-file tags.env"        # demo
-dc="docker compose -p recetas-prod --env-file .env --env-file versions.env"   # prod (as planned in INF-5)
+dc="docker compose -p recetas-prod --env-file .env --env-file versions.env"   # prod
 $dc ps          # backend should be "Up … (healthy)"
-cat tags.env    # demo: the deployed image tags
+cat tags.env    # demo: the deployed image tags (prod: cat versions.env)
 ```
 
 ## Deploys
@@ -30,7 +30,9 @@ A push to `main` deploys demo: after the image job pushes `sha-<7>`, CI's `deplo
 tail -n 80 /srv/recetas/demo/deploy.log
 ```
 
-Don't start a failed image by hand with `$dc run`: its entrypoint applies that image's migrations. Prod deploys follow INF-5.
+Don't start a failed image by hand with `$dc run`: its entrypoint applies that image's migrations.
+
+Prod never deploys from this repo's CI. A release is a recetas-infra PR that bumps `envs/prod/versions.env` to tags demo already runs (`scripts/promote.sh` there opens it), and only the owner merges it; the merge deploys prod through `deploy-env.sh`, with the same health wait and rollback (recetas-infra README.md, Releasing to prod). Its checklist asks for this repo's migrations in the range: expand/contract-safe (B3), already run on demo, `Down` tested.
 
 ## Logs
 
@@ -102,7 +104,7 @@ Run it as `deploy` from the owner's login (see "Who runs what" at the top); the 
 ```bash
 # From your machine; the bundle goes over stdin. Demo:
 ssh <vps> "sudo -u deploy bash -c 'cd /srv/recetas/demo && docker compose -p recetas-demo --env-file .env --env-file tags.env run --rm -T backend /app/import --source pipeline-<run-id> --dry-run'" < bundle.json
-# Prod (as planned in INF-5):
+# Prod:
 ssh <vps> "sudo -u deploy bash -c 'cd /srv/recetas/prod && docker compose -p recetas-prod --env-file .env --env-file versions.env run --rm -T backend /app/import --source pipeline-<run-id> --dry-run'" < bundle.json
 echo "exit=$?"
 ```
@@ -118,11 +120,11 @@ Pages pick up the new content within about a minute (the frontend's list cache a
 
 ## Roll back an image
 
-> **Prod is pending INF-5.** Per D-INF5-1 (recommended, outcome TBD), prod runs the tags pinned in `recetas-infra/envs/prod/versions.env`, and a rollback is a `git revert` of the versions PR, merged and deployed by `deploy-prod.yml`. Follow INF-5.
+> **Prod** runs only the tags pinned in `recetas-infra/envs/prod/versions.env` (D-INF5-1). A rollback is a `git revert` of the promotion PR there, merged by the owner and deployed by its `Prod` workflow (recetas-infra RUNBOOK.md, Prod stack → Rollback).
 
 1. Find the previous good tag: the `<old> -> <new>` line of the deploy job's log (or `deploy.log` on the VM), `docker image ls ghcr.io/cosmofactory/recetas-backend` on the VM, or for prod the `versions.env` history in recetas-infra. Images are pulled again when they've been pruned.
 2. Check the migrations between the two tags (`git diff --stat <old-sha> <new-sha> -- db/migrations` in recetas-backend; the `sha-<7>` tags are image tags, not git tags). With none, roll back the image and stop there.
-3. **Demo:** re-run only the `Deploy Demo` job of the older commit's CI run (Actions → that run → the `Deploy Demo` job → Re-run this job; not "Re-run all jobs", which would rebuild and re-push the same `sha-` tag), or as the owner run `/srv/recetas/scripts/deploy-service.sh demo backend sha-<old>` on the VM (as `deploy`). Either way it's the same script, with the same health wait and rollback. **Prod:** `git revert` the versions PR in recetas-infra, open a PR and merge it (needs the `prod` approval).
+3. **Demo:** re-run only the `Deploy Demo` job of the older commit's CI run (Actions → that run → the `Deploy Demo` job → Re-run this job; not "Re-run all jobs", which would rebuild and re-push the same `sha-` tag), or as the owner run `/srv/recetas/scripts/deploy-service.sh demo backend sha-<old>` on the VM (as `deploy`). Either way it's the same script, with the same health wait and rollback. **Prod:** `git revert` the promotion PR in recetas-infra and open a PR; only the owner merges it, and the merge deploys it.
 4. Verify:
 
 ```bash
@@ -150,7 +152,7 @@ BACKEND_IMAGE_TAG=sha-<new> $dc run --rm --entrypoint sh backend \
   -c 'goose -dir /app/migrations postgres "$DATABASE_URL" down'
 ```
 
-`--entrypoint sh` skips the image's `goose up`, and the single quotes make `$DATABASE_URL` expand inside the container. `BACKEND_IMAGE_TAG` is the compose variable from `tags.env`; a variable set in the shell wins over the env files, and this one-off run doesn't change `tags.env`. Repeat `down` once per migration, newest first.
+`--entrypoint sh` skips the image's `goose up`, and the single quotes make `$DATABASE_URL` expand inside the container. `BACKEND_IMAGE_TAG` is the compose variable from `tags.env` (prod: `versions.env`); a variable set in the shell wins over the env files, and this one-off run doesn't change the file. Repeat `down` once per migration, newest first.
 
 Before taking down 00008, save its rows. The dump includes the sequence position:
 
@@ -205,7 +207,7 @@ A fix to `.env` or the compose file takes effect when the container is recreated
 
 #### Changing configuration
 
-On demo, never hand-edit `.env` or `compose.yaml` on the VM: recetas-infra's `Demo` workflow writes both on every run. Values that are secrets (`POSTGRES_*`, `LOGFIRE_TOKEN`, `OTEL_EXPORTER_OTLP_ENDPOINT`) are its `DEMO_*` repository secrets: change the secret, then run `Demo` from recetas-infra's Actions tab. Everything else (`DB_MAX_CONNS`, `DB_MIN_CONNS`, `LOG_LEVEL`, memory limits) is a recetas-infra PR to `envs/demo/compose.yaml`; demo's compose doesn't pass those today, so the server uses its defaults. The `Demo` run recreates what changed. Prod follows INF-5.
+On demo, never hand-edit `.env` or `compose.yaml` on the VM: recetas-infra's `Demo` workflow writes both on every run. Values that are secrets (`POSTGRES_*`, `LOGFIRE_TOKEN`, `OTEL_EXPORTER_OTLP_ENDPOINT`) are its `DEMO_*` repository secrets: change the secret, then run `Demo` from recetas-infra's Actions tab. Everything else (`DB_MAX_CONNS`, `DB_MIN_CONNS`, `LOG_LEVEL`, memory limits) is a recetas-infra PR to `envs/demo/compose.yaml`; demo's compose doesn't pass those today, so the server uses its defaults. The `Demo` run recreates what changed. Prod works the same way with recetas-infra's `PROD_*` secrets, `envs/prod/compose.yaml` and its `Prod` workflow (run it by hand after changing a secret); prod's image tags change only through a promotion PR.
 
 ### Database down
 
@@ -268,4 +270,4 @@ $dc exec database sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT p
 docker image prune -af --filter "until=168h"    # the weekly prune planned in INF-5
 ```
 
-`deploy-service.sh` already removes this repository's `sha-` images older than 168 h after every successful deploy, keeping the tags any env's `tags.env` names and this env's previous tag (recetas-infra RUNBOOK.md, Image cleanup). A full disk makes Postgres refuse writes or stop (an import exits 2, then see [Database down](#database-down)). Container logs are capped by the rotation, so the usual culprits are old images, the Postgres volume and dumps. The 80% disk alert is planned in INF-5.
+`deploy-service.sh` already removes this repository's `sha-` images older than 168 h after every successful deploy, keeping the tags any env's tag file names (demo's `tags.env`, prod's `versions.env`) and this env's previous tag (recetas-infra RUNBOOK.md, Image cleanup). A full disk makes Postgres refuse writes or stop (an import exits 2, then see [Database down](#database-down)). Container logs are capped by the rotation, so the usual culprits are old images, the Postgres volume and dumps. The 80% disk alert is planned in INF-5.
