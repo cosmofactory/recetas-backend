@@ -1,7 +1,7 @@
 .PHONY: help fmt vet lint golangci-lint vulncheck vulncheck-image build run test test-integration tidy \
 	generate api-generate api-lint sqlc-generate goose-install seed design-bundle \
 	migrate migrate-down migrate-status migrate-create \
-	docker-build docker-up docker-down docker-logs load
+	docker-build docker-up docker-down docker-logs load lint-actions
 
 ifneq (,$(wildcard .env))
 	include .env
@@ -24,6 +24,8 @@ SEED_BUNDLE ?= testdata/content.design.json
 # Bump the tag and digest together: docker buildx imagetools inspect grafana/k6:<tag>
 K6_IMAGE ?= grafana/k6:2.3.0@sha256:2dd4756ec6e14e62778916e1eb850108e4b499304c02df56760fa0bdb0fba0b8
 LOAD_NETWORK ?= host
+# Same pin as recetas-infra's Makefile; bump the tag and digest together.
+ACTIONLINT_IMAGE ?= rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
 LDFLAGS = -s -w -X main.version=$(VERSION)
 
 # Integration tests opt in through TEST_DATABASE_URL, never DATABASE_URL (which
@@ -37,6 +39,7 @@ help:
 	@echo "  make fmt              - gofmt every Go file in place"
 	@echo "  make vet              - go vet ./..."
 	@echo "  make lint             - fmt check + vet + golangci-lint + build"
+	@echo "  make lint-actions     - actionlint (Docker, pinned) on .github/workflows"
 	@echo "  make vulncheck        - govulncheck ./... (fails on vulnerabilities in reachable code)"
 	@echo "  make vulncheck-image IMAGE_REF=img - govulncheck -mode=binary on the image's server and import"
 	@echo "  make build            - build the server and import binaries into ./bin/"
@@ -89,6 +92,9 @@ lint:
 
 golangci-lint:
 	$(GOLANGCI_LINT) run ./...
+
+lint-actions:
+	docker run --rm -u $$(id -u):$$(id -g) -v "$(CURDIR)":/work -w /work $(ACTIONLINT_IMAGE) -color
 
 # Source mode reports the stdlib of the Go toolchain running it, too.
 vulncheck:

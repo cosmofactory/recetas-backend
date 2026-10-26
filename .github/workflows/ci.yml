@@ -25,6 +25,7 @@ env:
   VACUUM_CLI_VERSION: "0.30.6" # keep in sync with VACUUM_VERSION in the Makefile
   GOVULNCHECK_VERSION: "v1.9.0" # keep in sync with GOVULNCHECK_VERSION in the Makefile
   IMAGE: ghcr.io/cosmofactory/recetas-backend
+  DEMO_URL: https://demo.asadorov.es
 
 jobs:
   lint-and-vet:
@@ -91,6 +92,10 @@ jobs:
 
       - name: Lint OpenAPI spec
         run: make api-lint VACUUM="$RUNNER_TEMP/vacuum"
+
+      # actionlint (with shellcheck) from the digest-pinned image, as in recetas-infra.
+      - name: Lint workflows
+        run: make lint-actions
 
   test:
     name: Test
@@ -164,6 +169,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      sha-tag: ${{ steps.tags.outputs.sha-tag }}
 
     steps:
       - name: Check out repository
@@ -182,6 +189,7 @@ jobs:
             tags="${tags}"$'\n'"${IMAGE}:${GITHUB_REF_NAME}"
           fi
           {
+            echo "sha-tag=${sha_tag}"
             echo "version=${version}"
             echo "ref=${IMAGE}:${sha_tag}"
             echo "tags<<EOF"
@@ -244,3 +252,85 @@ jobs:
           while IFS= read -r tag; do
             docker push "$tag"
           done <<< "$TAGS"
+
+  # Only main deploys, and only once the VM exists (DEPLOY_ENABLED, as in
+  # recetas-infra). The demo environment's key is restricted on the VM to
+  # ssh-gate.sh, which runs nothing but deploy-service.sh for the backend on
+  # demo; that script rolls back and exits non-zero when the new image isn't
+  # healthy, and keeps the failed container's logs on the VM.
+  deploy-demo:
+    name: Deploy Demo
+    runs-on: ubuntu-latest
+    needs: image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    environment:
+      name: demo
+      url: ${{ env.DEMO_URL }}
+    concurrency:
+      group: deploy-demo
+      cancel-in-progress: false
+    # No checkout and no GitHub API calls: the token needs no scopes.
+    permissions: {}
+    # Covers the VM-side deploy lock wait (15 min) plus the health wait.
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    env:
+      SSH_CONNECT_TIMEOUT_SECONDS: "20"
+      SMOKE_ATTEMPTS: "10"
+      SMOKE_RETRY_DELAY_SECONDS: "6"
+      SMOKE_REQUEST_TIMEOUT_SECONDS: "10"
+
+    steps:
+      - name: Write SSH key and known hosts
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          SSH_DIR="$RUNNER_TEMP/ssh"
+          echo "SSH_DIR=$SSH_DIR" >> "$GITHUB_ENV"
+          install -d -m 700 "$SSH_DIR"
+          install -m 600 /dev/null "$SSH_DIR/key"
+          install -m 600 /dev/null "$SSH_DIR/known_hosts"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$SSH_DIR/key"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$SSH_DIR/known_hosts"
+
+      # ssh-gate.sh lets only this command through (and execs it without a shell).
+      - name: Deploy the image to demo
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          IMAGE_TAG: ${{ needs.image.outputs.sha-tag }}
+        run: |
+          ssh -i "$SSH_DIR/key" \
+            -o IdentitiesOnly=yes \
+            -o UserKnownHostsFile="$SSH_DIR/known_hosts" \
+            -o StrictHostKeyChecking=yes \
+            -o BatchMode=yes \
+            -o ConnectTimeout="$SSH_CONNECT_TIMEOUT_SECONDS" \
+            "$SSH_USER@$SSH_HOST" "/srv/recetas/scripts/deploy-service.sh demo backend $IMAGE_TAG"
+
+      # /readyz is the frontend route that asks the backend's /healthz (the API
+      # itself isn't public). Retries cover Caddy and the frontend's upstream
+      # settling after the backend container was recreated.
+      - name: Smoke test demo
+        run: |
+          smoke() {
+            local url=$1 attempt
+            for ((attempt = 1; attempt <= SMOKE_ATTEMPTS; attempt++)); do
+              if curl -fsSL -o /dev/null --max-time "$SMOKE_REQUEST_TIMEOUT_SECONDS" "$url"; then
+                echo "ok: $url"
+                return 0
+              fi
+              echo "attempt $attempt/$SMOKE_ATTEMPTS failed: $url" >&2
+              if ((attempt < SMOKE_ATTEMPTS)); then sleep "$SMOKE_RETRY_DELAY_SECONDS"; fi
+            done
+            return 1
+          }
+          smoke "$DEMO_URL/"
+          smoke "$DEMO_URL/readyz"
+
+      - name: Remove SSH key
+        if: always()
+        run: rm -rf "${SSH_DIR:-$RUNNER_TEMP/ssh}"

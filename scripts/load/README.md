@@ -41,13 +41,13 @@ So the headline `GET /v1/dishes` target can't be measured from outside at all: p
 
 ### 1. API, from a container on the demo network
 
-This measures the backend alone (Go and Postgres, no TLS or proxy), which is what the BE-6 targets are about. The network name and the backend's service name are as planned in INF-2: compose project `recetas-demo` (always passed as `-p recetas-demo`, and planned as `name:` in the compose file) with network `internal` gives `recetas-demo_internal`, and the service is `backend`. Check with `docker network ls` before the run.
+This measures the backend alone (Go and Postgres, no TLS or proxy), which is what the BE-6 targets are about. The network name and the backend's service name come from `recetas-infra/envs/demo/compose.yaml` (INF-2): compose project `recetas-demo` with network `app` (frontend and backend) gives `recetas-demo_app`, and the service is `backend`. Check with `docker network ls` before the run.
 
 ```bash
-ssh <vps> 'docker run --rm -i --network recetas-demo_internal \
+ssh <vps> "sudo -u deploy docker run --rm -i --network recetas-demo_app \
   -e BASE_URL=http://backend:8080 -e DURATION=2m \
   grafana/k6:2.3.0@sha256:2dd4756ec6e14e62778916e1eb850108e4b499304c02df56760fa0bdb0fba0b8 \
-  run --quiet -' < scripts/load/catalog.js
+  run --quiet -" < scripts/load/catalog.js
 ```
 
 Keep the image reference in step with `K6_IMAGE` in the Makefile. k6 shares the VM's CPU with the system under test, so note the VM's load (`uptime`) next to the result.
@@ -60,6 +60,6 @@ This measures what a visitor sees for an uncached page: TLS, Caddy, SvelteKit's 
 make load BASE_URL=https://demo.asadorov.es TARGET=pages DURATION=2m
 ```
 
-The difference between the page and API numbers for the recipe is the cost of the frontend and the edge. A redeploy under load (BE-6, graceful shutdown) uses the same command with a longer `DURATION` while `docker compose -p recetas-demo up -d` runs on the VM; any failed request shows in `http_req_failed`.
+The difference between the page and API numbers for the recipe is the cost of the frontend and the edge. A redeploy under load (BE-6, graceful shutdown) uses the same command with a longer `DURATION` while `docker compose -p recetas-demo --env-file .env --env-file tags.env up -d --force-recreate backend` runs in `/srv/recetas/demo` on the VM (as `deploy`: `ssh <vps>`, then `sudo -iu deploy`); any failed request shows in `http_req_failed`.
 
 Don't run it against prod, where the synthetic load would compete with real visitors. The baseline is taken on demo, which shares the VM with prod (D-INF0-3), so schedule the run for a quiet hour.
