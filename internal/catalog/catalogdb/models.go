@@ -114,6 +114,7 @@ type Variation struct {
 	PhotoThumb *string `json:"photo_thumb"`
 	PhotoCard  *string `json:"photo_card"`
 	PhotoHero  *string `json:"photo_hero"`
+	Score      float64 `json:"score"`
 }
 
 type VariationTranslation struct {

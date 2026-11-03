@@ -38,7 +38,7 @@ func attachRegionalDishes(regions []Region, rows []catalogdb.ListRegionalDishesR
 
 func dishesFromRows(rows []catalogdb.ListDishesRow, l Locale) ([]Dish, error) {
 	dishes := make([]Dish, 0, len(rows))
-	for _, row := range rows {
+	for i, row := range rows {
 		err := firstMissing(
 			translation{entityDish, row.Key, l, []*string{row.Name, row.Description}},
 			translation{entityDish, row.Key, localeSpanish, []*string{row.NameEs}},
@@ -46,16 +46,17 @@ func dishesFromRows(rows []catalogdb.ListDishesRow, l Locale) ([]Dish, error) {
 		if err != nil {
 			return nil, err
 		}
-		dishes = append(dishes, dishFromRow(row))
+		dishes = append(dishes, dishFromRow(row, i+1))
 	}
 	return dishes, nil
 }
 
-// dishFromRow maps a row whose translations firstMissing has checked.
-func dishFromRow(row catalogdb.ListDishesRow) Dish {
+// dishFromRow maps a row whose translations firstMissing has checked; order
+// is its 1-based position in the display-ordered rows.
+func dishFromRow(row catalogdb.ListDishesRow, order int) Dish {
 	return Dish{
 		Key:         row.Key,
-		Order:       int(row.SortOrder),
+		Order:       order,
 		Name:        *row.Name,
 		NameEs:      *row.NameEs,
 		Description: *row.Description,
@@ -108,6 +109,7 @@ func variationFromRow(row catalogdb.ListVariationsRow, l Locale) (Variation, err
 		NameEs:      *row.NameEs,
 		Description: *row.Description,
 		Photos:      Photos{Thumb: row.PhotoThumb, Card: row.PhotoCard, Hero: row.PhotoHero},
+		Score:       row.Score,
 	}, nil
 }
 

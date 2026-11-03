@@ -155,6 +155,7 @@ func TestApply_ChangeUpdatesOnlyThatRow(t *testing.T) {
 		{"dish name", "dishes", func(b *importer.Bundle) { b.Dishes[2].Name.En = "Cocido and stews" }},
 		{"dish flag", "dishes", func(b *importer.Bundle) { b.Dishes[0].Flags.Pork = true }},
 		{"variation description", "variations", func(b *importer.Bundle) { b.Dishes[1].Variations[0].Description.Es = "Otra descripción" }},
+		{"variation score", "variations", func(b *importer.Bundle) { b.Dishes[1].Variations[0].Score = 12.5 }},
 		{"recipe step", "recipes", func(b *importer.Bundle) { b.Recipes[0].Steps[1].Ru = "Новый шаг." }},
 		{"recipe ingredient name", "recipes", func(b *importer.Bundle) { b.Recipes[0].Ingredients[0].Name.Es = "Huevos camperos" }},
 		{"recipe time note added", "recipes", func(b *importer.Bundle) {

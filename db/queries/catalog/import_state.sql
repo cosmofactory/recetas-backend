@@ -69,6 +69,7 @@ SELECT
     v.photo_thumb,
     v.photo_card,
     v.photo_hero,
+    v.score,
     COALESCE(en.name, '')::text        AS name_en,
     COALESCE(es.name, '')::text        AS name_es,
     COALESCE(ru.name, '')::text        AS name_ru,

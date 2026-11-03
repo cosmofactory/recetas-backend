@@ -19,10 +19,10 @@ func (q *Queries) ImportDeleteVariations(ctx context.Context, ids []int64) error
 }
 
 const importInsertVariation = `-- name: ImportInsertVariation :one
-INSERT INTO variations (dish_id, region_id, recipe_key, photo_thumb, photo_card, photo_hero)
+INSERT INTO variations (dish_id, region_id, recipe_key, photo_thumb, photo_card, photo_hero, score)
 VALUES (
     $1, $2, $3,
-    $4, $5, $6
+    $4, $5, $6, $7
 )
 RETURNING id
 `
@@ -34,6 +34,7 @@ type ImportInsertVariationParams struct {
 	PhotoThumb *string `json:"photo_thumb"`
 	PhotoCard  *string `json:"photo_card"`
 	PhotoHero  *string `json:"photo_hero"`
+	Score      float64 `json:"score"`
 }
 
 func (q *Queries) ImportInsertVariation(ctx context.Context, arg ImportInsertVariationParams) (int64, error) {
@@ -44,6 +45,7 @@ func (q *Queries) ImportInsertVariation(ctx context.Context, arg ImportInsertVar
 		arg.PhotoThumb,
 		arg.PhotoCard,
 		arg.PhotoHero,
+		arg.Score,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -52,14 +54,16 @@ func (q *Queries) ImportInsertVariation(ctx context.Context, arg ImportInsertVar
 
 const importUpdateVariation = `-- name: ImportUpdateVariation :exec
 UPDATE variations
-SET photo_thumb = $1, photo_card = $2, photo_hero = $3
-WHERE id = $4
+SET photo_thumb = $1, photo_card = $2, photo_hero = $3,
+    score = $4
+WHERE id = $5
 `
 
 type ImportUpdateVariationParams struct {
 	PhotoThumb *string `json:"photo_thumb"`
 	PhotoCard  *string `json:"photo_card"`
 	PhotoHero  *string `json:"photo_hero"`
+	Score      float64 `json:"score"`
 	ID         int64   `json:"id"`
 }
 
@@ -68,6 +72,7 @@ func (q *Queries) ImportUpdateVariation(ctx context.Context, arg ImportUpdateVar
 		arg.PhotoThumb,
 		arg.PhotoCard,
 		arg.PhotoHero,
+		arg.Score,
 		arg.ID,
 	)
 	return err

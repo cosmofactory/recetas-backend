@@ -109,7 +109,8 @@ func readRegions(ctx context.Context, q *catalogdb.Queries, l Locale) ([]Region,
 	return regions, nil
 }
 
-// readDishes takes two queries: the dishes, then every variation.
+// readDishes takes two queries: the dishes in display order, then every
+// variation. It numbers the dishes and ranks each region's variations.
 func readDishes(ctx context.Context, q *catalogdb.Queries, l Locale) ([]Dish, error) {
 	rows, err := q.ListDishes(ctx, catalogdb.ListDishesParams{Locale: string(l), Spanish: string(localeSpanish)})
 	if err != nil {
@@ -126,6 +127,7 @@ func readDishes(ctx context.Context, q *catalogdb.Queries, l Locale) ([]Dish, er
 	if err := attachVariations(dishes, variations, l); err != nil {
 		return nil, err
 	}
+	rankRegions(dishes)
 	return dishes, nil
 }
 

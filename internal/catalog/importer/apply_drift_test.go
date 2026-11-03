@@ -28,6 +28,8 @@ func TestApply_ReimportRepairsDrift(t *testing.T) {
 		{"variation translation deleted",
 			"DELETE FROM variation_translations WHERE locale = 'es' AND variation_id = (SELECT id FROM variations WHERE recipe_key = 'tortilla-chorizo')",
 			map[string]importer.Counts{"variations": {Updated: 1}}},
+		{"variation score hand-edited", "UPDATE variations SET score = 7 WHERE recipe_key = 'tortilla-chorizo'",
+			map[string]importer.Counts{"variations": {Updated: 1}}},
 		{"recipe step deleted", "DELETE FROM recipe_steps WHERE position = 2 AND recipe_id = " + betanzosRecipeSQL,
 			map[string]importer.Counts{"recipes": {Updated: 1}}},
 	}

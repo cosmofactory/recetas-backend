@@ -1,14 +1,15 @@
 -- name: ImportInsertVariation :one
-INSERT INTO variations (dish_id, region_id, recipe_key, photo_thumb, photo_card, photo_hero)
+INSERT INTO variations (dish_id, region_id, recipe_key, photo_thumb, photo_card, photo_hero, score)
 VALUES (
     sqlc.arg(dish_id), sqlc.arg(region_id), sqlc.arg(recipe_key),
-    sqlc.narg(photo_thumb), sqlc.narg(photo_card), sqlc.narg(photo_hero)
+    sqlc.narg(photo_thumb), sqlc.narg(photo_card), sqlc.narg(photo_hero), sqlc.arg(score)
 )
 RETURNING id;
 
 -- name: ImportUpdateVariation :exec
 UPDATE variations
-SET photo_thumb = sqlc.narg(photo_thumb), photo_card = sqlc.narg(photo_card), photo_hero = sqlc.narg(photo_hero)
+SET photo_thumb = sqlc.narg(photo_thumb), photo_card = sqlc.narg(photo_card), photo_hero = sqlc.narg(photo_hero),
+    score = sqlc.arg(score)
 WHERE id = sqlc.arg(id);
 
 -- name: ImportDeleteVariations :exec

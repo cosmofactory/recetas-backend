@@ -137,7 +137,13 @@
         "recipeKey": { "$ref": "#/$defs/slug" },
         "name": { "$ref": "#/$defs/text" },
         "description": { "$ref": "#/$defs/text" },
-        "photos": { "$ref": "#/$defs/photos" }
+        "photos": { "$ref": "#/$defs/photos" },
+        "score": {
+          "description": "Importance score (stack.md X15): orders the dish list by the sum over a dish's variations, and a region's list by this value. Never shown. Missing is 0; rounded to 3 decimal places on import.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000000
+        }
       }
     },
     "recipe": {
