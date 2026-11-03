@@ -42,11 +42,13 @@ func (w *writer) saveVariationRow(ctx context.Context, vw variationWrite) (int64
 			DishID:     w.dishes[vw.dishKey],
 			RegionID:   w.regions[v.RegionKey],
 			RecipeKey:  v.RecipeKey,
+			Score:      v.Score,
 			PhotoThumb: photos.Thumb, PhotoCard: photos.Card, PhotoHero: photos.Hero,
 		})
 	}
 	return vw.id, w.q.ImportUpdateVariation(ctx, catalogdb.ImportUpdateVariationParams{
 		ID:         vw.id,
+		Score:      v.Score,
 		PhotoThumb: photos.Thumb, PhotoCard: photos.Card, PhotoHero: photos.Hero,
 	})
 }

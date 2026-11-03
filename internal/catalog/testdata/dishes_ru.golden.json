@@ -31,7 +31,8 @@
         },
         "recipeKey": "tortilla-betanzos",
         "regionKey": "gal",
-        "regionName": "Галисия"
+        "regionName": "Галисия",
+        "regionRank": 1
       },
       {
         "description": "Жир чорисо окрашивает картофель",
@@ -44,7 +45,8 @@
         },
         "recipeKey": "tortilla-chorizo",
         "regionKey": "ast",
-        "regionName": "Астурия"
+        "regionName": "Астурия",
+        "regionRank": 1
       }
     ]
   },
@@ -61,7 +63,7 @@
     "key": "cocido",
     "name": "Косидо и рагу",
     "nameEs": "Cocidos y guisos",
-    "order": 3,
+    "order": 2,
     "photos": {
       "card": null,
       "hero": null,
@@ -80,7 +82,8 @@
         },
         "recipeKey": "fabada-asturiana",
         "regionKey": "ast",
-        "regionName": "Астурия"
+        "regionName": "Астурия",
+        "regionRank": 2
       }
     ]
   }

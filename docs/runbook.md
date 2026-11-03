@@ -142,6 +142,7 @@ Only when the schema itself is the problem; prefer a forward fix (a new migratio
 `goose down` reverts the latest applied migration and needs its file, so it runs from an image that still contains it: the **newer** image. Stop the newer server first when the down step would break it (see the table).
 
 > **`down` destroys data. Back up first** (prod: the INF-5 backup job, run by hand).
+> - Going down past **00009** drops `variations.score`: the importance scores (restored by re-importing the last bundle).
 > - Going down past **00008** drops `content_versions`: the import history and checksums.
 > - Going below 00008 into **00007–00004** drops the catalog content itself.
 
@@ -164,6 +165,7 @@ What each Down costs (the BE-6 migration review; every Down passes the round-tri
 
 | Migration | Down | Order and aftermath |
 |-----------|------|---------------------|
+| `00009_add_variation_score` | **Destroys data:** drops `variations.score`, the importance scores. | **Roll the image back first:** today's server and importer read the column, so dropping it under them turns every dish and region request into a 500. After rolling forward every score is 0 and lists fall back to editorial order; re-importing the last bundle (dry run first) restores the scores as variation updates and records a new version. |
 | `00008_create_content_versions` | **Destroys data:** drops `content_versions`, the import history and checksums. Back up and save the rows first. | **Roll the image back first.** Today's server reads the content version on every catalog request, so dropping the table under it turns every request into a 500. After rolling forward the table is empty: `ContentVersion` is 0 and every ETag becomes `W/"0-<locale>"`. The next import that changes content gets id 1 again and reissues ETags clients have already seen for other content (a client holding one gets a wrong 304). Re-importing the same bundle doesn't help: the catalog rows still match it, so the import prints `no changes (content version 0 is current)` and records nothing. **Restore the saved rows before any import** (below). |
 | `00007_create_recipes` … `00004_create_regions` | **Destroys data:** drops the catalog tables and their content. Back up first. | Requires 00008 down first (row above). The release that needed them must be rolled back first. Rolling forward recreates empty tables. |
 | `00003_create_locales` | drops `locales` (fixed reference rows, recreated by the Up) | As above. |
@@ -179,8 +181,9 @@ What each Down costs (the BE-6 migration review; every Down passes the round-tri
    ```
 
    Without the saved file, set the sequence past the old highest id (from the backup) instead: `SELECT setval('content_versions_id_seq', <old max id>)`. The history is lost, but no ETag is reissued.
-2. **If you went below 00008** (00007 or lower), re-import the last bundle (on demo `testdata/content.design.json`), dry run first. It recreates the catalog and records a new version.
-3. Check health and an ETag (see [Import content](#import-content)).
+2. **If you took down only 00009**, re-import the last bundle (dry run first); it shows each scored variation as updated.
+3. **If you went below 00008** (00007 or lower), re-import the last bundle (on demo `testdata/content.design.json`), dry run first. It recreates the catalog and records a new version.
+4. Check health and an ETag (see [Import content](#import-content)).
 
 ## Failure modes
 

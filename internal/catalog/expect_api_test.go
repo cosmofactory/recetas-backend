@@ -67,8 +67,9 @@ func apiRegionDetail(t *testing.T, key, loc string) apigen.RegionDetail {
 	}
 }
 
-func apiVariation(f catalogtest.Fixture, v catalogtest.Variation, loc string) apigen.VariationSummary {
+func apiVariation(f catalogtest.Fixture, dishKey string, v catalogtest.Variation, loc string) apigen.VariationSummary {
 	return apigen.VariationSummary{
+		RegionRank:  fixtureRegionRank(f, dishKey, v.RegionKey),
 		RegionKey:   v.RegionKey,
 		RegionName:  regionName(f, v.RegionKey, catalog.Locale(loc)),
 		RecipeKey:   v.RecipeKey,
@@ -82,7 +83,7 @@ func apiVariation(f catalogtest.Fixture, v catalogtest.Variation, loc string) ap
 func apiDish(f catalogtest.Fixture, d catalogtest.Dish, loc string) apigen.Dish {
 	dish := apigen.Dish{
 		Key:         d.Key,
-		Order:       d.SortOrder,
+		Order:       fixtureDishOrder(f, d.Key),
 		Name:        d.Name[loc],
 		NameEs:      d.Name[spanish],
 		Description: d.Description[loc],
@@ -96,7 +97,7 @@ func apiDish(f catalogtest.Fixture, d catalogtest.Dish, loc string) apigen.Dish 
 		Variations: []apigen.VariationSummary{},
 	}
 	for _, v := range d.Variations {
-		dish.Variations = append(dish.Variations, apiVariation(f, v, loc))
+		dish.Variations = append(dish.Variations, apiVariation(f, d.Key, v, loc))
 	}
 	return dish
 }

@@ -51,7 +51,23 @@ func domainRegions(l catalog.Locale) []catalog.Region {
 	return out
 }
 
-func domainVariation(f catalogtest.Fixture, v catalogtest.Variation, l catalog.Locale) catalog.Variation {
+// fixtureRegionRank is the variation's position in its region's list. The
+// fixture's scores are all 0, so that is dish order: one plus the earlier
+// dishes that also have a variation in the region.
+func fixtureRegionRank(f catalogtest.Fixture, dishKey, regionKey string) int {
+	rank := 1
+	for _, d := range f.Dishes {
+		if d.Key == dishKey {
+			return rank
+		}
+		if slices.ContainsFunc(d.Variations, func(v catalogtest.Variation) bool { return v.RegionKey == regionKey }) {
+			rank++
+		}
+	}
+	return 0
+}
+
+func domainVariation(f catalogtest.Fixture, dishKey string, v catalogtest.Variation, l catalog.Locale) catalog.Variation {
 	loc := string(l)
 	return catalog.Variation{
 		RegionKey:   v.RegionKey,
@@ -61,14 +77,21 @@ func domainVariation(f catalogtest.Fixture, v catalogtest.Variation, l catalog.L
 		NameEs:      v.Name[spanish],
 		Description: v.Description[loc],
 		Photos:      domainPhotos(v.Photos),
+		RegionRank:  fixtureRegionRank(f, dishKey, v.RegionKey),
 	}
+}
+
+// fixtureDishOrder is the dish's 1-based display position. With all scores 0
+// that is its position in the fixture, not its raw sort order (cocido's is 3).
+func fixtureDishOrder(f catalogtest.Fixture, dishKey string) int {
+	return slices.IndexFunc(f.Dishes, func(d catalogtest.Dish) bool { return d.Key == dishKey }) + 1
 }
 
 func domainDish(f catalogtest.Fixture, d catalogtest.Dish, l catalog.Locale) catalog.Dish {
 	loc := string(l)
 	dish := catalog.Dish{
 		Key:         d.Key,
-		Order:       d.SortOrder,
+		Order:       fixtureDishOrder(f, d.Key),
 		Name:        d.Name[loc],
 		NameEs:      d.Name[spanish],
 		Description: d.Description[loc],
@@ -81,7 +104,7 @@ func domainDish(f catalogtest.Fixture, d catalogtest.Dish, l catalog.Locale) cat
 		Photos: domainPhotos(d.Photos),
 	}
 	for _, v := range d.Variations {
-		dish.Variations = append(dish.Variations, domainVariation(f, v, l))
+		dish.Variations = append(dish.Variations, domainVariation(f, d.Key, v, l))
 	}
 	return dish
 }

@@ -20,7 +20,8 @@ The schema is [`api/content-bundle.schema.json`](../api/content-bundle.schema.js
       "course": "tapas", "season": "all",
       "photos": {"thumb": "dishes/tortilla/thumb-1a2b3c4d", "card": null, "hero": null},
       "variations": [
-        { "regionKey": "gal", "recipeKey": "tortilla-gal", "name": {…}, "description": {…}, "photos": null }
+        { "regionKey": "gal", "recipeKey": "tortilla-gal", "name": {…}, "description": {…}, "photos": null,
+          "score": 12.5 }   // optional hidden importance score, default 0
       ] }
   ],
   "recipes": [
@@ -34,7 +35,12 @@ The schema is [`api/content-bundle.schema.json`](../api/content-bundle.schema.js
 
 - Every human-readable text is an object with `en`, `es` and `ru`. All three are required, and there is no fallback to another locale.
 - `photos` (on dishes and variations), `timeNote` and an ingredient's `unit` are optional and may be `null`. A missing or `null` photo role means there's no photo yet, and the frontend shows its placeholder. A `null` unit is a counted item.
-- Variations of a dish are listed in region order whatever their order in the bundle. All variations are equal: there is no rank and no primary variation.
+- Variations of a dish are listed in region order whatever their order in the bundle. All variations are equal: there is no primary variation.
+- `score` on a variation is optional: a number from 0 to 1000000, default 0 (missing and `0` are the same content and checksum), rounded to 3 decimal places when parsed. It is the content pipeline's importance score (stack.md X15) and is **never shown**: the API returns positions only. It orders two lists:
+  - the dish list (`GET /v1/dishes`, the Popular list and search) by dish score, the sum of its variations' scores, descending, then bundle order; `Dish.order` is the resulting 1-based position;
+  - a region's list (`GET /v1/regions/{key}`) by variation score descending, then dish display order; `VariationSummary.regionRank` is the resulting position.
+
+  A dish's own variations stay in region order. A bundle without scores orders exactly as bundle order.
 - `testdata/content.design.json` is a complete example: the design's `content.json` converted by `make design-bundle`, with placeholder recipes for the 50 variations the design has no recipe for.
 
 ## Validation rules
@@ -46,6 +52,7 @@ Checked by the schema:
 - `course` is `tapas|mains|desserts`, `season` is `summer|winter|easter|all`, `unit` is `g|ml|tsp` or `null`.
 - Lists are bounded: 1–100 regions, 1–500 dishes, 1–100 variations per dish, 1–10000 recipes, 1–100 ingredients and 1–100 steps per recipe, and at most 20 regional dishes per region.
 - Texts are 1–4000 characters, regional dish names 1–200, photo keys at most 256.
+- A variation's `score`, when present, is a number from 0 to 1000000 (`null` is rejected).
 
 `schemaVersion` is checked first: a bundle whose version isn't `1` gets that one problem (`/schemaVersion: unsupported schemaVersion 2; this importer supports 1`), not a list of the fields this importer doesn't know.
 
@@ -67,7 +74,8 @@ The bundle is a **full replacement** of the previous state. It is declarative, n
 - A variation whose `recipeKey` now sits under another dish or region is deleted and created again, along with its recipe.
 - Order comes from position: a region's or dish's place in its list is its sort order. Removing or inserting a region or dish shifts the position of every later one, and each shifted row counts as updated.
 - A variation moved to another dish or region, or one whose `recipeKey` was renamed, counts as one variation and one recipe deleted and one of each created.
-- Quantities are rounded to 3 decimal places when the bundle is parsed, which is what the database stores, so float noise like `0.30000000000000004` neither changes the checksum nor counts as an update.
+- Quantities and scores are rounded to 3 decimal places when the bundle is parsed, which is what the database stores, so float noise like `0.30000000000000004` neither changes the checksum nor counts as an update.
+- A changed `score` is one variation updated; it can reorder the dish and region lists without any other row changing.
 - Everything runs in one transaction, and a failure at any point leaves the database as it was. Imports are serialised by an advisory lock, so two imports never interleave.
 - On success a `content_versions` row records `--source` and the bundle checksum. The checksum is the SHA-256 of the canonical JSON of the parsed bundle, so key order and whitespace in the input don't matter. The new version changes every API ETag, so caches revalidate.
 - Every import compares the bundle with the rows in the database, never only with the last checksum, so re-importing a bundle repairs any drift (a row edited by hand, say).
@@ -145,7 +153,7 @@ make design-bundle            # regenerate testdata/content.design.json after th
 
 `schemaVersion` is the bundle format version. This backend accepts exactly `1` (`importer.SchemaVersion`) and rejects anything else with a single problem at `/schemaVersion` naming the supported version, before checking the rest of the bundle.
 
-Any change to the format takes a version bump, including an added optional field, because unknown fields are rejected. The steps:
+Any change to the format takes a version bump, including an added optional field, because unknown fields are rejected. The one exception so far is the optional variation `score` (BE-7), added under version 1 because an older bundle stays valid and means the same thing. **Deploy the backend before importing a bundle with `score`:** an older importer rejects the unknown field (exit 1, nothing changed). The steps for a version bump:
 
 1. The backend PR updates `api/content-bundle.schema.json` and the importer, bumps `importer.SchemaVersion`, regenerates `testdata/content.design.json`, and updates this document.
 2. The owner prepares the pipeline change to emit the new version.

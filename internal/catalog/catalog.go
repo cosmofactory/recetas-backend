@@ -37,7 +37,9 @@ type Flags struct {
 }
 
 // Variation is a dish as cooked in one region. All variations of a dish are
-// equal; they are ordered by region order only.
+// equal; they are ordered by region order only. Score is the hidden
+// importance score (stack.md X15) and is never served; RegionRank is the
+// variation's 1-based position in its region's list.
 type Variation struct {
 	RegionKey   string
 	RegionName  string
@@ -46,11 +48,13 @@ type Variation struct {
 	NameEs      string
 	Description string
 	Photos      Photos
+	Score       float64
+	RegionRank  int
 }
 
 type Dish struct {
 	Key         string
-	Order       int
+	Order       int // 1-based display position
 	Name        string
 	NameEs      string
 	Description string
@@ -71,7 +75,7 @@ type RegionVariation struct {
 
 type RegionDetail struct {
 	Region
-	Variations []RegionVariation // in dish order
+	Variations []RegionVariation // in RegionRank order
 }
 
 type Ingredient struct {
@@ -97,7 +101,9 @@ type Recipe struct {
 	Photos       Photos
 }
 
-// Repository reads the catalog in one locale. Lists come in editorial order.
+// Repository reads the catalog in one locale. Regions come in region order;
+// dishes in display order (dish score, then editorial order) with Order and
+// every variation's RegionRank set.
 type Repository interface {
 	// ContentVersion is the latest content import, or 0 before the first.
 	ContentVersion(ctx context.Context) (int64, error)

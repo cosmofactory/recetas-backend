@@ -13,7 +13,8 @@ const (
 	maxServings    = 20
 	maxTimeMinutes = 7 * 24 * 60
 	maxQuantity    = 9_999_999
-	quantityScale  = 1000 // quantities are stored with 3 decimal places
+	maxScore       = 1_000_000
+	storedScale    = 1000 // quantities and scores are stored with 3 decimal places
 )
 
 var (
@@ -120,6 +121,6 @@ func validPhotoKey(key, prefix string) bool {
 // validQuantity is judged at the stored 3 decimals: a quantity that rounds
 // to zero is rejected.
 func validQuantity(q float64) bool {
-	rounded := roundQuantity(q)
+	rounded := roundToStored(q)
 	return rounded > 0 && rounded <= maxQuantity
 }

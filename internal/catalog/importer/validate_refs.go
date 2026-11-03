@@ -48,6 +48,9 @@ func validateVariations(ps *problems, dishAt pointer, d Dish, vc variationContex
 		checkText(ps, at.at("name"), v.Name)
 		checkText(ps, at.at("description"), v.Description)
 		checkPhotos(ps, at.at("photos"), v.Photos, "dishes/"+d.Key+"/"+v.RegionKey+"/")
+		if v.Score < 0 || v.Score > maxScore {
+			ps.add(at.at("score"), "score %v is not 0-%d", v.Score, maxScore)
+		}
 	}
 }
 
