@@ -1,6 +1,7 @@
 package importer_test
 
 import (
+	"cmp"
 	"context"
 	"reflect"
 	"slices"
@@ -239,9 +240,14 @@ func (idx bundleIndex) regions(l catalog.Locale) []catalog.Region {
 	return out
 }
 
+// dishes lists the dishes in display order: dish score (the sum of its
+// variations' scores) descending, then bundle order. Order is the 1-based
+// display position and every variation carries its RegionRank.
 func (idx bundleIndex) dishes(l catalog.Locale) []catalog.Dish {
-	out := make([]catalog.Dish, 0, len(idx.b.Dishes))
-	for i, d := range idx.b.Dishes {
+	ordered := slices.Clone(idx.b.Dishes)
+	slices.SortStableFunc(ordered, func(a, b importer.Dish) int { return cmp.Compare(dishScore(b), dishScore(a)) })
+	out := make([]catalog.Dish, 0, len(ordered))
+	for i, d := range ordered {
 		out = append(out, catalog.Dish{
 			Key:         d.Key,
 			Order:       i + 1,
@@ -255,7 +261,37 @@ func (idx bundleIndex) dishes(l catalog.Locale) []catalog.Dish {
 			Variations:  idx.variations(d, l),
 		})
 	}
+	expectRegionRanks(out)
 	return out
+}
+
+func dishScore(d importer.Dish) float64 {
+	var sum float64
+	for _, v := range d.Variations {
+		sum += v.Score
+	}
+	return sum
+}
+
+// variationRef locates a variation in a dish list.
+type variationRef struct{ dish, variation int }
+
+// expectRegionRanks sets each variation's RegionRank: its position among its
+// region's variations by score descending, then by dish display order.
+func expectRegionRanks(dishes []catalog.Dish) {
+	byRegion := map[string][]variationRef{}
+	for di, d := range dishes {
+		for vi, v := range d.Variations {
+			byRegion[v.RegionKey] = append(byRegion[v.RegionKey], variationRef{di, vi})
+		}
+	}
+	score := func(r variationRef) float64 { return dishes[r.dish].Variations[r.variation].Score }
+	for _, refs := range byRegion {
+		slices.SortStableFunc(refs, func(a, b variationRef) int { return cmp.Compare(score(b), score(a)) })
+		for rank, r := range refs {
+			dishes[r.dish].Variations[r.variation].RegionRank = rank + 1
+		}
+	}
 }
 
 // variations lists the dish's variations in region order.
@@ -270,6 +306,7 @@ func (idx bundleIndex) variations(d importer.Dish, l catalog.Locale) []catalog.V
 			NameEs:      v.Name.Es,
 			Description: pick(v.Description, l),
 			Photos:      photosOf(v.Photos),
+			Score:       v.Score,
 		})
 	}
 	slices.SortFunc(out, func(a, b catalog.Variation) int {

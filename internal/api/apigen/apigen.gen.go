@@ -144,7 +144,7 @@ type Dish struct {
 	Name   string `json:"name"`
 	NameEs string `json:"nameEs"`
 
-	// Order Editorial order; Popular and region lists use it. There is no sort control.
+	// Order Display order: importance score, then editorial order (stack.md X15). There is no sort control.
 	Order int `json:"order"`
 
 	// Photos Key prefixes in the media CDN (stack.md X3), e.g.
@@ -278,7 +278,7 @@ type RegionDetail struct {
 	RegionalDishes []string `json:"regionalDishes"`
 	TileColor      string   `json:"tileColor"`
 
-	// Variations The variations cooked in this region, in dish order (`Dish.order`).
+	// Variations The variations cooked in this region, in `regionRank` order (variation score, then `Dish.order`; stack.md X15).
 	Variations []RegionVariation `json:"variations"`
 }
 
@@ -332,6 +332,9 @@ type VariationSummary struct {
 	// RegionKey Example: tortilla
 	RegionKey  Slug   `json:"regionKey"`
 	RegionName string `json:"regionName"`
+
+	// RegionRank Position in its region's list: importance score, then dish display order (stack.md X15). Region lists sort by it.
+	RegionRank int `json:"regionRank"`
 }
 
 // DishKey Example: tortilla

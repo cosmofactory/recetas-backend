@@ -25,7 +25,8 @@ const (
 type fakeRepo struct {
 	mu      sync.Mutex
 	version int64
-	empty   bool // no content imported yet: version 0, no rows
+	empty   bool           // no content imported yet: version 0, no rows
+	dishes  []catalog.Dish // when set, served instead of the fixture in every locale
 	fail    map[string]error
 	calls   map[string]int
 }
@@ -39,6 +40,14 @@ func newFakeRepo() *fakeRepo {
 func newEmptyFakeRepo() *fakeRepo {
 	r := newFakeRepo()
 	r.version, r.empty = 0, true
+	return r
+}
+
+// newFakeRepoWithDishes serves dishes, already in display order and ranked,
+// instead of the fixture's.
+func newFakeRepoWithDishes(dishes []catalog.Dish) *fakeRepo {
+	r := newFakeRepo()
+	r.dishes = dishes
 	return r
 }
 
@@ -110,6 +119,9 @@ func (r *fakeRepo) Dishes(_ context.Context, l catalog.Locale) ([]catalog.Dish, 
 	}
 	if r.empty {
 		return nil, nil
+	}
+	if r.dishes != nil {
+		return r.dishes, nil
 	}
 	return domainDishes(l), nil
 }

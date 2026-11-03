@@ -113,6 +113,7 @@ func loadVariations(ctx context.Context, q *catalogdb.Queries) (map[string]store
 			Name:        Text{r.NameEn, r.NameEs, r.NameRu},
 			Description: Text{r.DescriptionEn, r.DescriptionEs, r.DescriptionRu},
 			Photos:      &Photos{Thumb: r.PhotoThumb, Card: r.PhotoCard, Hero: r.PhotoHero},
+			Score:       r.Score,
 		}}
 	}
 	return out, nil

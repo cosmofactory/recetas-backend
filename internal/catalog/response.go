@@ -98,6 +98,7 @@ func toAPIVariation(v Variation) apigen.VariationSummary {
 	return apigen.VariationSummary{
 		RegionKey:   v.RegionKey,
 		RegionName:  v.RegionName,
+		RegionRank:  v.RegionRank,
 		RecipeKey:   v.RecipeKey,
 		Name:        v.Name,
 		NameEs:      v.NameEs,

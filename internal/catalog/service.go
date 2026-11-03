@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"slices"
@@ -33,7 +34,8 @@ func (s *Service) Regions(ctx context.Context, l Locale) ([]Region, int64, error
 	return regions, version, nil
 }
 
-// Region returns one region with every dish's variation there, in dish order.
+// Region returns one region with every dish's variation there, in RegionRank
+// order.
 func (s *Service) Region(ctx context.Context, key string, l Locale) (RegionDetail, int64, error) {
 	regions, version, err := s.Regions(ctx, l)
 	if err != nil {
@@ -114,7 +116,8 @@ func (s *Service) dishesAt(ctx context.Context, l Locale, version int64) ([]Dish
 	return dishes, nil
 }
 
-// variationsIn lists each dish's variation in regionKey, in dish order.
+// variationsIn lists each dish's variation in regionKey, in RegionRank order.
+// It sorts its own copies, so the shared dish list is left as it is.
 func variationsIn(dishes []Dish, regionKey string) []RegionVariation {
 	var out []RegionVariation
 	for _, d := range dishes {
@@ -124,5 +127,6 @@ func variationsIn(dishes []Dish, regionKey string) []RegionVariation {
 		}
 		out = append(out, RegionVariation{DishKey: d.Key, DishName: d.Name, DishNameEs: d.NameEs, Variation: d.Variations[i]})
 	}
+	slices.SortStableFunc(out, func(a, b RegionVariation) int { return cmp.Compare(a.RegionRank, b.RegionRank) })
 	return out
 }

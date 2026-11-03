@@ -68,6 +68,7 @@ func Parse(r io.Reader) (Bundle, error) {
 		return Bundle{}, invalidDocument("decode bundle: %v", err)
 	}
 	roundQuantities(b.Recipes)
+	roundScores(b.Dishes)
 	return b, nil
 }
 
@@ -91,13 +92,23 @@ func checkSchemaVersion(data []byte) error {
 func roundQuantities(recipes []Recipe) {
 	for _, r := range recipes {
 		for i := range r.Ingredients {
-			r.Ingredients[i].Quantity = roundQuantity(r.Ingredients[i].Quantity)
+			r.Ingredients[i].Quantity = roundToStored(r.Ingredients[i].Quantity)
 		}
 	}
 }
 
-func roundQuantity(q float64) float64 {
-	return math.Round(q*quantityScale) / quantityScale
+// roundScores rounds variation scores like quantities, for the same reason.
+func roundScores(dishes []Dish) {
+	for _, d := range dishes {
+		for i := range d.Variations {
+			d.Variations[i].Score = roundToStored(d.Variations[i].Score)
+		}
+	}
+}
+
+// roundToStored rounds to the 3 decimals quantities and scores are kept at.
+func roundToStored(x float64) float64 {
+	return math.Round(x*storedScale) / storedScale
 }
 
 func invalidDocument(format string, args ...any) error {

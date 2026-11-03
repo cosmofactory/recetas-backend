@@ -17,9 +17,12 @@ info:
       `If-None-Match` with `304 Not Modified`. `If-None-Match` is read from
       the raw request headers (it may be a list, or split over several header
       lines), so it is deliberately not declared as an operation parameter.
-    - Lists and nested lists are in editorial order: regions by `Region.order`,
-      dishes by `Dish.order`, variations of a dish by region order, variations
-      of a region by dish order. Never alphabetical, never per locale.
+    - Lists and nested lists have a fixed order: regions by `Region.order`,
+      dishes by `Dish.order` (a hidden importance score, then editorial
+      order; stack.md X15), variations of a dish by region order, variations
+      of a region by `VariationSummary.regionRank` (the variation's score,
+      then `Dish.order`). The score itself is never returned. Never
+      alphabetical, never per locale.
   license:
     name: MIT
 servers:
@@ -383,7 +386,7 @@ components:
           properties:
             variations:
               type: array
-              description: The variations cooked in this region, in dish order (`Dish.order`).
+              description: The variations cooked in this region, in `regionRank` order (variation score, then `Dish.order`; stack.md X15).
               items:
                 $ref: '#/components/schemas/RegionVariation'
 
@@ -421,7 +424,7 @@ components:
         order:
           type: integer
           minimum: 1
-          description: Editorial order; Popular and region lists use it. There is no sort control.
+          description: "Display order: importance score, then editorial order (stack.md X15). There is no sort control."
         name:
           type: string
         nameEs:
@@ -445,12 +448,16 @@ components:
     VariationSummary:
       type: object
       additionalProperties: false
-      required: [regionKey, regionName, recipeKey, name, nameEs, description, photos]
+      required: [regionKey, regionName, recipeKey, name, nameEs, description, photos, regionRank]
       properties:
         regionKey:
           $ref: '#/components/schemas/Slug'
         regionName:
           type: string
+        regionRank:
+          type: integer
+          minimum: 1
+          description: "Position in its region's list: importance score, then dish display order (stack.md X15). Region lists sort by it."
         recipeKey:
           $ref: '#/components/schemas/Slug'
         name:

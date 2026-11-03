@@ -394,6 +394,7 @@ SELECT
     v.photo_thumb,
     v.photo_card,
     v.photo_hero,
+    v.score,
     COALESCE(en.name, '')::text        AS name_en,
     COALESCE(es.name, '')::text        AS name_es,
     COALESCE(ru.name, '')::text        AS name_ru,
@@ -417,6 +418,7 @@ type ImportListVariationsRow struct {
 	PhotoThumb    *string `json:"photo_thumb"`
 	PhotoCard     *string `json:"photo_card"`
 	PhotoHero     *string `json:"photo_hero"`
+	Score         float64 `json:"score"`
 	NameEn        string  `json:"name_en"`
 	NameEs        string  `json:"name_es"`
 	NameRu        string  `json:"name_ru"`
@@ -442,6 +444,7 @@ func (q *Queries) ImportListVariations(ctx context.Context) ([]ImportListVariati
 			&i.PhotoThumb,
 			&i.PhotoCard,
 			&i.PhotoHero,
+			&i.Score,
 			&i.NameEn,
 			&i.NameEs,
 			&i.NameRu,

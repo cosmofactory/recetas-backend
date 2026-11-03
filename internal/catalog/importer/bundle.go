@@ -50,12 +50,14 @@ type Dish struct {
 }
 
 // Variation is a dish as cooked in one region; RecipeKey names its recipe.
+// Score is its hidden importance score (stack.md X15); 0 when missing.
 type Variation struct {
 	RegionKey   string  `json:"regionKey"`
 	RecipeKey   string  `json:"recipeKey"`
 	Name        Text    `json:"name"`
 	Description Text    `json:"description"`
 	Photos      *Photos `json:"photos"`
+	Score       float64 `json:"score,omitempty"`
 }
 
 type Ingredient struct {

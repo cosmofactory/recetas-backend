@@ -29,7 +29,10 @@ SELECT
 FROM dishes d
 LEFT JOIN dish_translations t ON t.dish_id = d.id AND t.locale = $1::text
 LEFT JOIN dish_translations es ON es.dish_id = d.id AND es.locale = $2::text
-ORDER BY d.sort_order
+LEFT JOIN (
+    SELECT dish_id, SUM(score::numeric) AS score FROM variations GROUP BY dish_id
+) ds ON ds.dish_id = d.id
+ORDER BY COALESCE(ds.score, 0) DESC, d.sort_order
 `
 
 type ListDishesParams struct {
@@ -55,6 +58,9 @@ type ListDishesRow struct {
 	NameEs       *string `json:"name_es"`
 }
 
+// Display order (stack.md X15): dish score, the sum of its variations'
+// scores, descending, then editorial order. Summed as numeric so float error
+// (0.1 + 0.7 < 0.8) never breaks a tie that is exact at the stored precision.
 func (q *Queries) ListDishes(ctx context.Context, arg ListDishesParams) ([]ListDishesRow, error) {
 	rows, err := q.db.Query(ctx, listDishes, arg.Locale, arg.Spanish)
 	if err != nil {
@@ -99,6 +105,7 @@ SELECT
     v.photo_thumb,
     v.photo_card,
     v.photo_hero,
+    v.score,
     t.name        AS name,
     t.description AS description,
     es.name       AS name_es,
@@ -124,6 +131,7 @@ type ListVariationsRow struct {
 	PhotoThumb  *string `json:"photo_thumb"`
 	PhotoCard   *string `json:"photo_card"`
 	PhotoHero   *string `json:"photo_hero"`
+	Score       float64 `json:"score"`
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
 	NameEs      *string `json:"name_es"`
@@ -146,6 +154,7 @@ func (q *Queries) ListVariations(ctx context.Context, arg ListVariationsParams) 
 			&i.PhotoThumb,
 			&i.PhotoCard,
 			&i.PhotoHero,
+			&i.Score,
 			&i.Name,
 			&i.Description,
 			&i.NameEs,
