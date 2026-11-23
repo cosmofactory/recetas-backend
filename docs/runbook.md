@@ -99,7 +99,7 @@ The full contract is [`content-import.md`](content-import.md). Dry run first, ev
 
 `docker compose run backend` goes through the image's entrypoint, which runs `goose up` first. So even a `--dry-run` import applies any pending migrations when the compose tag is ahead of the database.
 
-Run it as `deploy` from the owner's login (see "Who runs what" at the top); the repo's deploy key can't. To reseed demo with the design content, use recetas-infra's `scripts/reseed-demo.sh` (its RUNBOOK.md, Demo → Reseed).
+Run it as `deploy` from the owner's login (see "Who runs what" at the top); the repo's deploy key can't. To reseed demo with the design content, use recetas-infra's `scripts/reseed-demo.sh` (its RUNBOOK.md, Demo → Reseed). CI does this by itself: after `Deploy Demo`, the `Reseed Demo` job runs `reseed-demo.sh --auto` whenever `testdata/content.design.json` changed in the push (or on a manual run of the workflow with `reseed_demo`). The auto mode refuses unless demo's last import came from `design-seed` and the dry run deletes nothing, and it keeps a verified `pg_dump` in `/srv/recetas/demo/backups/` before importing, so pipeline content on demo is never overwritten and nothing is lost. Prod is never reseeded.
 
 ```bash
 # From your machine; the bundle goes over stdin. Demo:
