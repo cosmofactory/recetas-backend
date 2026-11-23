@@ -26,16 +26,18 @@ var (
 		{"variations", `SELECT count(*) FROM variations WHERE id = $1`, byVariation},
 		{"variation_translations", `SELECT count(*) FROM variation_translations WHERE variation_id = $1`, byVariation},
 	}
-	ingredientAndStepTranslationProbes = []probe{
+	listItemTranslationProbes = []probe{
 		{"recipe_ingredient_translations", `SELECT count(*) FROM recipe_ingredient_translations WHERE recipe_id = $1`, byRecipe},
 		{"recipe_step_translations", `SELECT count(*) FROM recipe_step_translations WHERE recipe_id = $1`, byRecipe},
+		{"recipe_tip_translations", `SELECT count(*) FROM recipe_tip_translations WHERE recipe_id = $1`, byRecipe},
 	}
 	recipeProbes = append([]probe{
 		{"recipes", `SELECT count(*) FROM recipes WHERE id = $1`, byRecipe},
 		{"recipe_ingredients", `SELECT count(*) FROM recipe_ingredients WHERE recipe_id = $1`, byRecipe},
 		{"recipe_steps", `SELECT count(*) FROM recipe_steps WHERE recipe_id = $1`, byRecipe},
+		{"recipe_tips", `SELECT count(*) FROM recipe_tips WHERE recipe_id = $1`, byRecipe},
 		{"recipe_translations", `SELECT count(*) FROM recipe_translations WHERE recipe_id = $1`, byRecipe},
-	}, ingredientAndStepTranslationProbes...)
+	}, listItemTranslationProbes...)
 	variationTreeProbes = append(append([]probe{}, variationProbes...), recipeProbes...)
 	dishProbes          = []probe{
 		{"dishes", `SELECT count(*) FROM dishes WHERE id = $1`, byDish},
@@ -68,12 +70,12 @@ var cascadeCases = []cascadeCase{
 	{"deleting a region removes its variations and keeps the dish",
 		[]string{`DELETE FROM regions WHERE id = $1`}, byRegion,
 		append(append([]probe{}, regionProbes...), variationTreeProbes...), dishProbes},
-	{"deleting a recipe removes its time notes, ingredients and steps",
+	{"deleting a recipe removes its time notes, ingredients, steps and tips",
 		[]string{`DELETE FROM recipes WHERE id = $1`}, byRecipe,
 		recipeProbes, variationProbes},
-	{"deleting an ingredient or step removes its translations",
-		[]string{`DELETE FROM recipe_ingredients WHERE recipe_id = $1`, `DELETE FROM recipe_steps WHERE recipe_id = $1`}, byRecipe,
-		ingredientAndStepTranslationProbes, nil},
+	{"deleting an ingredient, step or tip removes its translations",
+		[]string{`DELETE FROM recipe_ingredients WHERE recipe_id = $1`, `DELETE FROM recipe_steps WHERE recipe_id = $1`, `DELETE FROM recipe_tips WHERE recipe_id = $1`}, byRecipe,
+		listItemTranslationProbes, nil},
 }
 
 func TestIntegrationDeleteCascades(t *testing.T) {
@@ -106,6 +108,8 @@ func insertCascadeTree(t *testing.T, tx pgx.Tx) tree {
 	mustExec(t, tx, `INSERT INTO recipe_ingredient_translations (recipe_id, position, locale, name) VALUES ($1, 1, 'en', 'Eggs')`, tr.recipe)
 	mustExec(t, tx, `INSERT INTO recipe_steps (recipe_id, position) VALUES ($1, 1)`, tr.recipe)
 	mustExec(t, tx, `INSERT INTO recipe_step_translations (recipe_id, position, locale, text) VALUES ($1, 1, 'en', 'Beat.')`, tr.recipe)
+	mustExec(t, tx, `INSERT INTO recipe_tips (recipe_id, position) VALUES ($1, 1)`, tr.recipe)
+	mustExec(t, tx, `INSERT INTO recipe_tip_translations (recipe_id, position, locale, text) VALUES ($1, 1, 'en', 'Rest it.')`, tr.recipe)
 	mustExec(t, tx, `INSERT INTO recipe_translations (recipe_id, locale, time_note) VALUES ($1, 'en', '+ soaking')`, tr.recipe)
 	return tr
 }

@@ -163,6 +163,9 @@ func (l *loader) insertRecipe(variationID int64, v Variation) {
 	for i, step := range rc.Steps {
 		l.insertStep(id, firstPosition+i, step)
 	}
+	for i, tip := range rc.Tips {
+		l.insertTip(id, firstPosition+i, tip)
+	}
 }
 
 func (l *loader) insertTimeNote(recipeID int64, recipeKey string, note *Text) {
@@ -213,4 +216,15 @@ func sortedKeys(text Text) []string {
 	}
 	slices.Sort(keys)
 	return keys
+}
+
+func (l *loader) insertTip(recipeID int64, position int, tip Text) {
+	l.t.Helper()
+	l.exec("tip",
+		`INSERT INTO recipe_tips (recipe_id, position) VALUES ($1, $2)`,
+		recipeID, position)
+	l.requireLocales("tip", tip)
+	l.insertPerLocale("tip translation",
+		`INSERT INTO recipe_tip_translations (recipe_id, position, locale, text) VALUES ($1, $2, $3, $4)`,
+		func(loc string) []any { return []any{recipeID, position, loc, tip[loc]} })
 }

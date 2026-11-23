@@ -169,3 +169,37 @@ func (q *Queries) ListRecipeSteps(ctx context.Context, arg ListRecipeStepsParams
 	}
 	return items, nil
 }
+
+const listRecipeTips = `-- name: ListRecipeTips :many
+SELECT t.text AS text
+FROM recipe_tips s
+LEFT JOIN recipe_tip_translations t
+    ON t.recipe_id = s.recipe_id AND t.position = s.position AND t.locale = $1::text
+WHERE s.recipe_id = $2
+ORDER BY s.position
+`
+
+type ListRecipeTipsParams struct {
+	Locale   string `json:"locale"`
+	RecipeID int64  `json:"recipe_id"`
+}
+
+func (q *Queries) ListRecipeTips(ctx context.Context, arg ListRecipeTipsParams) ([]*string, error) {
+	rows, err := q.db.Query(ctx, listRecipeTips, arg.Locale, arg.RecipeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*string
+	for rows.Next() {
+		var text *string
+		if err := rows.Scan(&text); err != nil {
+			return nil, err
+		}
+		items = append(items, text)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

@@ -160,15 +160,17 @@ func ingredientsFromRows(rows []catalogdb.ListRecipeIngredientsRow, recipeKey st
 	return ingredients, nil
 }
 
-func stepsFromRows(rows []*string, recipeKey string, l Locale) ([]string, error) {
-	var steps []string
+// textsFromRows maps a recipe's step or tip texts, in order; a nil text is
+// a missing translation of entity.
+func textsFromRows(rows []*string, entity, recipeKey string, l Locale) ([]string, error) {
+	var texts []string
 	for _, text := range rows {
 		if text == nil {
-			return nil, &MissingTranslationError{Entity: entityRecipeStep, Key: recipeKey, Locale: l}
+			return nil, &MissingTranslationError{Entity: entity, Key: recipeKey, Locale: l}
 		}
-		steps = append(steps, *text)
+		texts = append(texts, *text)
 	}
-	return steps, nil
+	return texts, nil
 }
 
 // indexBy maps each item's key to its position.

@@ -122,6 +122,7 @@ func toAPIRecipe(rc Recipe) apigen.Recipe {
 		BaseServings: rc.BaseServings,
 		Ingredients:  mapSlice(rc.Ingredients, toAPIIngredient),
 		Steps:        nonNil(rc.Steps),
+		Tips:         nonNil(rc.Tips),
 		Photos:       toAPIPhotos(rc.Photos),
 	}
 }

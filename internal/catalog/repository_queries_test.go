@@ -137,6 +137,7 @@ func missingCases() []missingCase {
 		{"region name in variation summaries", `DELETE FROM region_translations WHERE region_id = $1 AND locale = $2`, region, "ru", readDishes, "gal"},
 		{"recipe ingredient ru", `DELETE FROM recipe_ingredient_translations WHERE recipe_id = $1 AND position = 2 AND locale = $2`, recipe, "ru", readFabada, "fabada-asturiana"},
 		{"recipe step ru", `DELETE FROM recipe_step_translations WHERE recipe_id = $1 AND position = 3 AND locale = $2`, recipe, "ru", readFabada, "fabada-asturiana"},
+		{"recipe tip ru", `DELETE FROM recipe_tip_translations WHERE recipe_id = $1 AND position = 2 AND locale = $2`, recipe, "ru", readFabada, "fabada-asturiana"},
 		{"recipe time note ru", `DELETE FROM recipe_translations WHERE recipe_id = $1 AND locale = $2`, recipe, "ru", readFabada, "fabada-asturiana"},
 	}
 }

@@ -73,6 +73,7 @@ type Recipe struct {
 	BaseServings int          `json:"baseServings"`
 	Ingredients  []Ingredient `json:"ingredients"`
 	Steps        []Text       `json:"steps"`
+	Tips         []Text       `json:"tips,omitempty"` // omitted when empty, so tip-less bundles keep their checksum
 }
 
 // Bundle lists regions and dishes in editorial order, and one recipe per

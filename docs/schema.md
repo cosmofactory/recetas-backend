@@ -1,6 +1,6 @@
 # Database schema
 
-Written by hand from `db/migrations/` (00002–00009); the migrations are the source of truth.
+Written by hand from `db/migrations/` (00002–00010); the migrations are the source of truth.
 
 ## Conventions
 
@@ -24,6 +24,8 @@ Every human-readable field lives in a `*_translations` table keyed by its parent
 | `recipe_ingredient_translations` | `(recipe_id, position, locale)` | `name` |
 | `recipe_steps` | `(recipe_id, position)` | none beyond the key |
 | `recipe_step_translations` | `(recipe_id, position, locale)` | `text` |
+| `recipe_tips` | `(recipe_id, position)` | none beyond the key; 0–3 per recipe (the importer's limit), no rows means no tips |
+| `recipe_tip_translations` | `(recipe_id, position, locale)` | `text` |
 | `content_versions` | `id` | `imported_at`, `source`, `checksum`; the latest row feeds the API ETag |
 
 Positions are 1-based.
@@ -44,8 +46,10 @@ erDiagram
     recipes ||--o{ recipe_translations : ""
     recipes ||--o{ recipe_ingredients : ""
     recipes ||--o{ recipe_steps : ""
+    recipes ||--o{ recipe_tips : ""
     recipe_ingredients ||--o{ recipe_ingredient_translations : ""
     recipe_steps ||--o{ recipe_step_translations : ""
+    recipe_tips ||--o{ recipe_tip_translations : ""
 
     regions {
         bigint id PK
@@ -80,6 +84,10 @@ erDiagram
         text unit
     }
     recipe_steps {
+        bigint recipe_id PK,FK
+        int position PK
+    }
+    recipe_tips {
         bigint recipe_id PK,FK
         int position PK
     }

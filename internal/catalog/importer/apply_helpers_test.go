@@ -74,6 +74,8 @@ UNION ALL SELECT 'recipe_ingredients', count(*) FROM recipe_ingredients
 UNION ALL SELECT 'recipe_ingredient_translations', count(*) FROM recipe_ingredient_translations
 UNION ALL SELECT 'recipe_steps', count(*) FROM recipe_steps
 UNION ALL SELECT 'recipe_step_translations', count(*) FROM recipe_step_translations
+UNION ALL SELECT 'recipe_tips', count(*) FROM recipe_tips
+UNION ALL SELECT 'recipe_tip_translations', count(*) FROM recipe_tip_translations
 UNION ALL SELECT 'content_versions', count(*) FROM content_versions`
 
 // rowIDsSQL names every catalog row by its natural key, so tests can tell an
@@ -350,6 +352,9 @@ func (idx bundleIndex) recipe(p dishVariation, l catalog.Locale) catalog.Recipe 
 	for _, s := range rc.Steps {
 		out.Steps = append(out.Steps, pick(s, l))
 	}
+	for _, tip := range rc.Tips {
+		out.Tips = append(out.Tips, pick(tip, l))
+	}
 	return out
 }
 
@@ -374,6 +379,8 @@ func recipeTreeRows(rc importer.Recipe) map[string]int64 {
 		"recipe_ingredient_translations": 3 * int64(len(rc.Ingredients)),
 		"recipe_steps":                   int64(len(rc.Steps)),
 		"recipe_step_translations":       3 * int64(len(rc.Steps)),
+		"recipe_tips":                    int64(len(rc.Tips)),
+		"recipe_tip_translations":        3 * int64(len(rc.Tips)),
 	}
 	if rc.TimeNote != nil {
 		rows["recipe_translations"] = 3

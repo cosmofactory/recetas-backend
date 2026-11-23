@@ -13,6 +13,16 @@ import (
 // betanzosRecipeSQL selects the id of the tortilla-betanzos recipe.
 const betanzosRecipeSQL = `(SELECT r.id FROM recipes r JOIN variations v ON v.id = r.variation_id WHERE v.recipe_key = 'tortilla-betanzos')`
 
+// extraBetanzosTipSQL gives tortilla-betanzos, which has no tips in the
+// bundle, a complete tip in every locale.
+const extraBetanzosTipSQL = `WITH tip AS (
+	INSERT INTO recipe_tips (recipe_id, position) SELECT ` + betanzosRecipeSQL + `, 1 RETURNING recipe_id, position)
+INSERT INTO recipe_tip_translations (recipe_id, position, locale, text)
+SELECT tip.recipe_id, tip.position, l.code, 'Extra tip.' FROM tip CROSS JOIN locales l`
+
+// fabadaRecipeSQL selects the id of the fabada-asturiana recipe, the one with tips.
+const fabadaRecipeSQL = `(SELECT r.id FROM recipes r JOIN variations v ON v.id = r.variation_id WHERE v.recipe_key = 'fabada-asturiana')`
+
 // A database edited behind the importer's back is repaired by re-importing the
 // bundle it came from, even though the bundle's checksum is the latest one.
 func TestApply_ReimportRepairsDrift(t *testing.T) {
@@ -32,6 +42,11 @@ func TestApply_ReimportRepairsDrift(t *testing.T) {
 			map[string]importer.Counts{"variations": {Updated: 1}}},
 		{"recipe step deleted", "DELETE FROM recipe_steps WHERE position = 2 AND recipe_id = " + betanzosRecipeSQL,
 			map[string]importer.Counts{"recipes": {Updated: 1}}},
+		{"recipe tip deleted", "DELETE FROM recipe_tips WHERE position = 2 AND recipe_id = " + fabadaRecipeSQL,
+			map[string]importer.Counts{"recipes": {Updated: 1}}},
+		{"recipe tip translation hand-edited", "UPDATE recipe_tip_translations SET text = 'Otro truco.' WHERE locale = 'es' AND position = 1 AND recipe_id = " + fabadaRecipeSQL,
+			map[string]importer.Counts{"recipes": {Updated: 1}}},
+		{"recipe tip added by hand", extraBetanzosTipSQL, map[string]importer.Counts{"recipes": {Updated: 1}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

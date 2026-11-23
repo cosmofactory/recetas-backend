@@ -136,6 +136,10 @@ func betanzosRecipe() Recipe {
 			{"en": "Heat a spoon of the oil in a small pan until very hot. Pour in and cook for 40 seconds.", "es": "Calienta una cucharada del aceite en una sartén pequeña hasta que esté muy caliente. Vierte y cuaja 40 segundos.", "ru": "Сильно разогрейте ложку масла в маленькой сковороде. Вылейте смесь и жарьте 40 секунд."},
 			{"en": "Flip with a plate, cook 20 seconds more and serve at once — the centre should run.", "es": "Dale la vuelta con un plato, 20 segundos más y sirve enseguida: el centro debe quedar jugoso.", "ru": "Переверните с помощью тарелки, жарьте ещё 20 секунд и сразу подавайте — серединка должна остаться жидкой."},
 		},
+		Tips: []Text{
+			{"en": "Use a pan just wide enough for the mixture, so the tortilla stays thick.", "es": "Usa una sartén justa para la mezcla, así la tortilla queda alta.", "ru": "Берите сковороду ровно под объём смеси, чтобы тортилья вышла высокой."},
+			{"en": "Wet the plate before flipping so the tortilla slides back easily.", "es": "Moja el plato antes de darle la vuelta para que la tortilla resbale bien.", "ru": "Смочите тарелку перед переворотом, чтобы тортилья легко соскользнула обратно."},
+		},
 	}
 }
 
@@ -209,6 +213,11 @@ func fabadaRecipe() Recipe {
 			{"en": "Simmer very gently for 2½–3 hours, adding cold water to “scare” the beans when it boils.", "es": "Cuece muy suave 2½–3 horas, «asustando» las fabes con agua fría cuando hierva.", "ru": "Томите на очень слабом огне 2½–3 часа, «пугая» фасоль холодной водой, когда закипит."},
 			{"en": "Add saffron halfway. Never stir — shake the pot instead.", "es": "Añade el azafrán a mitad de cocción. Nunca remuevas: mueve la olla.", "ru": "На полпути добавьте шафран. Никогда не мешайте — встряхивайте кастрюлю."},
 			{"en": "Rest an hour before serving. Better the next day.", "es": "Reposa una hora antes de servir. Mejor al día siguiente.", "ru": "Дайте постоять час перед подачей. На следующий день ещё вкуснее."},
+		},
+		Tips: []Text{
+			{"en": "Use soft water for soaking and cooking; hard water keeps the skins tough.", "es": "Usa agua blanda para el remojo y la cocción; el agua dura endurece la piel.", "ru": "Для замачивания и варки берите мягкую воду: в жёсткой кожица остаётся грубой."},
+			{"en": "Prick the morcilla before it goes in so it doesn't burst.", "es": "Pincha la morcilla antes de echarla para que no reviente.", "ru": "Наколите морсилью перед закладкой, чтобы она не лопнула."},
+			{"en": "Keep the simmer barely moving; a rolling boil splits the beans.", "es": "Mantén un hervor muy suave; si borbotea, las fabes se rompen.", "ru": "Поддерживайте едва заметное кипение: при бурном фасоль лопается."},
 		},
 	}
 }

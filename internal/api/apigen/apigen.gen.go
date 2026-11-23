@@ -241,6 +241,9 @@ type Recipe struct {
 
 	// TimeNote Optional addition shown after the formatted time, e.g. "+ soaking". `null` for most recipes.
 	TimeNote *string `json:"timeNote"`
+
+	// Tips Optional cooking tips shown after the steps, in order. Empty when the recipe has none; never `null`.
+	Tips []string `json:"tips"`
 }
 
 // Region defines model for Region.

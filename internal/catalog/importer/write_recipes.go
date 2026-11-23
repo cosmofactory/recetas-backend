@@ -16,8 +16,8 @@ func (w *writer) writeRecipes(ctx context.Context, writes []recipeWrite) error {
 	return nil
 }
 
-// writeRecipe saves the recipe row and replaces its time note, ingredients
-// and steps, which are keyed by position.
+// writeRecipe saves the recipe row and replaces its time note, ingredients,
+// steps and tips, which are keyed by position.
 func (w *writer) writeRecipe(ctx context.Context, rw recipeWrite) error {
 	id, err := w.saveRecipeRow(ctx, rw)
 	if err != nil {
@@ -34,7 +34,10 @@ func (w *writer) writeRecipe(ctx context.Context, rw recipeWrite) error {
 	if err := w.insertIngredients(ctx, id, rw.recipe.Ingredients); err != nil {
 		return err
 	}
-	return w.insertSteps(ctx, id, rw.recipe.Steps)
+	if err := w.insertSteps(ctx, id, rw.recipe.Steps); err != nil {
+		return err
+	}
+	return w.insertTips(ctx, id, rw.recipe.Tips)
 }
 
 func (w *writer) saveRecipeRow(ctx context.Context, rw recipeWrite) (int64, error) {
@@ -62,6 +65,9 @@ func (w *writer) clearRecipe(ctx context.Context, id int64) error {
 	}
 	if err := w.q.ImportDeleteSteps(ctx, id); err != nil {
 		return fmt.Errorf("clear steps: %w", err)
+	}
+	if err := w.q.ImportDeleteTips(ctx, id); err != nil {
+		return fmt.Errorf("clear tips: %w", err)
 	}
 	return nil
 }

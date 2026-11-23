@@ -77,6 +77,18 @@ type RecipeStepTranslation struct {
 	Text     string `json:"text"`
 }
 
+type RecipeTip struct {
+	RecipeID int64 `json:"recipe_id"`
+	Position int32 `json:"position"`
+}
+
+type RecipeTipTranslation struct {
+	RecipeID int64  `json:"recipe_id"`
+	Position int32  `json:"position"`
+	Locale   string `json:"locale"`
+	Text     string `json:"text"`
+}
+
 type RecipeTranslation struct {
 	RecipeID int64  `json:"recipe_id"`
 	Locale   string `json:"locale"`

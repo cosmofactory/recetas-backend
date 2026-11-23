@@ -148,6 +148,7 @@ func sameVariation(a, b Variation) bool {
 }
 
 func sameRecipe(a, b Recipe) bool {
+	a.Tips, b.Tips = nonEmpty(a.Tips), nonEmpty(b.Tips)
 	return reflect.DeepEqual(a, b)
 }
 

@@ -44,3 +44,11 @@ LEFT JOIN recipe_step_translations t
     ON t.recipe_id = s.recipe_id AND t.position = s.position AND t.locale = sqlc.arg(locale)::text
 WHERE s.recipe_id = sqlc.arg(recipe_id)
 ORDER BY s.position;
+
+-- name: ListRecipeTips :many
+SELECT t.text AS text
+FROM recipe_tips s
+LEFT JOIN recipe_tip_translations t
+    ON t.recipe_id = s.recipe_id AND t.position = s.position AND t.locale = sqlc.arg(locale)::text
+WHERE s.recipe_id = sqlc.arg(recipe_id)
+ORDER BY s.position;

@@ -39,6 +39,8 @@ var domainTables = []string{
 	"recipe_ingredient_translations",
 	"recipe_steps",
 	"recipe_step_translations",
+	"recipe_tips",
+	"recipe_tip_translations",
 	"content_versions",
 }
 

@@ -96,8 +96,16 @@ func validateRecipe(ps *problems, at pointer, rc Recipe) {
 	if len(rc.Steps) == 0 {
 		ps.add(at.at("steps"), "a recipe needs at least one step")
 	}
-	for j, step := range rc.Steps {
-		checkText(ps, at.at("steps", j), step)
+	checkTexts(ps, at.at("steps"), rc.Steps)
+	if len(rc.Tips) > maxTips {
+		ps.add(at.at("tips"), "a recipe has at most %d tips, not %d", maxTips, len(rc.Tips))
+	}
+	checkTexts(ps, at.at("tips"), rc.Tips)
+}
+
+func checkTexts(ps *problems, at pointer, texts []Text) {
+	for i, t := range texts {
+		checkText(ps, at.at(i), t)
 	}
 }
 

@@ -133,3 +133,18 @@ LEFT JOIN recipe_step_translations es
 LEFT JOIN recipe_step_translations ru
     ON ru.recipe_id = s.recipe_id AND ru.position = s.position AND ru.locale = 'ru'
 ORDER BY s.recipe_id, s.position;
+
+-- name: ImportListTips :many
+SELECT
+    s.recipe_id,
+    COALESCE(en.text, '')::text AS text_en,
+    COALESCE(es.text, '')::text AS text_es,
+    COALESCE(ru.text, '')::text AS text_ru
+FROM recipe_tips s
+LEFT JOIN recipe_tip_translations en
+    ON en.recipe_id = s.recipe_id AND en.position = s.position AND en.locale = 'en'
+LEFT JOIN recipe_tip_translations es
+    ON es.recipe_id = s.recipe_id AND es.position = s.position AND es.locale = 'es'
+LEFT JOIN recipe_tip_translations ru
+    ON ru.recipe_id = s.recipe_id AND ru.position = s.position AND ru.locale = 'ru'
+ORDER BY s.recipe_id, s.position;

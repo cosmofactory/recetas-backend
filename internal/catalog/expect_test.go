@@ -177,6 +177,15 @@ func localeSteps(rc catalogtest.Recipe, l catalog.Locale) []string {
 	return out
 }
 
+// localeTips is the recipe's tips in l, in order; nil when it has none.
+func localeTips(rc catalogtest.Recipe, l catalog.Locale) []string {
+	var out []string
+	for _, tip := range rc.Tips {
+		out = append(out, tip[string(l)])
+	}
+	return out
+}
+
 func timeNote(rc catalogtest.Recipe, l catalog.Locale) *string {
 	if rc.TimeNote == nil {
 		return nil
@@ -208,6 +217,7 @@ func domainRecipe(dishKey, regionKey string, l catalog.Locale) (catalog.Recipe, 
 		BaseServings: v.Recipe.BaseServings,
 		Ingredients:  domainIngredients(v.Recipe, l),
 		Steps:        localeSteps(v.Recipe, l),
+		Tips:         localeTips(v.Recipe, l),
 		Photos:       domainPhotos(v.Photos),
 	}, true
 }
