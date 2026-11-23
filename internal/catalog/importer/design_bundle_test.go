@@ -34,7 +34,7 @@ func TestDesignBundle_Shape(t *testing.T) {
 	if b.SchemaVersion != importer.SchemaVersion {
 		t.Errorf("got schemaVersion %d, want %d", b.SchemaVersion, importer.SchemaVersion)
 	}
-	wantRegions := []string{"gal", "ast", "bas", "cat", "cyl", "mad", "ara", "val", "ext", "clm", "mur", "and", "bal", "can"}
+	wantRegions := []string{"gal", "ast", "cnb", "bas", "nav", "rio", "cat", "cyl", "mad", "ara", "val", "ext", "clm", "mur", "and", "bal", "can"}
 	if got := regionKeysOf(b); !reflect.DeepEqual(got, wantRegions) {
 		t.Errorf("got region keys %q, want %q", got, wantRegions)
 	}
@@ -52,7 +52,7 @@ func TestDesignBundle_Shape(t *testing.T) {
 
 func TestDesignBundle_KeepsDesignTexts(t *testing.T) {
 	b := readDesignBundle(t)
-	if got, want := b.Regions[2].Name, (importer.Text{En: "Basque Country", Es: "País Vasco", Ru: "Страна Басков"}); got != want {
+	if got, want := b.Regions[3].Name, (importer.Text{En: "Basque Country", Es: "País Vasco", Ru: "Страна Басков"}); got != want {
 		t.Errorf("bas name: got %+v, want %+v", got, want)
 	}
 	if got, want := b.Regions[0].RegionalDishes, []string{"Pulpo á feira", "Empanada gallega", "Lacón con grelos"}; !reflect.DeepEqual(got, want) {
