@@ -132,9 +132,9 @@ func TestRun_ImportsFileAndPrintsSummary(t *testing.T) {
 	tx := emptyTx(t)
 	r := runCLI(t, []string{"--source", "local seed", "--file", designBundlePath}, strings.NewReader(""), tx)
 	r.requireCode(t, 0)
-	assertContains(t, "stdout", r.stdout, "regions", "dishes", "variations", "recipes", "14", "54")
-	if got := count(t, tx, "regions"); got != 14 {
-		t.Errorf("got %d regions, want 14", got)
+	assertContains(t, "stdout", r.stdout, "regions", "dishes", "variations", "recipes", "17", "54")
+	if got := count(t, tx, "regions"); got != 17 {
+		t.Errorf("got %d regions, want 17", got)
 	}
 	if got := latestSource(t, tx); got != "local seed" {
 		t.Errorf("source: got %q, want %q", got, "local seed")
@@ -177,7 +177,7 @@ func TestRun_DryRunPrintsSummaryAndWritesNothing(t *testing.T) {
 	tx := emptyTx(t)
 	r := runCLI(t, []string{"--source", "check", "--dry-run", "--file", designBundlePath}, strings.NewReader(""), tx)
 	r.requireCode(t, 0)
-	assertContains(t, "stdout", r.stdout, "dry run", "regions", "14")
+	assertContains(t, "stdout", r.stdout, "dry run", "regions", "17")
 	for _, table := range []string{"regions", "recipes", "content_versions"} {
 		if got := count(t, tx, table); got != 0 {
 			t.Errorf("%s: got %d rows after a dry run, want 0", table, got)

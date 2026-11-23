@@ -14,7 +14,7 @@ import (
 )
 
 var designCreated = map[string]importer.Counts{
-	"regions":    {Created: 14},
+	"regions":    {Created: 17},
 	"dishes":     {Created: 7},
 	"variations": {Created: 54},
 	"recipes":    {Created: 54},
@@ -71,7 +71,7 @@ func TestApply_DesignContent(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Regions(%s): %v", l, err)
 		}
-		requireLen(t, "regions "+string(l), len(regions), 14)
+		requireLen(t, "regions "+string(l), len(regions), 17)
 		if regions[0].Key != "gal" || regions[0].Name != want {
 			t.Errorf("%s first region: got %s %q, want gal %q", l, regions[0].Key, regions[0].Name, want)
 		}
@@ -193,7 +193,7 @@ func TestApply_ReordersRegionsAndDishes(t *testing.T) {
 		{"move the last to the front", func(b *importer.Bundle) {
 			b.Regions = append(b.Regions[len(b.Regions)-1:], b.Regions[:len(b.Regions)-1]...)
 			b.Dishes = append(b.Dishes[len(b.Dishes)-1:], b.Dishes[:len(b.Dishes)-1]...)
-		}, map[string]importer.Counts{"regions": {Updated: 14}, "dishes": {Updated: 7}}},
+		}, map[string]importer.Counts{"regions": {Updated: 17}, "dishes": {Updated: 7}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

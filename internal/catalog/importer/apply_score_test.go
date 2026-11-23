@@ -205,7 +205,7 @@ func assertRegionInDishOrder(t *testing.T, svc *catalog.Service, regionKey strin
 	if err != nil {
 		t.Fatalf("Region(%s): %v", regionKey, err)
 	}
-	var want []string
+	want := []string{} // a region with no variations yet (cnb, nav, rio) has an empty list
 	for _, d := range dishes {
 		i := slices.IndexFunc(d.Variations, func(v catalog.Variation) bool { return v.RegionKey == regionKey })
 		if i < 0 {
