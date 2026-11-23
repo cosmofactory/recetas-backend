@@ -385,6 +385,54 @@ func (q *Queries) ImportListSteps(ctx context.Context) ([]ImportListStepsRow, er
 	return items, nil
 }
 
+const importListTips = `-- name: ImportListTips :many
+SELECT
+    s.recipe_id,
+    COALESCE(en.text, '')::text AS text_en,
+    COALESCE(es.text, '')::text AS text_es,
+    COALESCE(ru.text, '')::text AS text_ru
+FROM recipe_tips s
+LEFT JOIN recipe_tip_translations en
+    ON en.recipe_id = s.recipe_id AND en.position = s.position AND en.locale = 'en'
+LEFT JOIN recipe_tip_translations es
+    ON es.recipe_id = s.recipe_id AND es.position = s.position AND es.locale = 'es'
+LEFT JOIN recipe_tip_translations ru
+    ON ru.recipe_id = s.recipe_id AND ru.position = s.position AND ru.locale = 'ru'
+ORDER BY s.recipe_id, s.position
+`
+
+type ImportListTipsRow struct {
+	RecipeID int64  `json:"recipe_id"`
+	TextEn   string `json:"text_en"`
+	TextEs   string `json:"text_es"`
+	TextRu   string `json:"text_ru"`
+}
+
+func (q *Queries) ImportListTips(ctx context.Context) ([]ImportListTipsRow, error) {
+	rows, err := q.db.Query(ctx, importListTips)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ImportListTipsRow
+	for rows.Next() {
+		var i ImportListTipsRow
+		if err := rows.Scan(
+			&i.RecipeID,
+			&i.TextEn,
+			&i.TextEs,
+			&i.TextRu,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const importListVariations = `-- name: ImportListVariations :many
 SELECT
     v.id,

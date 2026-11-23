@@ -98,6 +98,7 @@ type Recipe struct {
 	BaseServings int
 	Ingredients  []Ingredient
 	Steps        []string
+	Tips         []string // nil when the recipe has none
 	Photos       Photos
 }
 

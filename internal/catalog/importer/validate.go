@@ -14,6 +14,7 @@ const (
 	maxTimeMinutes = 7 * 24 * 60
 	maxQuantity    = 9_999_999
 	maxScore       = 1_000_000
+	maxTips        = 3
 	storedScale    = 1000 // quantities and scores are stored with 3 decimal places
 )
 

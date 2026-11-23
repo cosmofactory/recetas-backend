@@ -158,6 +158,7 @@ func TestApply_ChangeUpdatesOnlyThatRow(t *testing.T) {
 		{"variation score", "variations", func(b *importer.Bundle) { b.Dishes[1].Variations[0].Score = 12.5 }},
 		{"recipe step", "recipes", func(b *importer.Bundle) { b.Recipes[0].Steps[1].Ru = "Новый шаг." }},
 		{"recipe ingredient name", "recipes", func(b *importer.Bundle) { b.Recipes[0].Ingredients[0].Name.Es = "Huevos camperos" }},
+		{"recipe tip added", "recipes", func(b *importer.Bundle) { b.Recipes[0].Tips = []importer.Text{txt("Rest it for a minute.")} }},
 		{"recipe time note added", "recipes", func(b *importer.Bundle) {
 			b.Recipes[0].TimeNote = &importer.Text{En: "+ resting", Es: "+ reposo", Ru: "+ отдых"}
 		}},
@@ -217,6 +218,9 @@ func TestApply_DryRunReportsWithoutWriting(t *testing.T) {
 	}{
 		{"first import", false, func(*testing.T, *importer.Bundle) {}},
 		{"update", true, func(_ *testing.T, b *importer.Bundle) { b.Regions[0].Name.En = "Galiza" }},
+		{"tip added", true, func(_ *testing.T, b *importer.Bundle) {
+			b.Recipes[0].Tips = []importer.Text{txt("Rest it for a minute.")}
+		}},
 		{"removal", true, func(t *testing.T, b *importer.Bundle) { removeVariation(t, b, "cocido", "ast") }},
 		{"identical", true, func(*testing.T, *importer.Bundle) {}},
 	}

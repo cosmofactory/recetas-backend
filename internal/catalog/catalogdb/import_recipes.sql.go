@@ -38,6 +38,16 @@ func (q *Queries) ImportDeleteTimeNotes(ctx context.Context, recipeID int64) err
 	return err
 }
 
+const importDeleteTips = `-- name: ImportDeleteTips :exec
+DELETE FROM recipe_tips WHERE recipe_id = $1
+`
+
+// Their translations cascade.
+func (q *Queries) ImportDeleteTips(ctx context.Context, recipeID int64) error {
+	_, err := q.db.Exec(ctx, importDeleteTips, recipeID)
+	return err
+}
+
 const importInsertIngredientTranslations = `-- name: ImportInsertIngredientTranslations :exec
 INSERT INTO recipe_ingredient_translations (recipe_id, position, locale, name)
 SELECT
@@ -162,6 +172,48 @@ type ImportInsertTimeNotesParams struct {
 
 func (q *Queries) ImportInsertTimeNotes(ctx context.Context, arg ImportInsertTimeNotesParams) error {
 	_, err := q.db.Exec(ctx, importInsertTimeNotes, arg.RecipeID, arg.Locales, arg.TimeNotes)
+	return err
+}
+
+const importInsertTipTranslations = `-- name: ImportInsertTipTranslations :exec
+INSERT INTO recipe_tip_translations (recipe_id, position, locale, text)
+SELECT
+    $1::bigint,
+    unnest($2::bigint[]),
+    unnest($3::text[]),
+    unnest($4::text[])
+`
+
+type ImportInsertTipTranslationsParams struct {
+	RecipeID  int64    `json:"recipe_id"`
+	Positions []int64  `json:"positions"`
+	Locales   []string `json:"locales"`
+	Texts     []string `json:"texts"`
+}
+
+func (q *Queries) ImportInsertTipTranslations(ctx context.Context, arg ImportInsertTipTranslationsParams) error {
+	_, err := q.db.Exec(ctx, importInsertTipTranslations,
+		arg.RecipeID,
+		arg.Positions,
+		arg.Locales,
+		arg.Texts,
+	)
+	return err
+}
+
+const importInsertTips = `-- name: ImportInsertTips :exec
+INSERT INTO recipe_tips (recipe_id, position)
+SELECT $1::bigint, generate_series(1, $2::bigint)
+`
+
+type ImportInsertTipsParams struct {
+	RecipeID int64 `json:"recipe_id"`
+	Count    int64 `json:"count"`
+}
+
+// Positions are 1-based.
+func (q *Queries) ImportInsertTips(ctx context.Context, arg ImportInsertTipsParams) error {
+	_, err := q.db.Exec(ctx, importInsertTips, arg.RecipeID, arg.Count)
 	return err
 }
 

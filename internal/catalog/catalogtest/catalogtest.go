@@ -40,6 +40,7 @@ type Recipe struct {
 	BaseServings int
 	Ingredients  []Ingredient
 	Steps        []Text
+	Tips         []Text // nil = no tips (no recipe_tips rows)
 }
 
 // Photos are media object key prefixes (stack.md X3:

@@ -51,13 +51,13 @@ Two runs, because the API isn't public (see the [load test README](../scripts/lo
 
 ### N+1 check
 
-One catalog request of each kind in Logfire, with its `query …` span count (BE-6). The counts are fixed whatever the catalog size: every request reads the content version (`query LatestContentVersion`); `GET /v1/dishes` adds `ListDishes` and `ListVariations` only when its (locale, version) list isn't memoised yet, so expect 3 spans cold and 1 warm; the recipe always adds `GetRecipeByDishRegion`, `ListRecipeIngredients` and `ListRecipeSteps`, so 4. Anything that grows with the number of dishes or variations is an N+1.
+One catalog request of each kind in Logfire, with its `query …` span count (BE-6). The counts are fixed whatever the catalog size: every request reads the content version (`query LatestContentVersion`); `GET /v1/dishes` adds `ListDishes` and `ListVariations` only when its (locale, version) list isn't memoised yet, so expect 3 spans cold and 1 warm; the recipe always adds `GetRecipeByDishRegion`, `ListRecipeIngredients`, `ListRecipeSteps` and `ListRecipeTips`, so 5. Anything that grows with the number of dishes or variations is an N+1.
 
 | Request | trace_id | Memo | SQL spans | Expected |
 |---------|----------|------|-----------|----------|
 | `GET /v1/dishes` | | cold | | 3 |
 | `GET /v1/dishes` | | warm | | 1 |
-| `GET /v1/dishes/{dishKey}/variations/{regionKey}/recipe` | | n/a | | 4 |
+| `GET /v1/dishes/{dishKey}/variations/{regionKey}/recipe` | | n/a | | 5 |
 
 ## Local smoke run, not a baseline
 

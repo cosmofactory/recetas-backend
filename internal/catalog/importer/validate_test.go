@@ -34,6 +34,9 @@ func TestValidate_AcceptsValidBundles(t *testing.T) {
 		{"region without variations", func(b *importer.Bundle) {
 			b.Regions = append(b.Regions, region("can", "#A8632F"))
 		}},
+		{"no tips", func(b *importer.Bundle) { b.Recipes[3].Tips = nil }},
+		{"empty tips", func(b *importer.Bundle) { b.Recipes[3].Tips = []importer.Text{} }},
+		{"one tip", func(b *importer.Bundle) { b.Recipes[0].Tips = []importer.Text{txt("Rest it for a minute.")} }},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -117,6 +120,11 @@ func TestValidate_RejectsWithPointers(t *testing.T) {
 			[]string{"/recipes/0/ingredients"}},
 		{"no steps", func(b *importer.Bundle) { b.Recipes[2].Steps = []importer.Text{} },
 			[]string{"/recipes/2/steps"}},
+		{"four tips", func(b *importer.Bundle) { b.Recipes[3].Tips = append(b.Recipes[3].Tips, txt("One too many.")) },
+			[]string{"/recipes/3/tips"}},
+		{"four tips, one of them blank", func(b *importer.Bundle) {
+			b.Recipes[3].Tips = append(b.Recipes[3].Tips, importer.Text{En: "One too many.", Es: "Uno de más."})
+		}, []string{"/recipes/3/tips", "/recipes/3/tips/3/ru"}},
 
 		// tile color
 		{"short tile color", func(b *importer.Bundle) { b.Regions[0].TileColor = "#ABC" },
@@ -149,6 +157,12 @@ func TestValidate_RejectsWithPointers(t *testing.T) {
 			[]string{"/recipes/0/ingredients/2/name/en"}},
 		{"step ru", func(b *importer.Bundle) { b.Recipes[0].Steps[1].Ru = "" },
 			[]string{"/recipes/0/steps/1/ru"}},
+		{"tip es", func(b *importer.Bundle) { b.Recipes[3].Tips[1].Es = "" },
+			[]string{"/recipes/3/tips/1/es"}},
+		{"whitespace-only tip", func(b *importer.Bundle) { b.Recipes[3].Tips[0].En = "  " },
+			[]string{"/recipes/3/tips/0/en"}},
+		{"every locale of one tip", func(b *importer.Bundle) { b.Recipes[3].Tips[2] = importer.Text{} },
+			[]string{"/recipes/3/tips/2/en", "/recipes/3/tips/2/es", "/recipes/3/tips/2/ru"}},
 		{"whitespace-only text", func(b *importer.Bundle) { b.Dishes[0].Name.Es = " \t\n" },
 			[]string{"/dishes/0/name/es"}},
 		{"every locale of one text", func(b *importer.Bundle) { b.Recipes[1].Steps[0] = importer.Text{} },

@@ -55,3 +55,20 @@ SELECT
     unnest(sqlc.arg(positions)::bigint[]),
     unnest(sqlc.arg(locales)::text[]),
     unnest(sqlc.arg(texts)::text[]);
+
+-- name: ImportDeleteTips :exec
+-- Their translations cascade.
+DELETE FROM recipe_tips WHERE recipe_id = sqlc.arg(recipe_id);
+
+-- name: ImportInsertTips :exec
+-- Positions are 1-based.
+INSERT INTO recipe_tips (recipe_id, position)
+SELECT sqlc.arg(recipe_id)::bigint, generate_series(1, sqlc.arg(count)::bigint);
+
+-- name: ImportInsertTipTranslations :exec
+INSERT INTO recipe_tip_translations (recipe_id, position, locale, text)
+SELECT
+    sqlc.arg(recipe_id)::bigint,
+    unnest(sqlc.arg(positions)::bigint[]),
+    unnest(sqlc.arg(locales)::text[]),
+    unnest(sqlc.arg(texts)::text[]);

@@ -131,7 +131,8 @@ func readDishes(ctx context.Context, q *catalogdb.Queries, l Locale) ([]Dish, er
 	return dishes, nil
 }
 
-// readRecipe takes three queries: the recipe, its ingredients and its steps.
+// readRecipe takes four queries: the recipe, its ingredients, its steps and
+// its tips.
 func readRecipe(ctx context.Context, q *catalogdb.Queries, ref recipeRef, l Locale) (Recipe, error) {
 	row, err := q.GetRecipeByDishRegion(ctx, catalogdb.GetRecipeByDishRegionParams{
 		Locale: string(l), Spanish: string(localeSpanish), DishKey: ref.dishKey, RegionKey: ref.regionKey,
@@ -146,34 +147,53 @@ func readRecipe(ctx context.Context, q *catalogdb.Queries, ref recipeRef, l Loca
 	if err != nil {
 		return Recipe{}, err
 	}
-	stored := storedRecipe{id: row.ID, key: rc.RecipeKey}
-	if rc.Ingredients, err = readIngredients(ctx, q, stored, l); err != nil {
-		return Recipe{}, err
-	}
-	if rc.Steps, err = readSteps(ctx, q, stored, l); err != nil {
+	if err := readRecipeLists(ctx, q, storedRecipe{id: row.ID, key: rc.RecipeKey, locale: l}, &rc); err != nil {
 		return Recipe{}, err
 	}
 	return rc, nil
 }
 
-// storedRecipe is a recipe's row id and its stable key for error messages.
-type storedRecipe struct {
-	id  int64
-	key string
+// readRecipeLists fills the recipe's ingredients, steps and tips.
+func readRecipeLists(ctx context.Context, q *catalogdb.Queries, rec storedRecipe, rc *Recipe) error {
+	var err error
+	if rc.Ingredients, err = readIngredients(ctx, q, rec); err != nil {
+		return err
+	}
+	if rc.Steps, err = readSteps(ctx, q, rec); err != nil {
+		return err
+	}
+	rc.Tips, err = readTips(ctx, q, rec)
+	return err
 }
 
-func readIngredients(ctx context.Context, q *catalogdb.Queries, rec storedRecipe, l Locale) ([]Ingredient, error) {
-	rows, err := q.ListRecipeIngredients(ctx, catalogdb.ListRecipeIngredientsParams{Locale: string(l), RecipeID: rec.id})
+// storedRecipe is a recipe's row id, its stable key for error messages and
+// the locale being read.
+type storedRecipe struct {
+	id     int64
+	key    string
+	locale Locale
+}
+
+func readIngredients(ctx context.Context, q *catalogdb.Queries, rec storedRecipe) ([]Ingredient, error) {
+	rows, err := q.ListRecipeIngredients(ctx, catalogdb.ListRecipeIngredientsParams{Locale: string(rec.locale), RecipeID: rec.id})
 	if err != nil {
 		return nil, fmt.Errorf("list ingredients of %s: %w", rec.key, err)
 	}
-	return ingredientsFromRows(rows, rec.key, l)
+	return ingredientsFromRows(rows, rec.key, rec.locale)
 }
 
-func readSteps(ctx context.Context, q *catalogdb.Queries, rec storedRecipe, l Locale) ([]string, error) {
-	rows, err := q.ListRecipeSteps(ctx, catalogdb.ListRecipeStepsParams{Locale: string(l), RecipeID: rec.id})
+func readSteps(ctx context.Context, q *catalogdb.Queries, rec storedRecipe) ([]string, error) {
+	rows, err := q.ListRecipeSteps(ctx, catalogdb.ListRecipeStepsParams{Locale: string(rec.locale), RecipeID: rec.id})
 	if err != nil {
 		return nil, fmt.Errorf("list steps of %s: %w", rec.key, err)
 	}
-	return stepsFromRows(rows, rec.key, l)
+	return textsFromRows(rows, entityRecipeStep, rec.key, rec.locale)
+}
+
+func readTips(ctx context.Context, q *catalogdb.Queries, rec storedRecipe) ([]string, error) {
+	rows, err := q.ListRecipeTips(ctx, catalogdb.ListRecipeTipsParams{Locale: string(rec.locale), RecipeID: rec.id})
+	if err != nil {
+		return nil, fmt.Errorf("list tips of %s: %w", rec.key, err)
+	}
+	return textsFromRows(rows, entityRecipeTip, rec.key, rec.locale)
 }

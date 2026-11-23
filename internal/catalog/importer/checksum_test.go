@@ -77,6 +77,12 @@ func TestChecksum_ChangesWithContent(t *testing.T) {
 		{"ingredient unit", func(b *importer.Bundle) { b.Recipes[0].Ingredients[0].Unit = strp("g") }},
 		{"ingredient name", func(b *importer.Bundle) { b.Recipes[1].Ingredients[0].Name.Ru = "Яйца" }},
 		{"step text", func(b *importer.Bundle) { b.Recipes[2].Steps[1].Es = "Sirve." }},
+		{"tip text", func(b *importer.Bundle) { b.Recipes[3].Tips[1].Ru = "Пугайте фасоль." }},
+		{"tip added", func(b *importer.Bundle) { b.Recipes[0].Tips = []importer.Text{txt("Rest it.")} }},
+		{"tip removed", func(b *importer.Bundle) { b.Recipes[3].Tips = b.Recipes[3].Tips[:2] }},
+		{"tip order", func(b *importer.Bundle) {
+			b.Recipes[3].Tips[0], b.Recipes[3].Tips[2] = b.Recipes[3].Tips[2], b.Recipes[3].Tips[0]
+		}},
 	}
 	base := importer.Checksum(validBundle())
 	for _, tt := range tests {

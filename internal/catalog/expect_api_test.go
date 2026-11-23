@@ -130,6 +130,11 @@ func apiIngredients(rc catalogtest.Recipe, loc string) []apigen.Ingredient {
 	return out
 }
 
+// apiTips is the recipe's tips in loc; never null, [] when it has none.
+func apiTips(rc catalogtest.Recipe, loc string) []string {
+	return append([]string{}, localeTips(rc, catalog.Locale(loc))...)
+}
+
 func apiRecipe(t *testing.T, p recipePair, loc string) apigen.Recipe {
 	t.Helper()
 	f := fixture()
@@ -151,6 +156,7 @@ func apiRecipe(t *testing.T, p recipePair, loc string) apigen.Recipe {
 		BaseServings: v.Recipe.BaseServings,
 		Ingredients:  apiIngredients(v.Recipe, loc),
 		Steps:        localeSteps(v.Recipe, catalog.Locale(loc)),
+		Tips:         apiTips(v.Recipe, loc),
 		Photos:       apiPhotos(v.Photos),
 	}
 }

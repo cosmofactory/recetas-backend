@@ -28,13 +28,15 @@ The schema is [`api/content-bundle.schema.json`](../api/content-bundle.schema.js
     { "recipeKey": "tortilla-gal", "timeMinutes": 25, "timeNote": null,   // or {"en": "+ soaking", "es": "+ remojo", "ru": "+ замачивание"}
       "baseServings": 2,
       "ingredients": [{"quantity": 400, "unit": "g", "name": {…}}, {"quantity": 4, "unit": null, "name": {…}}],
-      "steps": [{"en": "…", "es": "…", "ru": "…"}] }
+      "steps": [{"en": "…", "es": "…", "ru": "…"}],
+      "tips": [{"en": "…", "es": "…", "ru": "…"}] }   // optional, 0–3
   ]
 }
 ```
 
 - Every human-readable text is an object with `en`, `es` and `ru`. All three are required, and there is no fallback to another locale.
 - `photos` (on dishes and variations), `timeNote` and an ingredient's `unit` are optional and may be `null`. A missing or `null` photo role means there's no photo yet, and the frontend shows its placeholder. A `null` unit is a counted item.
+- `tips` on a recipe is optional: at most 3 texts, shown in order after the steps. A missing list and `[]` are the same content and checksum (no tips); `null` is rejected. Length and wording rules for tips are the content pipeline's (D-CNT2-3); the importer only requires every locale to be non-blank.
 - Variations of a dish are listed in region order whatever their order in the bundle. All variations are equal: there is no primary variation.
 - `score` on a variation is optional: a number from 0 to 1000000, default 0 (missing and `0` are the same content and checksum), rounded to 3 decimal places when parsed. It is the content pipeline's importance score (stack.md X15) and is **never shown**: the API returns positions only. It orders two lists:
   - the dish list (`GET /v1/dishes`, the Popular list and search) by dish score, the sum of its variations' scores, descending, then bundle order; `Dish.order` is the resulting 1-based position;
@@ -50,9 +52,10 @@ The CLI rejects a bundle before it touches the database when any of these fail. 
 Checked by the schema:
 - The input is a JSON object of at most 16 MiB, with no unknown fields at any level and every required field present with the right type.
 - `course` is `tapas|mains|desserts`, `season` is `summer|winter|easter|all`, `unit` is `g|ml|tsp` or `null`.
-- Lists are bounded: 1–100 regions, 1–500 dishes, 1–100 variations per dish, 1–10000 recipes, 1–100 ingredients and 1–100 steps per recipe, and at most 20 regional dishes per region.
+- Lists are bounded: 1–100 regions, 1–500 dishes, 1–100 variations per dish, 1–10000 recipes, 1–100 ingredients, 1–100 steps and 0–3 tips per recipe, and at most 20 regional dishes per region.
 - Texts are 1–4000 characters, regional dish names 1–200, photo keys at most 256.
 - A variation's `score`, when present, is a number from 0 to 1000000 (`null` is rejected).
+- A recipe's `tips`, when present, is an array (`null` is rejected).
 
 `schemaVersion` is checked first: a bundle whose version isn't `1` gets that one problem (`/schemaVersion: unsupported schemaVersion 2; this importer supports 1`), not a list of the fields this importer doesn't know.
 
@@ -153,7 +156,7 @@ make design-bundle            # regenerate testdata/content.design.json after th
 
 `schemaVersion` is the bundle format version. This backend accepts exactly `1` (`importer.SchemaVersion`) and rejects anything else with a single problem at `/schemaVersion` naming the supported version, before checking the rest of the bundle.
 
-Any change to the format takes a version bump, including an added optional field, because unknown fields are rejected. The one exception so far is the optional variation `score` (BE-7), added under version 1 because an older bundle stays valid and means the same thing. **Deploy the backend before importing a bundle with `score`:** an older importer rejects the unknown field (exit 1, nothing changed). The steps for a version bump:
+Any change to the format takes a version bump, including an added optional field, because unknown fields are rejected. The exceptions so far are the optional variation `score` (BE-7) and recipe `tips` (BE-8), added under version 1 because an older bundle stays valid and means the same thing. **Deploy the backend before importing a bundle with `score` or `tips`:** an older importer rejects the unknown field (exit 1, nothing changed). The steps for a version bump:
 
 1. The backend PR updates `api/content-bundle.schema.json` and the importer, bumps `importer.SchemaVersion`, regenerates `testdata/content.design.json`, and updates this document.
 2. The owner prepares the pipeline change to emit the new version.

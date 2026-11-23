@@ -27,6 +27,7 @@ const (
 	entityRecipeTimeNote   = "recipe time note"
 	entityRecipeIngredient = "recipe ingredient"
 	entityRecipeStep       = "recipe step"
+	entityRecipeTip        = "recipe tip"
 )
 
 // translation names the translated fields of one entity in one locale.

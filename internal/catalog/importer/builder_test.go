@@ -28,7 +28,7 @@ func strp(s string) *string { return &s }
 //	regions gal, ast, mad
 //	dishes  tortilla [gal tortilla-betanzos (photos), ast tortilla-chorizo]
 //	        cocido   [mad cocido-madrileno, ast fabada-asturiana]
-//	recipes in that order; fabada has a time note.
+//	recipes in that order; fabada has a time note and the most tips allowed.
 func validBundle() importer.Bundle {
 	return importer.Bundle{
 		SchemaVersion: importer.SchemaVersion,
@@ -130,6 +130,7 @@ func fabadaRecipe() importer.Recipe {
 	r.TimeMinutes = 180
 	note := importer.Text{En: "+ soaking", Es: "+ remojo", Ru: "+ замачивание"}
 	r.TimeNote = &note
+	r.Tips = []importer.Text{txt("Never stir; shake the pot."), txt("Scare the beans with cold water."), txt("Better the next day.")}
 	return r
 }
 

@@ -71,3 +71,24 @@ func (w *writer) insertSteps(ctx context.Context, id int64, steps []Text) error 
 	}
 	return nil
 }
+
+func (w *writer) insertTips(ctx context.Context, id int64, tips []Text) error {
+	if len(tips) == 0 {
+		return nil
+	}
+	var texts positioned
+	for i, tip := range tips {
+		texts.add(i+1, tip)
+	}
+	err := w.q.ImportInsertTips(ctx, catalogdb.ImportInsertTipsParams{RecipeID: id, Count: int64(len(tips))})
+	if err != nil {
+		return fmt.Errorf("tips: %w", err)
+	}
+	err = w.q.ImportInsertTipTranslations(ctx, catalogdb.ImportInsertTipTranslationsParams{
+		RecipeID: id, Positions: texts.positions, Locales: texts.locales, Texts: texts.texts,
+	})
+	if err != nil {
+		return fmt.Errorf("tip texts: %w", err)
+	}
+	return nil
+}

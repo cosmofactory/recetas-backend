@@ -41,8 +41,8 @@ type rowCount struct {
 	want  int
 }
 
-// rowCounts: 4+5+5 ingredients and 5+4+5 steps across the three recipes;
-// only fabada has a time note.
+// rowCounts: 4+5+5 ingredients, 5+4+5 steps and 2+0+3 tips across the three
+// recipes; only fabada has a time note.
 func rowCounts(f catalogtest.Fixture, ids fixtureIDs) []rowCount {
 	tortillas := []int64{f.RecipeIDs["tortilla-betanzos"], f.RecipeIDs["tortilla-chorizo"]}
 	return []rowCount{
@@ -58,6 +58,9 @@ func rowCounts(f catalogtest.Fixture, ids fixtureIDs) []rowCount {
 		{"recipe_ingredient_translations", `SELECT count(*) FROM recipe_ingredient_translations WHERE recipe_id = ANY($1)`, []any{ids.recipes}, 42},
 		{"recipe_steps", `SELECT count(*) FROM recipe_steps WHERE recipe_id = ANY($1)`, []any{ids.recipes}, 14},
 		{"recipe_step_translations", `SELECT count(*) FROM recipe_step_translations WHERE recipe_id = ANY($1)`, []any{ids.recipes}, 42},
+		{"recipe_tips", `SELECT count(*) FROM recipe_tips WHERE recipe_id = ANY($1)`, []any{ids.recipes}, 5},
+		{"recipe_tip_translations", `SELECT count(*) FROM recipe_tip_translations WHERE recipe_id = ANY($1)`, []any{ids.recipes}, 15},
+		{"recipe_tips of chorizo", `SELECT count(*) FROM recipe_tips WHERE recipe_id = $1`, []any{f.RecipeIDs["tortilla-chorizo"]}, 0},
 		{"recipe_translations", `SELECT count(*) FROM recipe_translations WHERE recipe_id = ANY($1)`, []any{ids.recipes}, 3},
 		{"recipe_translations of fabada", `SELECT count(*) FROM recipe_translations WHERE recipe_id = $1`, []any{f.RecipeIDs["fabada-asturiana"]}, 3},
 		{"recipe_translations of tortillas", `SELECT count(*) FROM recipe_translations WHERE recipe_id = ANY($1)`, []any{tortillas}, 0},
@@ -96,6 +99,12 @@ func localeChecks(ids fixtureIDs) []localeCheck {
 		{"recipe_step_translations", `
 			SELECT s.recipe_id || '/' || s.position FROM recipe_steps s
 			LEFT JOIN recipe_step_translations tr USING (recipe_id, position)
+			WHERE s.recipe_id = ANY($1)
+			GROUP BY s.recipe_id, s.position
+			HAVING array_agg(tr.locale::text ORDER BY tr.locale) <> ARRAY['en','es','ru']`, ids.recipes},
+		{"recipe_tip_translations", `
+			SELECT s.recipe_id || '/' || s.position FROM recipe_tips s
+			LEFT JOIN recipe_tip_translations tr USING (recipe_id, position)
 			WHERE s.recipe_id = ANY($1)
 			GROUP BY s.recipe_id, s.position
 			HAVING array_agg(tr.locale::text ORDER BY tr.locale) <> ARRAY['en','es','ru']`, ids.recipes},

@@ -56,6 +56,22 @@ func checkVariation(t *testing.T, v catalogtest.Variation) {
 	for i, s := range v.Recipe.Steps {
 		checkLocales(t, v.RecipeKey+" step "+strconv.Itoa(i+1), s)
 	}
+	for i, tip := range v.Recipe.Tips {
+		checkLocales(t, v.RecipeKey+" tip "+strconv.Itoa(i+1), tip)
+	}
+}
+
+// Betanzos has two tips and fabada the most allowed, three; chorizo has none,
+// so readers are tested with and without tips.
+func TestDataTipsPerRecipe(t *testing.T) {
+	want := map[string]int{"tortilla-betanzos": 2, "tortilla-chorizo": 0, "fabada-asturiana": 3}
+	for _, d := range catalogtest.Data().Dishes {
+		for _, v := range d.Variations {
+			if got := len(v.Recipe.Tips); got != want[v.RecipeKey] {
+				t.Errorf("%s: got %d tips, want %d", v.RecipeKey, got, want[v.RecipeKey])
+			}
+		}
+	}
 }
 
 // Only the tortilla dish and its Betanzos variation have photos, so the

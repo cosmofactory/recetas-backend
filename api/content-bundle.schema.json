@@ -169,6 +169,12 @@
           "minItems": 1,
           "maxItems": 100,
           "items": { "$ref": "#/$defs/text" }
+        },
+        "tips": {
+          "description": "Optional cooking tips shown after the steps; a missing or empty list means none.",
+          "type": "array",
+          "maxItems": 3,
+          "items": { "$ref": "#/$defs/text" }
         }
       }
     },
