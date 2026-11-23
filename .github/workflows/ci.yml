@@ -340,10 +340,13 @@ jobs:
         if: always()
         run: rm -rf "${SSH_DIR:-$RUNNER_TEMP/ssh}"
 
-  # Re-imports the design seed into demo when it changed (or on a manual run
-  # with reseed_demo). The VM side, reseed-demo.sh --auto in recetas-infra,
-  # refuses unless demo's last import came from the design seed and the dry
-  # run deletes nothing, and keeps a verified pg_dump before importing, so no
+  # Brings demo's catalog to the committed design seed after every successful
+  # deploy (and on a manual run with reseed_demo). It runs every time rather
+  # than diffing pushes, so a seed change in a cancelled or failed run is
+  # never missed; an unchanged seed is one locked dry run, "nothing to import".
+  # The VM side, reseed-demo.sh --auto in recetas-infra, stands down (exit 0)
+  # when demo's last import isn't the design seed, refuses a dry run that
+  # deletes anything, and keeps a verified pg_dump before importing, so no
   # demo data is lost. ssh-gate.sh lets this key run exactly that command.
   reseed-demo:
     name: Reseed Demo
@@ -374,28 +377,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           persist-credentials: false
 
-      - name: Did the design seed change?
-        id: seed
-        env:
-          EVENT: ${{ github.event_name }}
-          BEFORE: ${{ github.event.before }}
-        run: |
-          if [[ $EVENT == workflow_dispatch ]]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          elif [[ $BEFORE =~ ^0+$ ]] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-            echo "no usable previous commit; reseeding to be safe" >&2
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          elif git diff --quiet "$BEFORE" HEAD -- "$SEED_FILE"; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Write SSH key and known hosts
-        if: steps.seed.outputs.changed == 'true'
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
@@ -409,7 +393,6 @@ jobs:
           printf '%s\n' "$SSH_KNOWN_HOSTS" > "$SSH_DIR/known_hosts"
 
       - name: Reseed demo (guarded)
-        if: steps.seed.outputs.changed == 'true'
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}

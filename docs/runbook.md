@@ -99,11 +99,11 @@ The full contract is [`content-import.md`](content-import.md). Dry run first, ev
 
 `docker compose run backend` goes through the image's entrypoint, which runs `goose up` first. So even a `--dry-run` import applies any pending migrations when the compose tag is ahead of the database.
 
-Run it as `deploy` from the owner's login (see "Who runs what" at the top); the repo's deploy key can't. To reseed demo with the design content, use recetas-infra's `scripts/reseed-demo.sh` (its RUNBOOK.md, Demo → Reseed). CI does this by itself: after `Deploy Demo`, the `Reseed Demo` job runs `reseed-demo.sh --auto` whenever `testdata/content.design.json` changed in the push (or on a manual run of the workflow with `reseed_demo`). The auto mode refuses unless demo's last import came from `design-seed` and the dry run deletes nothing, and it keeps a verified `pg_dump` in `/srv/recetas/demo/backups/` before importing, so pipeline content on demo is never overwritten and nothing is lost. Prod is never reseeded.
+Run it as `deploy` from the owner's login (see "Who runs what" at the top); the repo's deploy key can't. To reseed demo with the design content, use recetas-infra's `scripts/reseed-demo.sh` (its RUNBOOK.md, Demo → Reseed). CI does this by itself: after `Deploy Demo`, the `Reseed Demo` job runs `reseed-demo.sh --auto` after every successful demo deploy (or on a manual run of the workflow with `reseed_demo`); with the seed unchanged that's a dry run ending "nothing to import". The auto mode stands down (exit 0, "skipped") when demo's last import didn't come from `design-seed`, refuses a dry run that deletes anything, and it keeps a verified `pg_dump` in `/srv/recetas/demo/backups/` before importing, so pipeline content on demo is never overwritten and nothing is lost. Prod is never reseeded.
 
 ```bash
-# From your machine; the bundle goes over stdin. Demo:
-ssh <vps> "sudo -u deploy bash -c 'cd /srv/recetas/demo && docker compose -p recetas-demo --env-file .env --env-file tags.env run --rm -T backend /app/import --source pipeline-<run-id> --dry-run'" < bundle.json
+# From your machine; the bundle goes over stdin. Demo (under demo's deploy lock, so it never interleaves with a deploy or CI's reseed):
+ssh <vps> "sudo -u deploy bash -c 'cd /srv/recetas/demo && flock -w 900 /srv/recetas/demo/.deploy.lock docker compose -p recetas-demo --env-file .env --env-file tags.env run --rm -T backend /app/import --source pipeline-<run-id> --dry-run'" < bundle.json
 # Prod:
 ssh <vps> "sudo -u deploy bash -c 'cd /srv/recetas/prod && docker compose -p recetas-prod --env-file .env --env-file versions.env run --rm -T backend /app/import --source pipeline-<run-id> --dry-run'" < bundle.json
 echo "exit=$?"
