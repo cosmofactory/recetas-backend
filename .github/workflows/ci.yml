@@ -8,11 +8,6 @@ on:
     tags:
       - "*"
   workflow_dispatch:
-    inputs:
-      reseed_demo:
-        description: Reseed demo with testdata/content.design.json (guarded, see the reseed-demo job)
-        type: boolean
-        default: false
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -335,75 +330,6 @@ jobs:
           }
           smoke "$DEMO_URL/"
           smoke "$DEMO_URL/readyz"
-
-      - name: Remove SSH key
-        if: always()
-        run: rm -rf "${SSH_DIR:-$RUNNER_TEMP/ssh}"
-
-  # Brings demo's catalog to the committed design seed after every successful
-  # deploy (and on a manual run with reseed_demo). It runs every time rather
-  # than diffing pushes, so a seed change in a cancelled or failed run is
-  # never missed; an unchanged seed is one locked dry run, "nothing to import".
-  # The VM side, reseed-demo.sh --auto in recetas-infra, stands down (exit 0)
-  # when demo's last import isn't the design seed, refuses a dry run that
-  # deletes anything, and keeps a verified pg_dump before importing, so no
-  # demo data is lost. ssh-gate.sh lets this key run exactly that command.
-  reseed-demo:
-    name: Reseed Demo
-    runs-on: ubuntu-latest
-    needs: deploy-demo
-    if: >-
-      always() && vars.DEPLOY_ENABLED == 'true' && github.ref == 'refs/heads/main' &&
-      ((github.event_name == 'push' && needs.deploy-demo.result == 'success') ||
-      (github.event_name == 'workflow_dispatch' && inputs.reseed_demo))
-    environment:
-      name: demo
-      url: ${{ env.DEMO_URL }}
-    concurrency:
-      group: deploy-demo
-      cancel-in-progress: false
-    permissions:
-      contents: read
-    # The VM-side deploy lock wait (15 min) plus a dry run, a dump and an import.
-    timeout-minutes: 25
-    defaults:
-      run:
-        shell: bash
-    env:
-      SEED_FILE: testdata/content.design.json
-      SSH_CONNECT_TIMEOUT_SECONDS: "20"
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Write SSH key and known hosts
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
-        run: |
-          SSH_DIR="$RUNNER_TEMP/ssh"
-          echo "SSH_DIR=$SSH_DIR" >> "$GITHUB_ENV"
-          install -d -m 700 "$SSH_DIR"
-          install -m 600 /dev/null "$SSH_DIR/key"
-          install -m 600 /dev/null "$SSH_DIR/known_hosts"
-          printf '%s\n' "$SSH_PRIVATE_KEY" > "$SSH_DIR/key"
-          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$SSH_DIR/known_hosts"
-
-      - name: Reseed demo (guarded)
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-        run: |
-          ssh -i "$SSH_DIR/key" \
-            -o IdentitiesOnly=yes \
-            -o UserKnownHostsFile="$SSH_DIR/known_hosts" \
-            -o StrictHostKeyChecking=yes \
-            -o BatchMode=yes \
-            -o ConnectTimeout="$SSH_CONNECT_TIMEOUT_SECONDS" \
-            "$SSH_USER@$SSH_HOST" "/srv/recetas/scripts/reseed-demo.sh --auto" < "$SEED_FILE"
 
       - name: Remove SSH key
         if: always()
