@@ -17,6 +17,7 @@ const (
 	methodRegions        = "Regions"
 	methodDishes         = "Dishes"
 	methodRecipe         = "Recipe"
+	methodSpainWide      = "SpainWideRecipe"
 )
 
 // fakeRepo serves the catalogtest fixture at a content version. It records
@@ -27,8 +28,11 @@ type fakeRepo struct {
 	version int64
 	empty   bool           // no content imported yet: version 0, no rows
 	dishes  []catalog.Dish // when set, served instead of the fixture in every locale
-	fail    map[string]error
-	calls   map[string]int
+	// spainWide are the Spanish variations' recipes by "<dish>/<slug>"; set
+	// before the first call and only read after.
+	spainWide map[string]catalog.Recipe
+	fail      map[string]error
+	calls     map[string]int
 }
 
 var _ catalog.Repository = (*fakeRepo)(nil)
@@ -48,6 +52,13 @@ func newEmptyFakeRepo() *fakeRepo {
 func newFakeRepoWithDishes(dishes []catalog.Dish) *fakeRepo {
 	r := newFakeRepo()
 	r.dishes = dishes
+	return r
+}
+
+// newSpainWideFakeRepo serves spainWideDishes and their Spanish recipes.
+func newSpainWideFakeRepo() *fakeRepo {
+	r := newFakeRepoWithDishes(spainWideDishes("en"))
+	r.spainWide = spainWideRecipes()
 	return r
 }
 
@@ -133,6 +144,17 @@ func (r *fakeRepo) Recipe(_ context.Context, dishKey, regionKey string, l catalo
 	rc, ok := domainRecipe(dishKey, regionKey, l)
 	if r.empty || !ok {
 		return catalog.Recipe{}, fmt.Errorf("fake recipe %s/%s: %w", dishKey, regionKey, catalog.ErrNotFound)
+	}
+	return rc, nil
+}
+
+func (r *fakeRepo) SpainWideRecipe(_ context.Context, dishKey, variationSlug string, l catalog.Locale) (catalog.Recipe, error) {
+	if err := r.record(methodSpainWide, string(l), dishKey, variationSlug); err != nil {
+		return catalog.Recipe{}, err
+	}
+	rc, ok := r.spainWide[dishKey+"/"+variationSlug]
+	if r.empty || !ok {
+		return catalog.Recipe{}, fmt.Errorf("fake spain-wide recipe %s/%s: %w", dishKey, variationSlug, catalog.ErrNotFound)
 	}
 	return rc, nil
 }

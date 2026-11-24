@@ -92,6 +92,61 @@ func variation(regionKey, recipeKey string) importer.Variation {
 	}
 }
 
+// spainWideKey is the reserved region key of a Spanish (Spain-wide)
+// variation (D-ESP-1).
+const spainWideKey = "esp"
+
+// spainWideVariation is a Spanish variation of dishKey, with its recipe keyed
+// <dishKey>-esp-<slug> (D-ESP-2).
+func spainWideVariation(dishKey, slug string) importer.Variation {
+	v := variation(spainWideKey, spainWideRecipeKey(dishKey, slug))
+	v.VariationSlug = slug
+	return v
+}
+
+func spainWideRecipeKey(dishKey, slug string) string {
+	return dishKey + "-" + spainWideKey + "-" + slug
+}
+
+// The allioli dish's variations, in bundle order: Spanish, regional, Spanish.
+const (
+	morterSlug = "allioli-de-morter"
+	codonySlug = "allioli-de-codony"
+)
+
+var (
+	morterRecipeKey = spainWideRecipeKey("allioli", morterSlug)
+	codonyRecipeKey = spainWideRecipeKey("allioli", codonySlug)
+)
+
+// allioliDish is a basics dish whose bundle order puts a regional variation
+// between two Spanish ones: [esp allioli-de-morter, ast allioli-asturiano,
+// esp allioli-de-codony].
+func allioliDish() importer.Dish {
+	return importer.Dish{
+		Key:         "allioli",
+		Name:        txt("Allioli"),
+		Description: txt("Garlic and oil"),
+		Flags:       importer.Flags{Vegetarian: true, Quick: true},
+		Course:      "basics",
+		Season:      "all",
+		Variations: []importer.Variation{
+			spainWideVariation("allioli", morterSlug),
+			variation("ast", "allioli-asturiano"),
+			spainWideVariation("allioli", codonySlug),
+		},
+	}
+}
+
+// spainWideBundle is validBundle plus allioliDish (dish 2) and its recipes
+// (recipes 4-6, in variation order).
+func spainWideBundle() importer.Bundle {
+	b := validBundle()
+	b.Dishes = append(b.Dishes, allioliDish())
+	b.Recipes = append(b.Recipes, recipe(morterRecipeKey), recipe("allioli-asturiano"), recipe(codonyRecipeKey))
+	return b
+}
+
 func dishPhotos(dishKey string) *importer.Photos {
 	prefix := "dishes/" + dishKey + "/"
 	return &importer.Photos{

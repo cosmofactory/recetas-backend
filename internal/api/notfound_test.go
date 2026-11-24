@@ -62,6 +62,8 @@ var unroutedPaths = []string{
 	"/v1/regions/",
 	"/v1/dishes/tortilla/variations",
 	"/v1/dishes/tortilla/variations/gal",
+	"/v1/dishes/allioli/variations/esp/allioli-de-morter",
+	"/v1/dishes/allioli/variations/esp/allioli-de-morter/recipe/extra",
 	"/v1",
 	"/v1/",
 	"/totally/unknown",
@@ -126,6 +128,8 @@ func TestRegister_CatchAllDoesNotShadowRoutes(t *testing.T) {
 		{name: "list dishes", method: http.MethodGet, target: "/v1/dishes?lang=ru", wantStatus: http.StatusNotImplemented, check: notImplemented},
 		{name: "get dish", method: http.MethodGet, target: "/v1/dishes/tortilla", wantStatus: http.StatusNotImplemented, check: notImplemented},
 		{name: "get recipe", method: http.MethodGet, target: "/v1/dishes/tortilla/variations/gal/recipe", wantStatus: http.StatusNotImplemented, check: notImplemented},
+		{name: "get spain-wide recipe", method: http.MethodGet, target: "/v1/dishes/allioli/variations/esp/allioli-de-morter/recipe", wantStatus: http.StatusNotImplemented, check: notImplemented},
+		{name: "esp on the regional recipe route", method: http.MethodGet, target: "/v1/dishes/allioli/variations/esp/recipe", wantStatus: http.StatusNotImplemented, check: notImplemented},
 		{name: "lang validation still runs", method: http.MethodGet, target: "/v1/regions?lang=fr", wantStatus: http.StatusBadRequest},
 	}
 	for _, tt := range tests {
@@ -169,6 +173,7 @@ func TestRegister_WrongMethodOnExistingPath(t *testing.T) {
 		{method: http.MethodPost, target: "/v1/regions"},
 		{method: http.MethodDelete, target: "/v1/dishes/tortilla"},
 		{method: http.MethodPut, target: "/v1/dishes/tortilla/variations/gal/recipe"},
+		{method: http.MethodPost, target: "/v1/dishes/allioli/variations/esp/allioli-de-morter/recipe"},
 		{method: http.MethodPost, target: "/openapi.json"},
 		{method: http.MethodPost, target: "/healthz"},
 	}

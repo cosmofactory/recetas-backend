@@ -18,6 +18,7 @@ import (
 
 // Defines values for Course.
 const (
+	Basics   Course = "basics"
 	Desserts Course = "desserts"
 	Mains    Course = "mains"
 	Tapas    Course = "tapas"
@@ -26,6 +27,8 @@ const (
 // Valid indicates whether the value is a known member of the Course enum.
 func (e Course) Valid() bool {
 	switch e {
+	case Basics:
+		return true
 	case Desserts:
 		return true
 	case Mains:
@@ -153,7 +156,7 @@ type Dish struct {
 	Photos Photos `json:"photos"`
 	Season Season `json:"season"`
 
-	// Variations One per region the dish is cooked in, ordered by region order. All equal.
+	// Variations One per region the dish is cooked in, ordered by region order, then its Spanish (`esp`) variations in bundle order. All equal.
 	Variations []VariationSummary `json:"variations"`
 }
 
@@ -232,8 +235,10 @@ type Recipe struct {
 	RecipeKey Slug `json:"recipeKey"`
 
 	// RegionKey Example: tortilla
-	RegionKey  Slug     `json:"regionKey"`
-	RegionName string   `json:"regionName"`
+	RegionKey Slug `json:"regionKey"`
+
+	// RegionName The region's name; `null` exactly when `regionKey` is `esp`.
+	RegionName *string  `json:"regionName"`
 	Steps      []string `json:"steps"`
 
 	// TimeMinutes Total time; the frontend formats it per locale (D-BE3-1).
@@ -244,6 +249,9 @@ type Recipe struct {
 
 	// Tips Optional cooking tips shown after the steps, in order. Empty when the recipe has none; never `null`.
 	Tips []string `json:"tips"`
+
+	// VariationSlug Set exactly when `regionKey` is `esp`; `null` for a regional variation.
+	VariationSlug *string `json:"variationSlug"`
 }
 
 // Region defines model for Region.
@@ -333,11 +341,16 @@ type VariationSummary struct {
 	RecipeKey Slug `json:"recipeKey"`
 
 	// RegionKey Example: tortilla
-	RegionKey  Slug   `json:"regionKey"`
-	RegionName string `json:"regionName"`
+	RegionKey Slug `json:"regionKey"`
 
-	// RegionRank Position in its region's list: importance score, then dish display order (stack.md X15). Region lists sort by it.
-	RegionRank int `json:"regionRank"`
+	// RegionName The region's name; `null` exactly when `regionKey` is `esp` (the frontend shows its Spanish term).
+	RegionName *string `json:"regionName"`
+
+	// RegionRank Position in its region's list: importance score, then dish display order (stack.md X15). Region lists sort by it. `null` exactly when `regionKey` is `esp`: Spanish variations are in no region's list.
+	RegionRank *int `json:"regionRank"`
+
+	// VariationSlug Set exactly when `regionKey` is `esp`; identifies the Spanish variation within its dish (`getSpainWideRecipe`). `null` for a regional variation.
+	VariationSlug *string `json:"variationSlug"`
 }
 
 // DishKey Example: tortilla
@@ -348,6 +361,9 @@ type Lang = Locale
 
 // RegionKey Example: tortilla
 type RegionKey = Slug
+
+// VariationSlug Example: tortilla
+type VariationSlug = Slug
 
 // BadRequest defines model for BadRequest.
 type BadRequest = Error
@@ -366,6 +382,12 @@ type ListDishesParams struct {
 
 // GetDishParams defines parameters for GetDish.
 type GetDishParams struct {
+	// Lang Locale of the human-readable fields. An unknown value is a 400.
+	Lang *Lang `form:"lang,omitempty" json:"lang,omitempty"`
+}
+
+// GetSpainWideRecipeParams defines parameters for GetSpainWideRecipe.
+type GetSpainWideRecipeParams struct {
 	// Lang Locale of the human-readable fields. An unknown value is a 400.
 	Lang *Lang `form:"lang,omitempty" json:"lang,omitempty"`
 }
@@ -396,10 +418,13 @@ type ServerInterface interface {
 	// GetDish One dish with its variations.
 	// (GET /v1/dishes/{dishKey})
 	GetDish(w http.ResponseWriter, r *http.Request, dishKey DishKey, params GetDishParams)
+	// GetSpainWideRecipe The recipe of one Spanish (Spain-wide) variation of a dish.
+	// (GET /v1/dishes/{dishKey}/variations/esp/{variationSlug}/recipe)
+	GetSpainWideRecipe(w http.ResponseWriter, r *http.Request, dishKey DishKey, variationSlug VariationSlug, params GetSpainWideRecipeParams)
 	// GetRecipe The recipe of one variation (one dish in one region).
 	// (GET /v1/dishes/{dishKey}/variations/{regionKey}/recipe)
 	GetRecipe(w http.ResponseWriter, r *http.Request, dishKey DishKey, regionKey RegionKey, params GetRecipeParams)
-	// ListRegions All regions, in map/region order.
+	// ListRegions All regions, in map/region order. Never `esp`.
 	// (GET /v1/regions)
 	ListRegions(w http.ResponseWriter, r *http.Request, params ListRegionsParams)
 	// GetRegion One region with the variations cooked there.
@@ -482,6 +507,57 @@ func (siw *ServerInterfaceWrapper) GetDish(w http.ResponseWriter, r *http.Reques
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetDish(w, r, dishKey, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSpainWideRecipe operation middleware
+func (siw *ServerInterfaceWrapper) GetSpainWideRecipe(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dishKey" -------------
+	var dishKey DishKey
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dishKey", r.PathValue("dishKey"), &dishKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dishKey", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "variationSlug" -------------
+	var variationSlug VariationSlug
+
+	err = runtime.BindStyledParameterWithOptions("simple", "variationSlug", r.PathValue("variationSlug"), &variationSlug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "variationSlug", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetSpainWideRecipeParams
+
+	// ------------- Optional query parameter "lang" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "lang", r.URL.Query(), &params.Lang, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "lang"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "lang", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSpainWideRecipe(w, r, dishKey, variationSlug, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -742,6 +818,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/dishes", wrapper.ListDishes)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/dishes/{dishKey}", wrapper.GetDish)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/dishes/{dishKey}/variations/{regionKey}/recipe", wrapper.GetRecipe)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/dishes/{dishKey}/variations/esp/{variationSlug}/recipe", wrapper.GetSpainWideRecipe)
 
 	return m
 }
@@ -918,6 +995,99 @@ func (response GetDish404JSONResponse) VisitGetDishResponse(w http.ResponseWrite
 type GetDish500JSONResponse struct{ InternalJSONResponse }
 
 func (response GetDish500JSONResponse) VisitGetDishResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpainWideRecipeRequestObject struct {
+	DishKey       DishKey       `json:"dishKey"`
+	VariationSlug VariationSlug `json:"variationSlug"`
+	Params        GetSpainWideRecipeParams
+}
+
+type GetSpainWideRecipeResponseObject interface {
+	VisitGetSpainWideRecipeResponse(w http.ResponseWriter) error
+}
+
+type GetSpainWideRecipe200ResponseHeaders struct {
+	CacheControl *string
+	ETag         *string
+}
+
+type GetSpainWideRecipe200JSONResponse struct {
+	Body    Recipe
+	Headers GetSpainWideRecipe200ResponseHeaders
+}
+
+func (response GetSpainWideRecipe200JSONResponse) VisitGetSpainWideRecipeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.CacheControl != nil {
+		w.Header().Set("Cache-Control", fmt.Sprint(*response.Headers.CacheControl))
+	}
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpainWideRecipe304Response = NotModifiedResponse
+
+func (response GetSpainWideRecipe304Response) VisitGetSpainWideRecipeResponse(w http.ResponseWriter) error {
+	if response.Headers.CacheControl != nil {
+		w.Header().Set("Cache-Control", fmt.Sprint(*response.Headers.CacheControl))
+	}
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(304)
+	return nil
+}
+
+type GetSpainWideRecipe400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response GetSpainWideRecipe400JSONResponse) VisitGetSpainWideRecipeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpainWideRecipe404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetSpainWideRecipe404JSONResponse) VisitGetSpainWideRecipeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpainWideRecipe500JSONResponse struct{ InternalJSONResponse }
+
+func (response GetSpainWideRecipe500JSONResponse) VisitGetSpainWideRecipeResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -1199,10 +1369,13 @@ type StrictServerInterface interface {
 	// GetDish One dish with its variations.
 	// (GET /v1/dishes/{dishKey})
 	GetDish(ctx context.Context, request GetDishRequestObject) (GetDishResponseObject, error)
+	// GetSpainWideRecipe The recipe of one Spanish (Spain-wide) variation of a dish.
+	// (GET /v1/dishes/{dishKey}/variations/esp/{variationSlug}/recipe)
+	GetSpainWideRecipe(ctx context.Context, request GetSpainWideRecipeRequestObject) (GetSpainWideRecipeResponseObject, error)
 	// GetRecipe The recipe of one variation (one dish in one region).
 	// (GET /v1/dishes/{dishKey}/variations/{regionKey}/recipe)
 	GetRecipe(ctx context.Context, request GetRecipeRequestObject) (GetRecipeResponseObject, error)
-	// ListRegions All regions, in map/region order.
+	// ListRegions All regions, in map/region order. Never `esp`.
 	// (GET /v1/regions)
 	ListRegions(ctx context.Context, request ListRegionsRequestObject) (ListRegionsResponseObject, error)
 	// GetRegion One region with the variations cooked there.
@@ -1295,6 +1468,34 @@ func (sh *strictHandler) GetDish(w http.ResponseWriter, r *http.Request, dishKey
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetDishResponseObject); ok {
 		if err := validResponse.VisitGetDishResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetSpainWideRecipe operation middleware
+func (sh *strictHandler) GetSpainWideRecipe(w http.ResponseWriter, r *http.Request, dishKey DishKey, variationSlug VariationSlug, params GetSpainWideRecipeParams) {
+	var request GetSpainWideRecipeRequestObject
+
+	request.DishKey = dishKey
+	request.VariationSlug = variationSlug
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpainWideRecipe(ctx, request.(GetSpainWideRecipeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpainWideRecipe")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSpainWideRecipeResponseObject); ok {
+		if err := validResponse.VisitGetSpainWideRecipeResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

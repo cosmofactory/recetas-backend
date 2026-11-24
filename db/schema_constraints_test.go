@@ -12,7 +12,7 @@ import (
 const (
 	insertRegionSQL       = `INSERT INTO regions (key, sort_order, tile_color) VALUES ($1, $2, $3)`
 	insertDishSQL         = `INSERT INTO dishes (key, sort_order, course, season) VALUES ($1, $2, $3, $4)`
-	insertVariationSQL    = `INSERT INTO variations (dish_id, region_id, recipe_key) VALUES ($1, $2, $3)`
+	insertVariationSQL    = `INSERT INTO variations (dish_id, region_id, recipe_key, position) VALUES ($1, $2, $3, ` + nextPositionSQL + `)`
 	insertRecipeSQL       = `INSERT INTO recipes (variation_id, time_minutes, base_servings) VALUES ($1, $2, $3)`
 	insertIngredientSQL   = `INSERT INTO recipe_ingredients (recipe_id, position, quantity, unit) VALUES ($1, $2, $3, $4)`
 	insertStepSQL         = `INSERT INTO recipe_steps (recipe_id, position) VALUES ($1, $2)`
@@ -84,6 +84,7 @@ func dishCases(t *testing.T, takenKey string, takenOrder int) []dishCase {
 		{"course tapas", uniqKey(t, "d"), uniqOrder(t), "tapas", "summer", codeOK},
 		{"course mains", uniqKey(t, "d"), uniqOrder(t), "mains", "winter", codeOK},
 		{"course desserts", uniqKey(t, "d"), uniqOrder(t), "desserts", "easter", codeOK},
+		{"course basics", uniqKey(t, "d"), uniqOrder(t), "basics", "all", codeOK},
 		{"season all", uniqKey(t, "d"), uniqOrder(t), "desserts", "all", codeOK},
 		{"slug uppercase", "Tortilla" + randHex(t, 3), uniqOrder(t), "tapas", "all", codeCheck},
 		{"slug space", "tortilla de" + randHex(t, 3), uniqOrder(t), "tapas", "all", codeCheck},
@@ -203,10 +204,11 @@ func TestIntegrationVariationConstraints(t *testing.T) {
 }
 
 // forbiddenVariationColumns would rank or single out a variation; all
-// variations are equal and ordered by region.
+// variations are equal and ordered by region. position is allowed: it is the
+// bundle order (D-ESP-4), which only orders a dish's Spanish variations.
 var forbiddenVariationColumns = map[string]bool{
 	"is_primary": true, "primary": true, "is_default": true, "is_featured": true,
-	"is_best": true, "rank": true, "position": true, "sort_order": true, "rating": true,
+	"is_best": true, "rank": true, "sort_order": true, "rating": true,
 }
 
 func TestIntegrationVariationsHaveNoPrimaryOrRank(t *testing.T) {

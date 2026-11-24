@@ -17,11 +17,13 @@ The schema is [`api/content-bundle.schema.json`](../api/content-bundle.schema.js
   "dishes": [             // editorial order
     { "key": "tortilla", "name": {…}, "description": {…},
       "flags": {"vegetarian": true, "seafood": false, "pork": false, "quick": true, "slowCooked": false},
-      "course": "tapas", "season": "all",
+      "course": "tapas", "season": "all",   // course: tapas|mains|desserts|basics
       "photos": {"thumb": "dishes/tortilla/thumb-1a2b3c4d", "card": null, "hero": null},
       "variations": [
         { "regionKey": "gal", "recipeKey": "tortilla-gal", "name": {…}, "description": {…}, "photos": null,
-          "score": 12.5 }   // optional hidden importance score, default 0
+          "score": 12.5 },  // optional hidden importance score, default 0
+        { "regionKey": "esp", "variationSlug": "tortilla-de-diario",   // a Spanish (Spain-wide) variation
+          "recipeKey": "tortilla-esp-tortilla-de-diario", "name": {…}, "description": {…} }
       ] }
   ],
   "recipes": [
@@ -37,13 +39,19 @@ The schema is [`api/content-bundle.schema.json`](../api/content-bundle.schema.js
 - Every human-readable text is an object with `en`, `es` and `ru`. All three are required, and there is no fallback to another locale.
 - `photos` (on dishes and variations), `timeNote` and an ingredient's `unit` are optional and may be `null`. A missing or `null` photo role means there's no photo yet, and the frontend shows its placeholder. A `null` unit is a counted item.
 - `tips` on a recipe is optional: at most 3 texts, shown in order after the steps. A missing list and `[]` are the same content and checksum (no tips); `null` is rejected. Length and wording rules for tips are the content pipeline's (D-CNT2-3); the importer only requires every locale to be non-blank.
-- Variations of a dish are listed in region order whatever their order in the bundle. All variations are equal: there is no primary variation.
+- Variations of a dish are listed in region order whatever their order in the bundle, then its Spanish variations in bundle order. All variations are equal: there is no primary variation.
+- **Spanish (Spain-wide) variations** (BE-9) belong to no region: `regionKey` is the reserved key `esp`, which is never a region. A dish may have any number of them, beside regional ones or on their own, each with its own recipe.
+  - `variationSlug` is **required** on an `esp` variation and **forbidden** on a regional one. It identifies the variation within its dish and in its URL (`/:lang/dishes/:dishKey/esp/:variationSlug`), so it is unique within the dish (two dishes may share one).
+  - Whoever writes the bundle derives it **once** from the Spanish variation name: lowercase, accents stripped, every run of other characters a single `-` ("Allioli de morter" → `allioli-de-morter`). The importer only validates it and never derives it, so a later name fix doesn't change a URL. Keep it when the name changes.
+  - The recipe key is `<dishKey>-esp-<slug>` (regional ones stay `<dishKey>-<regionKey>`). Keys are at most 64 characters, so the deriver shortens the slug, at a `-` where possible, until the recipe key fits; the importer rejects a longer key.
+  - The API sends a Spanish variation with `regionKey: "esp"`, `regionName: null`, `regionRank: null` and its `variationSlug`; the frontend shows its own Spanish term. Region lists and their counts leave Spanish variations out. A dish's score still sums all its variations, Spanish ones included.
+  - `course: "basics"` is meant for stocks and sauces, but any dish may use it.
 - `score` on a variation is optional: a number from 0 to 1000000, default 0 (missing and `0` are the same content and checksum), rounded to 3 decimal places when parsed. It is the content pipeline's importance score (stack.md X15) and is **never shown**: the API returns positions only. It orders two lists:
   - the dish list (`GET /v1/dishes`, the Popular list and search) by dish score, the sum of its variations' scores, descending, then bundle order; `Dish.order` is the resulting 1-based position;
   - a region's list (`GET /v1/regions/{key}`) by variation score descending, then dish display order; `VariationSummary.regionRank` is the resulting position.
 
-  A dish's own variations stay in region order. A bundle without scores orders exactly as bundle order.
-- `testdata/content.design.json` is a complete example: the design's `content.json` converted by `make design-bundle`, with placeholder recipes for the 50 variations the design has no recipe for.
+  A dish's own variations stay in region order, then Spanish in bundle order. A bundle without scores orders exactly as bundle order.
+- `testdata/content.design.json` is a complete example: the design's `content.json` converted by `make design-bundle`, with placeholder recipes for the 50 variations the design has no recipe for. It includes the Spanish samples Allioli (two Spanish variations, course `basics`) and Arroz blanco con tomate (one); the converter derives their slugs from the Spanish names and drops the design-only `spainWide` block.
 
 ## Validation rules
 
@@ -51,9 +59,10 @@ The CLI rejects a bundle before it touches the database when any of these fail. 
 
 Checked by the schema:
 - The input is a JSON object of at most 16 MiB, with no unknown fields at any level and every required field present with the right type.
-- `course` is `tapas|mains|desserts`, `season` is `summer|winter|easter|all`, `unit` is `g|ml|tsp` or `null`.
+- `course` is `tapas|mains|desserts|basics`, `season` is `summer|winter|easter|all`, `unit` is `g|ml|tsp` or `null`.
 - Lists are bounded: 1–100 regions, 1–500 dishes, 1–100 variations per dish, 1–10000 recipes, 1–100 ingredients, 1–100 steps and 0–3 tips per recipe, and at most 20 regional dishes per region.
 - Texts are 1–4000 characters, regional dish names 1–200, photo keys at most 256.
+- A variation's `variationSlug`, when present, is a slug of at most 64 characters.
 - A variation's `score`, when present, is a number from 0 to 1000000 (`null` is rejected).
 - A recipe's `tips`, when present, is an array (`null` is rejected).
 
@@ -62,11 +71,13 @@ Checked by the schema:
 Checked after the schema (semantic rules):
 - Keys (`regions[].key`, `dishes[].key`, `recipeKey`) are ASCII slugs `^[a-z0-9]+(-[a-z0-9]+)*$` of at most 64 characters, and unique within their kind.
 - `tileColor` is `#RRGGBB`.
-- Every `variation.regionKey` is a region in the bundle, and a dish has at most one variation per region.
+- Every `variation.regionKey` is a region in the bundle or `esp`, and a dish has at most one variation per region.
+- No region is keyed `esp`.
+- An `esp` variation has a `variationSlug` (a slug of at most 64 characters, unique among the dish's Spanish variations); a regional variation has none.
 - Every variation's `recipeKey` names exactly one recipe, and every recipe is used by exactly one variation.
 - `timeMinutes` is 1–10080, `baseServings` is 1–20, and `quantity`, after rounding to 3 decimal places, is above 0 and at most 9999999 (so `1e-10` is rejected).
 - No text in any locale is blank (empty or whitespace only), and neither is a regional dish name.
-- Photo keys follow the media convention (stack.md X3, INF-4): `dishes/<dishKey>/<role>-<hash>` for a dish and `dishes/<dishKey>/<regionKey>/<role>-<hash>` for a variation, where `<role>` is the field's own role (`thumb`, `card` or `hero`) and `<hash>` is 8–64 lowercase hex digits. There's no leading slash and no file extension, because widths and formats are implied by X3.
+- Photo keys follow the media convention (stack.md X3, INF-4): `dishes/<dishKey>/<role>-<hash>` for a dish and `dishes/<dishKey>/<regionKey>/<role>-<hash>` for a regional variation and `dishes/<dishKey>/esp-<variationSlug>/<role>-<hash>` for a Spanish one (D-ESP-7), where `<role>` is the field's own role (`thumb`, `card` or `hero`) and `<hash>` is 8–64 lowercase hex digits. There's no leading slash and no file extension, because widths and formats are implied by X3.
 
 ## Import semantics
 
@@ -74,9 +85,10 @@ The bundle is a **full replacement** of the previous state. It is declarative, n
 
 - Rows are matched by natural key: regions and dishes by `key`, variations and recipes by `recipeKey`. A matched row is updated in place, so its id stays the same. A key the database doesn't have yet is created.
 - Anything stored that the bundle doesn't mention is **deleted**, including its children: a region or dish that's missing loses its variations and their recipes. An empty list is rejected by the schema, so a truncated bundle can't wipe the catalog.
-- A variation whose `recipeKey` now sits under another dish or region is deleted and created again, along with its recipe.
+- A variation whose `recipeKey` now sits under another dish or region, or under another `variationSlug`, is deleted and created again, along with its recipe. A variation is thus identified by (dish, region), or (dish, `esp`, slug) for a Spanish one, as well as by its `recipeKey`.
+- A variation's place in its dish's list is stored as its position. A Spanish variation whose position changes counts as updated. A regional variation is listed by region order, so its position changing is not a change: a bundle that only reorders regional variations prints `no changes` and writes nothing. Positions are written whenever the plan has changes, so the stored ones catch up with the next import that changes anything.
 - Order comes from position: a region's or dish's place in its list is its sort order. Removing or inserting a region or dish shifts the position of every later one, and each shifted row counts as updated.
-- A variation moved to another dish or region, or one whose `recipeKey` was renamed, counts as one variation and one recipe deleted and one of each created.
+- A variation moved to another dish or region, one whose `variationSlug` changed, or one whose `recipeKey` was renamed, counts as one variation and one recipe deleted and one of each created. A slug change is therefore refused by the guarded demo reseed, which refuses deletions.
 - Quantities and scores are rounded to 3 decimal places when the bundle is parsed, which is what the database stores, so float noise like `0.30000000000000004` neither changes the checksum nor counts as an update.
 - A changed `score` is one variation updated; it can reorder the dish and region lists without any other row changing.
 - Everything runs in one transaction, and a failure at any point leaves the database as it was. Imports are serialised by an advisory lock, so two imports never interleave.
@@ -156,7 +168,7 @@ make design-bundle            # regenerate testdata/content.design.json after th
 
 `schemaVersion` is the bundle format version. This backend accepts exactly `1` (`importer.SchemaVersion`) and rejects anything else with a single problem at `/schemaVersion` naming the supported version, before checking the rest of the bundle.
 
-Any change to the format takes a version bump, including an added optional field, because unknown fields are rejected. The exceptions so far are the optional variation `score` (BE-7) and recipe `tips` (BE-8), added under version 1 because an older bundle stays valid and means the same thing. **Deploy the backend before importing a bundle with `score` or `tips`:** an older importer rejects the unknown field (exit 1, nothing changed). The steps for a version bump:
+Any change to the format takes a version bump, including an added optional field, because unknown fields are rejected. The exceptions so far are the optional variation `score` (BE-7), recipe `tips` (BE-8), and `esp` variations with `variationSlug` and the course `basics` (BE-9), added under version 1 because an older bundle stays valid and means the same thing. **Deploy the backend before importing a bundle with `score`, `tips`, `variationSlug` or `basics`:** an older importer rejects the unknown field (exit 1, nothing changed). The steps for a version bump:
 
 1. The backend PR updates `api/content-bundle.schema.json` and the importer, bumps `importer.SchemaVersion`, regenerates `testdata/content.design.json`, and updates this document.
 2. The owner prepares the pipeline change to emit the new version.

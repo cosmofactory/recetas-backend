@@ -65,7 +65,7 @@ func (s *Service) Dishes(ctx context.Context, l Locale) ([]Dish, int64, error) {
 	return dishes, version, nil
 }
 
-// Dish returns one dish with all its variations.
+// Dish returns one dish with all its variations, regional then Spanish.
 func (s *Service) Dish(ctx context.Context, key string, l Locale) (Dish, int64, error) {
 	dishes, version, err := s.Dishes(ctx, l)
 	if err != nil {
@@ -88,6 +88,20 @@ func (s *Service) Recipe(ctx context.Context, dishKey, regionKey string, l Local
 	rc, err := s.repo.Recipe(ctx, dishKey, regionKey, l)
 	if err != nil {
 		return Recipe{}, 0, fmt.Errorf("load recipe: %w", err)
+	}
+	return rc, version, nil
+}
+
+// SpainWideRecipe returns the recipe of dishKey's Spanish variation
+// variationSlug, or ErrNotFound when the dish or that variation doesn't exist.
+func (s *Service) SpainWideRecipe(ctx context.Context, dishKey, variationSlug string, l Locale) (Recipe, int64, error) {
+	version, err := s.contentVersion(ctx)
+	if err != nil {
+		return Recipe{}, 0, err
+	}
+	rc, err := s.repo.SpainWideRecipe(ctx, dishKey, variationSlug, l)
+	if err != nil {
+		return Recipe{}, 0, fmt.Errorf("load spain-wide recipe: %w", err)
 	}
 	return rc, version, nil
 }

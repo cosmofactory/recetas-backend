@@ -181,12 +181,24 @@ func assertCatalogMatches(t *testing.T, tx pgx.Tx, b importer.Bundle) {
 func assertRecipesMatch(t *testing.T, svc *catalog.Service, idx bundleIndex, l catalog.Locale) {
 	t.Helper()
 	for _, p := range idx.pairs() {
-		got, _, err := svc.Recipe(context.Background(), p.dish.Key, p.variation.RegionKey, l)
+		got, err := readRecipe(svc, p, l)
 		if err != nil {
-			t.Fatalf("Recipe(%s/%s, %s): %v", p.dish.Key, p.variation.RegionKey, l, err)
+			t.Fatalf("recipe %s (%s): %v", p.path(), l, err)
 		}
-		assertDeepEqual(t, "recipe "+p.dish.Key+"/"+p.variation.RegionKey+" "+string(l), got, idx.recipe(p, l))
+		assertDeepEqual(t, "recipe "+p.path()+" "+string(l), got, idx.recipe(p, l))
 	}
+}
+
+// readRecipe reads a regional variation's recipe by its region and a Spanish
+// one's by its slug.
+func readRecipe(svc *catalog.Service, p dishVariation, l catalog.Locale) (catalog.Recipe, error) {
+	ctx := context.Background()
+	if p.variation.RegionKey == spainWideKey {
+		rc, _, err := svc.SpainWideRecipe(ctx, p.dish.Key, p.variation.VariationSlug, l)
+		return rc, err
+	}
+	rc, _, err := svc.Recipe(ctx, p.dish.Key, p.variation.RegionKey, l)
+	return rc, err
 }
 
 // bundleIndex derives the catalog read model a bundle should produce.
@@ -200,6 +212,14 @@ type bundleIndex struct {
 type dishVariation struct {
 	dish      importer.Dish
 	variation importer.Variation
+}
+
+// path names the variation like its URL: dish/region or dish/esp/slug.
+func (p dishVariation) path() string {
+	if p.variation.RegionKey == spainWideKey {
+		return p.dish.Key + "/" + spainWideKey + "/" + p.variation.VariationSlug
+	}
+	return p.dish.Key + "/" + p.variation.RegionKey
 }
 
 func indexBundle(b importer.Bundle) bundleIndex {
@@ -280,10 +300,14 @@ type variationRef struct{ dish, variation int }
 
 // expectRegionRanks sets each variation's RegionRank: its position among its
 // region's variations by score descending, then by dish display order.
+// Spanish variations are in no region's list and keep RegionRank 0 (D-ESP-5).
 func expectRegionRanks(dishes []catalog.Dish) {
 	byRegion := map[string][]variationRef{}
 	for di, d := range dishes {
 		for vi, v := range d.Variations {
+			if v.RegionKey == spainWideKey {
+				continue
+			}
 			byRegion[v.RegionKey] = append(byRegion[v.RegionKey], variationRef{di, vi})
 		}
 	}
@@ -296,25 +320,37 @@ func expectRegionRanks(dishes []catalog.Dish) {
 	}
 }
 
-// variations lists the dish's variations in region order.
+// variations lists the dish's regional variations in region order, then its
+// Spanish ones in bundle order (D-ESP-4). A Spanish variation has no region
+// name (D-ESP-3).
 func (idx bundleIndex) variations(d importer.Dish, l catalog.Locale) []catalog.Variation {
 	out := make([]catalog.Variation, 0, len(d.Variations))
 	for _, v := range d.Variations {
 		out = append(out, catalog.Variation{
-			RegionKey:   v.RegionKey,
-			RegionName:  pick(idx.regionByKey[v.RegionKey].Name, l),
-			RecipeKey:   v.RecipeKey,
-			Name:        pick(v.Name, l),
-			NameEs:      v.Name.Es,
-			Description: pick(v.Description, l),
-			Photos:      photosOf(v.Photos),
-			Score:       v.Score,
+			RegionKey:     v.RegionKey,
+			RegionName:    pick(idx.regionByKey[v.RegionKey].Name, l),
+			VariationSlug: v.VariationSlug,
+			RecipeKey:     v.RecipeKey,
+			Name:          pick(v.Name, l),
+			NameEs:        v.Name.Es,
+			Description:   pick(v.Description, l),
+			Photos:        photosOf(v.Photos),
+			Score:         v.Score,
 		})
 	}
-	slices.SortFunc(out, func(a, b catalog.Variation) int {
-		return idx.regionOrder[a.RegionKey] - idx.regionOrder[b.RegionKey]
+	slices.SortStableFunc(out, func(a, b catalog.Variation) int {
+		return idx.displayRank(a.RegionKey) - idx.displayRank(b.RegionKey)
 	})
 	return out
+}
+
+// displayRank orders a dish's variations: regions by region order, every
+// Spanish variation after them (their bundle order kept by a stable sort).
+func (idx bundleIndex) displayRank(regionKey string) int {
+	if regionKey == spainWideKey {
+		return len(idx.regionOrder) + 1
+	}
+	return idx.regionOrder[regionKey]
 }
 
 func (idx bundleIndex) pairs() []dishVariation {
@@ -330,17 +366,18 @@ func (idx bundleIndex) pairs() []dishVariation {
 func (idx bundleIndex) recipe(p dishVariation, l catalog.Locale) catalog.Recipe {
 	rc := idx.recipeByKey[p.variation.RecipeKey]
 	out := catalog.Recipe{
-		DishKey:      p.dish.Key,
-		DishName:     pick(p.dish.Name, l),
-		RegionKey:    p.variation.RegionKey,
-		RegionName:   pick(idx.regionByKey[p.variation.RegionKey].Name, l),
-		RecipeKey:    rc.RecipeKey,
-		Name:         pick(p.variation.Name, l),
-		NameEs:       p.variation.Name.Es,
-		Description:  pick(p.variation.Description, l),
-		TimeMinutes:  rc.TimeMinutes,
-		BaseServings: rc.BaseServings,
-		Photos:       photosOf(p.variation.Photos),
+		DishKey:       p.dish.Key,
+		DishName:      pick(p.dish.Name, l),
+		RegionKey:     p.variation.RegionKey,
+		RegionName:    pick(idx.regionByKey[p.variation.RegionKey].Name, l),
+		VariationSlug: p.variation.VariationSlug,
+		RecipeKey:     rc.RecipeKey,
+		Name:          pick(p.variation.Name, l),
+		NameEs:        p.variation.Name.Es,
+		Description:   pick(p.variation.Description, l),
+		TimeMinutes:   rc.TimeMinutes,
+		BaseServings:  rc.BaseServings,
+		Photos:        photosOf(p.variation.Photos),
 	}
 	if rc.TimeNote != nil {
 		note := pick(*rc.TimeNote, l)

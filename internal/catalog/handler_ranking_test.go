@@ -19,7 +19,10 @@ func TestHandler_DishesCarryRegionRankPerVariation(t *testing.T) {
 	got := map[string]int{}
 	for _, d := range decodeStrict[[]apigen.Dish](t, rec) {
 		for _, v := range d.Variations {
-			got[v.RecipeKey] = v.RegionRank
+			if v.RegionRank == nil {
+				t.Fatalf("variation %s: got regionRank null, want a rank", v.RecipeKey)
+			}
+			got[v.RecipeKey] = *v.RegionRank
 		}
 	}
 	want := map[string]int{}

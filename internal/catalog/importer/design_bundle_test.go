@@ -11,22 +11,33 @@ import (
 
 var slugPattern = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 
-// designRecipe is one of the four recipes the design content.json has.
+// designRecipe is one of the seven recipes the design content.json has.
+// variation is the region key, or esp/<slug> for a Spanish variation.
 type designRecipe struct {
-	dish, region     string
+	dish, variation  string
 	timeMinutes      int
 	timeNote         *importer.Text
 	baseServings     int
 	firstIngredient  importer.Ingredient
 	ingredientsCount int
+	stepsCount       int
 }
 
+var (
+	eggs   = importer.Text{En: "Eggs", Es: "Huevos", Ru: "Яйца"}
+	garlic = importer.Text{En: "Garlic cloves", Es: "Dientes de ajo", Ru: "Зубчики чеснока"}
+)
+
 var designRecipes = []designRecipe{
-	{"tortilla", "gal", 25, nil, 2, importer.Ingredient{Quantity: 4, Name: importer.Text{En: "Eggs", Es: "Huevos", Ru: "Яйца"}}, 4},
-	{"tortilla", "mad", 50, nil, 6, importer.Ingredient{Quantity: 8, Name: importer.Text{En: "Eggs", Es: "Huevos", Ru: "Яйца"}}, 6},
-	{"paella", "val", 75, nil, 4, importer.Ingredient{Quantity: 400, Unit: strp("g"), Name: importer.Text{En: "Bomba rice", Es: "Arroz bomba", Ru: "Рис бомба"}}, 9},
+	{"tortilla", "gal", 25, nil, 2, importer.Ingredient{Quantity: 4, Name: eggs}, 4, 5},
+	{"tortilla", "mad", 50, nil, 6, importer.Ingredient{Quantity: 8, Name: eggs}, 6, 5},
+	{"paella", "val", 75, nil, 4, importer.Ingredient{Quantity: 400, Unit: strp("g"), Name: importer.Text{En: "Bomba rice", Es: "Arroz bomba", Ru: "Рис бомба"}}, 9, 5},
 	{"cocido", "ast", 180, &importer.Text{En: "+ soaking", Es: "+ remojo", Ru: "+ замачивание"}, 4,
-		importer.Ingredient{Quantity: 500, Unit: strp("g"), Name: importer.Text{En: "Fabes de la Granja", Es: "Fabes de la Granja", Ru: "Фасоль фабес-де-ла-гранха"}}, 5},
+		importer.Ingredient{Quantity: 500, Unit: strp("g"), Name: importer.Text{En: "Fabes de la Granja", Es: "Fabes de la Granja", Ru: "Фасоль фабес-де-ла-гранха"}}, 5, 5},
+	{"allioli", "esp/allioli-de-morter", 15, nil, 4, importer.Ingredient{Quantity: 4, Name: garlic}, 3, 3},
+	{"allioli", "esp/allioli-de-codony", 60, nil, 6, importer.Ingredient{Quantity: 300, Unit: strp("g"), Name: importer.Text{En: "Quince", Es: "Membrillo", Ru: "Айва"}}, 4, 3},
+	{"arrozblanco", "esp/arroz-blanco-con-tomate", 30, nil, 4,
+		importer.Ingredient{Quantity: 300, Unit: strp("g"), Name: importer.Text{En: "Long-grain rice", Es: "Arroz largo", Ru: "Длиннозёрный рис"}}, 6, 3},
 }
 
 func TestDesignBundle_Shape(t *testing.T) {
@@ -38,15 +49,15 @@ func TestDesignBundle_Shape(t *testing.T) {
 	if got := regionKeysOf(b); !reflect.DeepEqual(got, wantRegions) {
 		t.Errorf("got region keys %q, want %q", got, wantRegions)
 	}
-	wantDishes := []string{"tortilla", "paella", "cocido", "gazpacho", "croquetas", "torrijas", "arrozleche"}
+	wantDishes := []string{"tortilla", "paella", "cocido", "gazpacho", "croquetas", "torrijas", "arrozleche", "allioli", "arrozblanco"}
 	if got := dishKeysOf(b); !reflect.DeepEqual(got, wantDishes) {
 		t.Errorf("got dish keys %q, want %q", got, wantDishes)
 	}
-	if got := len(allVariations(b)); got != 54 {
-		t.Errorf("got %d variations, want 54", got)
+	if got := len(allVariations(b)); got != 57 {
+		t.Errorf("got %d variations, want 57", got)
 	}
-	if got := len(b.Recipes); got != 54 {
-		t.Errorf("got %d recipes, want 54", got)
+	if got := len(b.Recipes); got != 57 {
+		t.Errorf("got %d recipes, want 57", got)
 	}
 }
 
@@ -92,16 +103,16 @@ func TestDesignBundle_RecipeKeysAreSlugs(t *testing.T) {
 func TestDesignBundle_RealRecipes(t *testing.T) {
 	b := readDesignBundle(t)
 	for _, want := range designRecipes {
-		t.Run(want.dish+"/"+want.region, func(t *testing.T) {
-			rc := recipeOf(t, b, want.dish, want.region)
+		t.Run(want.dish+"/"+want.variation, func(t *testing.T) {
+			rc := recipeOf(t, b, want.dish, want.variation)
 			if rc.TimeMinutes != want.timeMinutes || rc.BaseServings != want.baseServings {
 				t.Errorf("got %d min for %d, want %d min for %d", rc.TimeMinutes, rc.BaseServings, want.timeMinutes, want.baseServings)
 			}
 			if !reflect.DeepEqual(rc.TimeNote, want.timeNote) {
 				t.Errorf("got time note %+v, want %+v", rc.TimeNote, want.timeNote)
 			}
-			if len(rc.Ingredients) != want.ingredientsCount || len(rc.Steps) != 5 {
-				t.Fatalf("got %d ingredients and %d steps, want %d and 5", len(rc.Ingredients), len(rc.Steps), want.ingredientsCount)
+			if len(rc.Ingredients) != want.ingredientsCount || len(rc.Steps) != want.stepsCount {
+				t.Fatalf("got %d ingredients and %d steps, want %d and %d", len(rc.Ingredients), len(rc.Steps), want.ingredientsCount, want.stepsCount)
 			}
 			if !reflect.DeepEqual(rc.Ingredients[0], want.firstIngredient) {
 				t.Errorf("got first ingredient %+v, want %+v", rc.Ingredients[0], want.firstIngredient)
@@ -115,7 +126,7 @@ func TestDesignBundle_PlaceholderRecipes(t *testing.T) {
 	b := readDesignBundle(t)
 	designed := map[string]bool{}
 	for _, r := range designRecipes {
-		designed[recipeOf(t, b, r.dish, r.region).RecipeKey] = true
+		designed[recipeOf(t, b, r.dish, r.variation).RecipeKey] = true
 	}
 	placeholders := 0
 	for _, rc := range b.Recipes {
@@ -165,28 +176,38 @@ func allVariations(b importer.Bundle) []importer.Variation {
 	return vs
 }
 
-// recipeOf returns the recipe of dishKey's variation in regionKey.
-func recipeOf(t *testing.T, b importer.Bundle, dishKey, regionKey string) importer.Recipe {
+// recipeOf returns the recipe of dishKey's variation named by variationID.
+func recipeOf(t *testing.T, b importer.Bundle, dishKey, id string) importer.Recipe {
 	t.Helper()
-	recipeKey := variationOf(t, b, dishKey, regionKey).RecipeKey
+	recipeKey := variationOf(t, b, dishKey, id).RecipeKey
 	for _, rc := range b.Recipes {
 		if rc.RecipeKey == recipeKey {
 			return rc
 		}
 	}
-	t.Fatalf("no recipe %q for %s/%s", recipeKey, dishKey, regionKey)
+	t.Fatalf("no recipe %q for %s/%s", recipeKey, dishKey, id)
 	return importer.Recipe{}
 }
 
-func variationOf(t *testing.T, b importer.Bundle, dishKey, regionKey string) importer.Variation {
+// variationOf returns dishKey's variation named by variationID.
+func variationOf(t *testing.T, b importer.Bundle, dishKey, id string) importer.Variation {
 	t.Helper()
 	for _, v := range variationsOfDish(b, dishKey) {
-		if v.RegionKey == regionKey {
+		if variationID(v) == id {
 			return v
 		}
 	}
-	t.Fatalf("no variation %s/%s", dishKey, regionKey)
+	t.Fatalf("no variation %s/%s", dishKey, id)
 	return importer.Variation{}
+}
+
+// variationID is a regional variation's region key, or esp/<slug> for a
+// Spanish one.
+func variationID(v importer.Variation) string {
+	if v.RegionKey == spainWideKey {
+		return spainWideKey + "/" + v.VariationSlug
+	}
+	return v.RegionKey
 }
 
 func variationsOfDish(b importer.Bundle, dishKey string) []importer.Variation {
@@ -196,4 +217,58 @@ func variationsOfDish(b importer.Bundle, dishKey string) []importer.Variation {
 		}
 	}
 	return nil
+}
+
+// The design's two Spanish samples convert with their slugs and
+// <dish>-esp-<slug> recipe keys, in design order (D-ESP-2).
+func TestDesignBundle_SpainWideSamples(t *testing.T) {
+	b := readDesignBundle(t)
+	tests := []struct {
+		dish   string
+		course string
+		want   []string // regionKey/variationSlug/recipeKey, in bundle order
+	}{
+		{"allioli", "basics", []string{
+			"esp/allioli-de-morter/allioli-esp-allioli-de-morter",
+			"esp/allioli-de-codony/allioli-esp-allioli-de-codony",
+		}},
+		{"arrozblanco", "mains", []string{
+			"esp/arroz-blanco-con-tomate/arrozblanco-esp-arroz-blanco-con-tomate",
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.dish, func(t *testing.T) {
+			d := dishOf(t, b, tt.dish)
+			if d.Course != tt.course {
+				t.Errorf("course: got %q, want %q", d.Course, tt.course)
+			}
+			var got []string
+			for _, v := range d.Variations {
+				got = append(got, v.RegionKey+"/"+v.VariationSlug+"/"+v.RecipeKey)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("variations: got %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+// Only Spanish variations carry a slug.
+func TestDesignBundle_RegionalVariationsHaveNoSlug(t *testing.T) {
+	for _, v := range allVariations(readDesignBundle(t)) {
+		if v.RegionKey != spainWideKey && v.VariationSlug != "" {
+			t.Errorf("variation %s: got slug %q, want none", v.RecipeKey, v.VariationSlug)
+		}
+	}
+}
+
+func dishOf(t *testing.T, b importer.Bundle, key string) importer.Dish {
+	t.Helper()
+	for _, d := range b.Dishes {
+		if d.Key == key {
+			return d
+		}
+	}
+	t.Fatalf("no dish %s", key)
+	return importer.Dish{}
 }

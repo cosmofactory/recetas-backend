@@ -27,9 +27,12 @@ LEFT JOIN (
 ORDER BY COALESCE(ds.score, 0) DESC, d.sort_order;
 
 -- name: ListVariations :many
+-- A dish's regional variations in region order, then its Spanish ones (no
+-- region, a slug) in bundle order (D-ESP-4).
 SELECT
     d.key         AS dish_key,
     r.key         AS region_key,
+    v.slug,
     v.recipe_key,
     v.photo_thumb,
     v.photo_card,
@@ -41,8 +44,8 @@ SELECT
     rt.name       AS region_name
 FROM variations v
 JOIN dishes d ON d.id = v.dish_id
-JOIN regions r ON r.id = v.region_id
+LEFT JOIN regions r ON r.id = v.region_id
 LEFT JOIN variation_translations t ON t.variation_id = v.id AND t.locale = sqlc.arg(locale)::text
 LEFT JOIN variation_translations es ON es.variation_id = v.id AND es.locale = sqlc.arg(spanish)::text
 LEFT JOIN region_translations rt ON rt.region_id = r.id AND rt.locale = sqlc.arg(locale)::text
-ORDER BY d.sort_order, r.sort_order;
+ORDER BY d.sort_order, r.sort_order NULLS LAST, v.position;

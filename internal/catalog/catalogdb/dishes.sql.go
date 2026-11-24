@@ -101,6 +101,7 @@ const listVariations = `-- name: ListVariations :many
 SELECT
     d.key         AS dish_key,
     r.key         AS region_key,
+    v.slug,
     v.recipe_key,
     v.photo_thumb,
     v.photo_card,
@@ -112,11 +113,11 @@ SELECT
     rt.name       AS region_name
 FROM variations v
 JOIN dishes d ON d.id = v.dish_id
-JOIN regions r ON r.id = v.region_id
+LEFT JOIN regions r ON r.id = v.region_id
 LEFT JOIN variation_translations t ON t.variation_id = v.id AND t.locale = $1::text
 LEFT JOIN variation_translations es ON es.variation_id = v.id AND es.locale = $2::text
 LEFT JOIN region_translations rt ON rt.region_id = r.id AND rt.locale = $1::text
-ORDER BY d.sort_order, r.sort_order
+ORDER BY d.sort_order, r.sort_order NULLS LAST, v.position
 `
 
 type ListVariationsParams struct {
@@ -126,7 +127,8 @@ type ListVariationsParams struct {
 
 type ListVariationsRow struct {
 	DishKey     string  `json:"dish_key"`
-	RegionKey   string  `json:"region_key"`
+	RegionKey   *string `json:"region_key"`
+	Slug        *string `json:"slug"`
 	RecipeKey   string  `json:"recipe_key"`
 	PhotoThumb  *string `json:"photo_thumb"`
 	PhotoCard   *string `json:"photo_card"`
@@ -138,6 +140,8 @@ type ListVariationsRow struct {
 	RegionName  *string `json:"region_name"`
 }
 
+// A dish's regional variations in region order, then its Spanish ones (no
+// region, a slug) in bundle order (D-ESP-4).
 func (q *Queries) ListVariations(ctx context.Context, arg ListVariationsParams) ([]ListVariationsRow, error) {
 	rows, err := q.db.Query(ctx, listVariations, arg.Locale, arg.Spanish)
 	if err != nil {
@@ -150,6 +154,7 @@ func (q *Queries) ListVariations(ctx context.Context, arg ListVariationsParams) 
 		if err := rows.Scan(
 			&i.DishKey,
 			&i.RegionKey,
+			&i.Slug,
 			&i.RecipeKey,
 			&i.PhotoThumb,
 			&i.PhotoCard,

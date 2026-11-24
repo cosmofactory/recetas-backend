@@ -21,13 +21,21 @@ func rankRegions(dishes []Dish) {
 	}
 }
 
-// variationsByRegion groups the variations by region key, in dish order.
+// variationsByRegion groups the regional variations by region key, in dish
+// order. Spanish variations are in no region's list and keep RegionRank 0.
 func variationsByRegion(dishes []Dish) map[string][]variationRef {
 	byRegion := map[string][]variationRef{}
 	for di, d := range dishes {
-		for vi, v := range d.Variations {
-			byRegion[v.RegionKey] = append(byRegion[v.RegionKey], variationRef{dish: di, variation: vi})
-		}
+		addRegional(byRegion, di, d.Variations)
 	}
 	return byRegion
+}
+
+func addRegional(byRegion map[string][]variationRef, dish int, variations []Variation) {
+	for vi, v := range variations {
+		if v.RegionKey == spainWideRegionKey {
+			continue
+		}
+		byRegion[v.RegionKey] = append(byRegion[v.RegionKey], variationRef{dish: dish, variation: vi})
+	}
 }

@@ -82,6 +82,19 @@ func rankCases() []rankCase {
 			},
 			want: map[string]int{"gallego": 1, "betanzos": 2, "chorizo": 1, "fabada": 2},
 		},
+		{
+			name: "spanish variations take no rank (0) and leave region ranks alone",
+			dishes: []Dish{
+				rankedDish("allioli", scoredVariation("cat", "allioli-cat", 1), scoredVariation("esp", "allioli-esp-morter", 90),
+					scoredVariation("esp", "allioli-esp-codony", 80)),
+				rankedDish("arrozblanco", scoredVariation("esp", "arrozblanco-esp-tomate", 50)),
+				rankedDish("escudella", scoredVariation("cat", "escudella-cat", 2)),
+			},
+			want: map[string]int{
+				"escudella-cat": 1, "allioli-cat": 2,
+				"allioli-esp-morter": 0, "allioli-esp-codony": 0, "arrozblanco-esp-tomate": 0,
+			},
+		},
 	}
 }
 

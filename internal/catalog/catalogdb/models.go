@@ -121,12 +121,14 @@ type RegionTranslation struct {
 type Variation struct {
 	ID         int64   `json:"id"`
 	DishID     int64   `json:"dish_id"`
-	RegionID   int64   `json:"region_id"`
+	RegionID   *int64  `json:"region_id"`
 	RecipeKey  string  `json:"recipe_key"`
 	PhotoThumb *string `json:"photo_thumb"`
 	PhotoCard  *string `json:"photo_card"`
 	PhotoHero  *string `json:"photo_hero"`
 	Score      float64 `json:"score"`
+	Slug       *string `json:"slug"`
+	Position   int32   `json:"position"`
 }
 
 type VariationTranslation struct {

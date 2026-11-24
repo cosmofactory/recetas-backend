@@ -122,21 +122,28 @@ func (l *loader) insertDish(d Dish) {
 		`INSERT INTO dish_translations (dish_id, locale, name, description) VALUES ($1, $2, $3, $4)`,
 		func(loc string) []any { return []any{id, loc, d.Name[loc], d.Description[loc]} })
 
-	for _, v := range d.Variations {
-		l.insertVariation(id, v)
+	for i, v := range d.Variations {
+		l.insertVariation(placement{dishID: id, position: firstPosition + i}, v)
 	}
 }
 
-func (l *loader) insertVariation(dishID int64, v Variation) {
+// placement is where a variation goes: its dish and its 1-based position
+// in the dish's bundle order (D-ESP-4).
+type placement struct {
+	dishID   int64
+	position int
+}
+
+func (l *loader) insertVariation(at placement, v Variation) {
 	l.t.Helper()
 	regionID, ok := l.f.RegionIDs[v.RegionKey]
 	if !ok {
 		l.t.Fatalf("catalogtest: variation %s: unknown region %q", v.RecipeKey, v.RegionKey)
 	}
 	id := l.queryID("variation "+v.RecipeKey,
-		`INSERT INTO variations (dish_id, region_id, recipe_key, photo_thumb, photo_card, photo_hero)
-		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-		dishID, regionID, v.RecipeKey, v.Photos.Thumb, v.Photos.Card, v.Photos.Hero)
+		`INSERT INTO variations (dish_id, region_id, recipe_key, position, photo_thumb, photo_card, photo_hero)
+		VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+		at.dishID, regionID, v.RecipeKey, at.position, v.Photos.Thumb, v.Photos.Card, v.Photos.Hero)
 	l.f.VariationIDs[v.RecipeKey] = id
 
 	l.requireLocales("variation "+v.RecipeKey+" name", v.Name)

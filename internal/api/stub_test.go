@@ -34,6 +34,10 @@ func (Stub) GetRecipe(context.Context, apigen.GetRecipeRequestObject) (apigen.Ge
 	return notImplemented{}, nil
 }
 
+func (Stub) GetSpainWideRecipe(context.Context, apigen.GetSpainWideRecipeRequestObject) (apigen.GetSpainWideRecipeResponseObject, error) {
+	return notImplemented{}, nil
+}
+
 type notImplemented struct{}
 
 func (notImplemented) write(w http.ResponseWriter) error {
@@ -46,3 +50,6 @@ func (r notImplemented) VisitGetRegionResponse(w http.ResponseWriter) error   { 
 func (r notImplemented) VisitListDishesResponse(w http.ResponseWriter) error  { return r.write(w) }
 func (r notImplemented) VisitGetDishResponse(w http.ResponseWriter) error     { return r.write(w) }
 func (r notImplemented) VisitGetRecipeResponse(w http.ResponseWriter) error   { return r.write(w) }
+func (r notImplemented) VisitGetSpainWideRecipeResponse(w http.ResponseWriter) error {
+	return r.write(w)
+}

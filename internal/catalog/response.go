@@ -96,34 +96,36 @@ func toAPIDish(d Dish) apigen.Dish {
 
 func toAPIVariation(v Variation) apigen.VariationSummary {
 	return apigen.VariationSummary{
-		RegionKey:   v.RegionKey,
-		RegionName:  v.RegionName,
-		RegionRank:  v.RegionRank,
-		RecipeKey:   v.RecipeKey,
-		Name:        v.Name,
-		NameEs:      v.NameEs,
-		Description: v.Description,
-		Photos:      toAPIPhotos(v.Photos),
+		RegionKey:     v.RegionKey,
+		RegionName:    nullIfZero(v.RegionName),
+		RegionRank:    nullIfZero(v.RegionRank),
+		VariationSlug: nullIfZero(v.VariationSlug),
+		RecipeKey:     v.RecipeKey,
+		Name:          v.Name,
+		NameEs:        v.NameEs,
+		Description:   v.Description,
+		Photos:        toAPIPhotos(v.Photos),
 	}
 }
 
 func toAPIRecipe(rc Recipe) apigen.Recipe {
 	return apigen.Recipe{
-		DishKey:      rc.DishKey,
-		DishName:     rc.DishName,
-		RegionKey:    rc.RegionKey,
-		RegionName:   rc.RegionName,
-		RecipeKey:    rc.RecipeKey,
-		Name:         rc.Name,
-		NameEs:       rc.NameEs,
-		Description:  rc.Description,
-		TimeMinutes:  rc.TimeMinutes,
-		TimeNote:     rc.TimeNote,
-		BaseServings: rc.BaseServings,
-		Ingredients:  mapSlice(rc.Ingredients, toAPIIngredient),
-		Steps:        nonNil(rc.Steps),
-		Tips:         nonNil(rc.Tips),
-		Photos:       toAPIPhotos(rc.Photos),
+		DishKey:       rc.DishKey,
+		DishName:      rc.DishName,
+		RegionKey:     rc.RegionKey,
+		RegionName:    nullIfZero(rc.RegionName),
+		VariationSlug: nullIfZero(rc.VariationSlug),
+		RecipeKey:     rc.RecipeKey,
+		Name:          rc.Name,
+		NameEs:        rc.NameEs,
+		Description:   rc.Description,
+		TimeMinutes:   rc.TimeMinutes,
+		TimeNote:      rc.TimeNote,
+		BaseServings:  rc.BaseServings,
+		Ingredients:   mapSlice(rc.Ingredients, toAPIIngredient),
+		Steps:         nonNil(rc.Steps),
+		Tips:          nonNil(rc.Tips),
+		Photos:        toAPIPhotos(rc.Photos),
 	}
 }
 
@@ -134,6 +136,16 @@ func toAPIIngredient(i Ingredient) apigen.Ingredient {
 		out.Unit = &unit
 	}
 	return out
+}
+
+// nullIfZero maps a domain zero value, which means none (a Spanish
+// variation's region name and rank, a regional one's slug), to null.
+func nullIfZero[T comparable](v T) *T {
+	var zero T
+	if v == zero {
+		return nil
+	}
+	return &v
 }
 
 func mapSlice[From, To any](items []From, convert func(From) To) []To {

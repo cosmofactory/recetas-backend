@@ -74,8 +74,8 @@ func dishFromRow(row catalogdb.ListDishesRow, order int) Dish {
 }
 
 // attachVariations appends each variation to its dish, keeping the rows'
-// region order. Rows of a dish missing from dishes (added between the two
-// queries) are dropped.
+// order (regional by region, then Spanish). Rows of a dish missing from
+// dishes (added between the two queries) are dropped.
 func attachVariations(dishes []Dish, rows []catalogdb.ListVariationsRow, l Locale) error {
 	byKey := indexBy(dishes, func(d Dish) string { return d.Key })
 	for _, row := range rows {
@@ -93,60 +93,97 @@ func attachVariations(dishes []Dish, rows []catalogdb.ListVariationsRow, l Local
 }
 
 func variationFromRow(row catalogdb.ListVariationsRow, l Locale) (Variation, error) {
+	at := placeOf(row.RegionKey, row.Slug)
 	err := firstMissing(
 		translation{entityVariation, row.RecipeKey, l, []*string{row.Name, row.Description}},
 		translation{entityVariation, row.RecipeKey, localeSpanish, []*string{row.NameEs}},
-		translation{entityRegion, row.RegionKey, l, []*string{row.RegionName}},
+		at.regionNameTranslation(row.RegionName, l),
 	)
 	if err != nil {
 		return Variation{}, err
 	}
 	return Variation{
-		RegionKey:   row.RegionKey,
-		RegionName:  *row.RegionName,
-		RecipeKey:   row.RecipeKey,
-		Name:        *row.Name,
-		NameEs:      *row.NameEs,
-		Description: *row.Description,
-		Photos:      Photos{Thumb: row.PhotoThumb, Card: row.PhotoCard, Hero: row.PhotoHero},
-		Score:       row.Score,
+		RegionKey:     at.regionKey,
+		RegionName:    valueOr(row.RegionName),
+		VariationSlug: at.slug,
+		RecipeKey:     row.RecipeKey,
+		Name:          *row.Name,
+		NameEs:        *row.NameEs,
+		Description:   *row.Description,
+		Photos:        Photos{Thumb: row.PhotoThumb, Card: row.PhotoCard, Hero: row.PhotoHero},
+		Score:         row.Score,
 	}, nil
 }
 
-func recipeFromRow(row catalogdb.GetRecipeByDishRegionRow, l Locale) (Recipe, error) {
+func recipeFromRow(row recipeRow, l Locale) (Recipe, error) {
 	if err := recipeRowMissing(row, l); err != nil {
 		return Recipe{}, err
 	}
+	at := placeOf(row.RegionKey, row.Slug)
 	return Recipe{
-		DishKey:      row.DishKey,
-		DishName:     *row.DishName,
-		RegionKey:    row.RegionKey,
-		RegionName:   *row.RegionName,
-		RecipeKey:    row.RecipeKey,
-		Name:         *row.Name,
-		NameEs:       *row.NameEs,
-		Description:  *row.Description,
-		TimeMinutes:  int(row.TimeMinutes),
-		TimeNote:     row.TimeNote,
-		BaseServings: int(row.BaseServings),
-		Photos:       Photos{Thumb: row.PhotoThumb, Card: row.PhotoCard, Hero: row.PhotoHero},
+		DishKey:       row.DishKey,
+		DishName:      *row.DishName,
+		RegionKey:     at.regionKey,
+		RegionName:    valueOr(row.RegionName),
+		VariationSlug: at.slug,
+		RecipeKey:     row.RecipeKey,
+		Name:          *row.Name,
+		NameEs:        *row.NameEs,
+		Description:   *row.Description,
+		TimeMinutes:   int(row.TimeMinutes),
+		TimeNote:      row.TimeNote,
+		BaseServings:  int(row.BaseServings),
+		Photos:        Photos{Thumb: row.PhotoThumb, Card: row.PhotoCard, Hero: row.PhotoHero},
 	}, nil
 }
 
 // recipeRowMissing checks the recipe row's translations. The time note is
 // optional, but once a recipe has one it must have it in every locale.
-func recipeRowMissing(row catalogdb.GetRecipeByDishRegionRow, l Locale) error {
+func recipeRowMissing(row recipeRow, l Locale) error {
 	var timeNote []*string
 	if row.HasTimeNote {
 		timeNote = []*string{row.TimeNote}
 	}
 	return firstMissing(
 		translation{entityDish, row.DishKey, l, []*string{row.DishName}},
-		translation{entityRegion, row.RegionKey, l, []*string{row.RegionName}},
+		placeOf(row.RegionKey, row.Slug).regionNameTranslation(row.RegionName, l),
 		translation{entityVariation, row.RecipeKey, l, []*string{row.Name, row.Description}},
 		translation{entityVariation, row.RecipeKey, localeSpanish, []*string{row.NameEs}},
 		translation{entityRecipeTimeNote, row.RecipeKey, l, timeNote},
 	)
+}
+
+// place is where a variation belongs: a region, or Spain-wide with a slug
+// when the row has no region (D-ESP-1).
+type place struct {
+	regionKey string
+	slug      string
+	spainWide bool
+}
+
+func placeOf(regionKey, slug *string) place {
+	if regionKey == nil {
+		return place{regionKey: spainWideRegionKey, slug: valueOr(slug), spainWide: true}
+	}
+	return place{regionKey: *regionKey}
+}
+
+// regionNameTranslation requires a regional variation's region name; a
+// Spanish variation has none.
+func (p place) regionNameTranslation(name *string, l Locale) translation {
+	t := translation{entity: entityRegion, key: p.regionKey, locale: l}
+	if !p.spainWide {
+		t.fields = []*string{name}
+	}
+	return t
+}
+
+// valueOr is *s, or "" for nil.
+func valueOr(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
 
 func ingredientsFromRows(rows []catalogdb.ListRecipeIngredientsRow, recipeKey string, l Locale) ([]Ingredient, error) {

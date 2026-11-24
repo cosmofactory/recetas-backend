@@ -99,6 +99,8 @@ The full contract is [`content-import.md`](content-import.md). Dry run first, ev
 
 `docker compose run backend` goes through the image's entrypoint, which runs `goose up` first. So even a `--dry-run` import applies any pending migrations when the compose tag is ahead of the database.
 
+With `00011_spain_wide_variations` applied, import only with a BE-9 or later image: an older importer fails on every new variation (`position` is NOT NULL). After rolling the image back past BE-9, roll 00011 down first (it refuses while Spanish variations or `basics` dishes exist) before importing with the old image.
+
 Run it as `deploy` from the owner's login (see "Who runs what" at the top); the repo's deploy key can't. To reseed demo with the design content, use recetas-infra's `scripts/reseed-demo.sh` (its RUNBOOK.md, Demo → Reseed). Demo's content is recetas-infra's `content/demo/bundle.json` (not this repo's design seed); recetas-infra's demo workflow reseeds it automatically with the guarded `reseed-demo.sh --auto`. Prod is never reseeded.
 
 ```bash
@@ -142,6 +144,7 @@ Only when the schema itself is the problem; prefer a forward fix (a new migratio
 `goose down` reverts the latest applied migration and needs its file, so it runs from an image that still contains it: the **newer** image. Stop the newer server first when the down step would break it (see the table).
 
 > **`down` destroys data. Back up first** (prod: the INF-5 backup job, run by hand).
+> - Going down past **00011** drops `variations.slug` and `variations.position` and restores the `NOT NULL` region and the old `course` values. It refuses (and changes nothing) while a Spanish (`esp`) variation or a `basics` dish exists.
 > - Going down past **00010** drops `recipe_tips` and `recipe_tip_translations`: the recipe tips (restored by re-importing the last bundle).
 > - Going down past **00009** drops `variations.score`: the importance scores (restored by re-importing the last bundle).
 > - Going down past **00008** drops `content_versions`: the import history and checksums.
@@ -166,6 +169,7 @@ What each Down costs (the BE-6 migration review; every Down passes the round-tri
 
 | Migration | Down | Order and aftermath |
 |-----------|------|---------------------|
+| `00011_spain_wide_variations` | **Refuses** while any Spanish (`esp`, no region) variation or `basics` dish exists, rather than drop them; otherwise drops `variations.slug` and `variations.position` (the bundle order, rebuilt from the bundle) and restores `region_id NOT NULL` and the 3-value `course` check. | **Roll the image back first** (today's server reads the columns), after importing a bundle without Spanish variations or `basics` dishes with the newer image. Until 00011 is down, the old image's importer fails on any new variation (`position` is NOT NULL), so import only after the down. Rolling forward backfills positions in region order; re-importing the last bundle (dry run first) restores the Spanish content. |
 | `00010_create_recipe_tips` | **Destroys data:** drops `recipe_tips` and `recipe_tip_translations`, the recipe tips. | **Roll the image back first:** today's server and importer read the tables, so dropping them under them turns every recipe request and every import into an error. After rolling forward no recipe has tips; re-importing the last bundle (dry run first) restores them as recipe updates and records a new version. |
 | `00009_add_variation_score` | **Destroys data:** drops `variations.score`, the importance scores. | **Roll the image back first:** today's server and importer read the column, so dropping it under them turns every dish and region request into a 500. After rolling forward every score is 0 and lists fall back to editorial order; re-importing the last bundle (dry run first) restores the scores as variation updates and records a new version. |
 | `00008_create_content_versions` | **Destroys data:** drops `content_versions`, the import history and checksums. Back up and save the rows first. | **Roll the image back first.** Today's server reads the content version on every catalog request, so dropping the table under it turns every request into a 500. After rolling forward the table is empty: `ContentVersion` is 0 and every ETag becomes `W/"0-<locale>"`. The next import that changes content gets id 1 again and reissues ETags clients have already seen for other content (a client holding one gets a wrong 304). Re-importing the same bundle doesn't help: the catalog rows still match it, so the import prints `no changes (content version 0 is current)` and records nothing. **Restore the saved rows before any import** (below). |

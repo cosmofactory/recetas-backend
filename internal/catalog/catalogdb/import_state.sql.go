@@ -438,6 +438,8 @@ SELECT
     v.id,
     d.key AS dish_key,
     r.key AS region_key,
+    v.slug,
+    v.position,
     v.recipe_key,
     v.photo_thumb,
     v.photo_card,
@@ -451,7 +453,7 @@ SELECT
     COALESCE(ru.description, '')::text AS description_ru
 FROM variations v
 JOIN dishes d ON d.id = v.dish_id
-JOIN regions r ON r.id = v.region_id
+LEFT JOIN regions r ON r.id = v.region_id
 LEFT JOIN variation_translations en ON en.variation_id = v.id AND en.locale = 'en'
 LEFT JOIN variation_translations es ON es.variation_id = v.id AND es.locale = 'es'
 LEFT JOIN variation_translations ru ON ru.variation_id = v.id AND ru.locale = 'ru'
@@ -461,7 +463,9 @@ ORDER BY v.id
 type ImportListVariationsRow struct {
 	ID            int64   `json:"id"`
 	DishKey       string  `json:"dish_key"`
-	RegionKey     string  `json:"region_key"`
+	RegionKey     *string `json:"region_key"`
+	Slug          *string `json:"slug"`
+	Position      int32   `json:"position"`
 	RecipeKey     string  `json:"recipe_key"`
 	PhotoThumb    *string `json:"photo_thumb"`
 	PhotoCard     *string `json:"photo_card"`
@@ -488,6 +492,8 @@ func (q *Queries) ImportListVariations(ctx context.Context) ([]ImportListVariati
 			&i.ID,
 			&i.DishKey,
 			&i.RegionKey,
+			&i.Slug,
+			&i.Position,
 			&i.RecipeKey,
 			&i.PhotoThumb,
 			&i.PhotoCard,

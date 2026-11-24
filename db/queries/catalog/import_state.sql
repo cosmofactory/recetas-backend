@@ -65,6 +65,8 @@ SELECT
     v.id,
     d.key AS dish_key,
     r.key AS region_key,
+    v.slug,
+    v.position,
     v.recipe_key,
     v.photo_thumb,
     v.photo_card,
@@ -78,7 +80,7 @@ SELECT
     COALESCE(ru.description, '')::text AS description_ru
 FROM variations v
 JOIN dishes d ON d.id = v.dish_id
-JOIN regions r ON r.id = v.region_id
+LEFT JOIN regions r ON r.id = v.region_id
 LEFT JOIN variation_translations en ON en.variation_id = v.id AND en.locale = 'en'
 LEFT JOIN variation_translations es ON es.variation_id = v.id AND es.locale = 'es'
 LEFT JOIN variation_translations ru ON ru.variation_id = v.id AND ru.locale = 'ru'

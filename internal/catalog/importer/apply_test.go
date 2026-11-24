@@ -15,9 +15,9 @@ import (
 
 var designCreated = map[string]importer.Counts{
 	"regions":    {Created: 17},
-	"dishes":     {Created: 7},
-	"variations": {Created: 54},
-	"recipes":    {Created: 54},
+	"dishes":     {Created: 9},
+	"variations": {Created: 57},
+	"recipes":    {Created: 57},
 }
 
 func TestApply_DesignBundleSummary(t *testing.T) {
@@ -80,7 +80,7 @@ func TestApply_DesignContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Dishes: %v", err)
 	}
-	requireLen(t, "dishes", len(dishes), 7)
+	requireLen(t, "dishes", len(dishes), 9)
 
 	betanzos := mustRecipe(t, svc, pairKey{"tortilla", "gal"}, "en")
 	if betanzos.TimeMinutes != 25 || betanzos.BaseServings != 2 || betanzos.TimeNote != nil {
@@ -99,6 +99,20 @@ func TestApply_DesignContent(t *testing.T) {
 	arrosNegre := mustRecipe(t, svc, pairKey{"paella", "cat"}, "en")
 	if len(arrosNegre.Steps) == 0 || !strings.Contains(strings.ToLower(strings.Join(arrosNegre.Steps, " ")), "placeholder") {
 		t.Errorf("paella/cat: got steps %q, want a placeholder step", arrosNegre.Steps)
+	}
+}
+
+// The design seed's Spanish sample imports and is served by its slug.
+func TestApply_DesignContentSpainWide(t *testing.T) {
+	tx := emptyTx(t)
+	mustApply(t, tx, readDesignBundle(t), realImport("design"))
+
+	rc, _, err := newService(tx).SpainWideRecipe(context.Background(), "arrozblanco", "arroz-blanco-con-tomate", "es")
+	if err != nil {
+		t.Fatalf("SpainWideRecipe(arrozblanco, arroz-blanco-con-tomate): %v", err)
+	}
+	if rc.TimeMinutes != 30 || rc.RegionKey != "esp" || rc.Name != "Arroz blanco con tomate" {
+		t.Errorf("arroz blanco: got %d min, region %q, name %q; want 30, esp, %q", rc.TimeMinutes, rc.RegionKey, rc.Name, "Arroz blanco con tomate")
 	}
 }
 
@@ -193,7 +207,7 @@ func TestApply_ReordersRegionsAndDishes(t *testing.T) {
 		{"move the last to the front", func(b *importer.Bundle) {
 			b.Regions = append(b.Regions[len(b.Regions)-1:], b.Regions[:len(b.Regions)-1]...)
 			b.Dishes = append(b.Dishes[len(b.Dishes)-1:], b.Dishes[:len(b.Dishes)-1]...)
-		}, map[string]importer.Counts{"regions": {Updated: 17}, "dishes": {Updated: 7}}},
+		}, map[string]importer.Counts{"regions": {Updated: 17}, "dishes": {Updated: 9}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

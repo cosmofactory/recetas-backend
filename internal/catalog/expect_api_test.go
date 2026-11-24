@@ -67,11 +67,16 @@ func apiRegionDetail(t *testing.T, key, loc string) apigen.RegionDetail {
 	}
 }
 
+// ptr returns a pointer to v, for the contract's nullable fields.
+func ptr[T any](v T) *T { return &v }
+
+// apiVariation is a fixture variation: always regional, so it has a region
+// name and rank and no variationSlug.
 func apiVariation(f catalogtest.Fixture, dishKey string, v catalogtest.Variation, loc string) apigen.VariationSummary {
 	return apigen.VariationSummary{
-		RegionRank:  fixtureRegionRank(f, dishKey, v.RegionKey),
+		RegionRank:  ptr(fixtureRegionRank(f, dishKey, v.RegionKey)),
 		RegionKey:   v.RegionKey,
-		RegionName:  regionName(f, v.RegionKey, catalog.Locale(loc)),
+		RegionName:  ptr(regionName(f, v.RegionKey, catalog.Locale(loc))),
 		RecipeKey:   v.RecipeKey,
 		Name:        v.Name[loc],
 		NameEs:      v.Name[spanish],
@@ -146,7 +151,7 @@ func apiRecipe(t *testing.T, p recipePair, loc string) apigen.Recipe {
 		DishKey:      d.Key,
 		DishName:     d.Name[loc],
 		RegionKey:    v.RegionKey,
-		RegionName:   regionName(f, v.RegionKey, catalog.Locale(loc)),
+		RegionName:   ptr(regionName(f, v.RegionKey, catalog.Locale(loc))),
 		RecipeKey:    v.RecipeKey,
 		Name:         v.Name[loc],
 		NameEs:       v.Name[spanish],

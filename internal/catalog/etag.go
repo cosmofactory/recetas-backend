@@ -15,8 +15,17 @@ func listETag(version int64, l Locale) string {
 }
 
 // recipeETag tags one variation's recipe.
-func recipeETag(version int64, l Locale, dishKey, regionKey string) string {
-	return fmt.Sprintf(`W/"%d-%s-%s-%s"`, version, l, dishKey, regionKey)
+func recipeETag(version int64, l Locale, rc Recipe) string {
+	return fmt.Sprintf(`W/"%d-%s-%s-%s"`, version, l, rc.DishKey, variationKey(rc))
+}
+
+// variationKey names a variation within its dish: its region key, or
+// esp-<slug> for a Spanish variation (D-ESP-7).
+func variationKey(rc Recipe) string {
+	if rc.VariationSlug != "" {
+		return rc.RegionKey + "-" + rc.VariationSlug
+	}
+	return rc.RegionKey
 }
 
 // cacheHeaders are the ETag and Cache-Control of a 200; every generated

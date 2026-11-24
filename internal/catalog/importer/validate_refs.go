@@ -34,24 +34,60 @@ type variationContext struct {
 }
 
 func validateVariations(ps *problems, dishAt pointer, d Dish, vc variationContext) {
-	inDish := map[string]bool{}
+	places := newDishPlaces(d.Key, vc.regions)
 	for j, v := range d.Variations {
 		at := dishAt.at("variations", j)
-		switch {
-		case !vc.regions.seen[v.RegionKey]:
-			ps.add(at.at("regionKey"), "unknown region %q", v.RegionKey)
-		case inDish[v.RegionKey]:
-			ps.add(at.at("regionKey"), "dish %q already has a variation in region %q", d.Key, v.RegionKey)
-		}
-		inDish[v.RegionKey] = true
+		places.check(ps, at, v)
 		vc.refs.add(ps, at.at("recipeKey"), v.RecipeKey)
 		checkText(ps, at.at("name"), v.Name)
 		checkText(ps, at.at("description"), v.Description)
-		checkPhotos(ps, at.at("photos"), v.Photos, "dishes/"+d.Key+"/"+v.RegionKey+"/")
+		checkPhotos(ps, at.at("photos"), v.Photos, "dishes/"+d.Key+"/"+v.key()+"/")
 		if v.Score < 0 || v.Score > maxScore {
 			ps.add(at.at("score"), "score %v is not 0-%d", v.Score, maxScore)
 		}
 	}
+}
+
+// dishPlaces checks where a dish's variations belong: at most one per known
+// region, and Spanish ones by a slug unique within the dish (D-ESP-6).
+type dishPlaces struct {
+	dishKey string
+	known   keySet
+	regions map[string]bool
+	slugs   map[string]bool
+}
+
+func newDishPlaces(dishKey string, known keySet) dishPlaces {
+	return dishPlaces{dishKey: dishKey, known: known, regions: map[string]bool{}, slugs: map[string]bool{}}
+}
+
+func (dp dishPlaces) check(ps *problems, at pointer, v Variation) {
+	if v.spainWide() {
+		dp.checkSlug(ps, at.at("variationSlug"), v.VariationSlug)
+		return
+	}
+	if v.VariationSlug != "" {
+		ps.add(at.at("variationSlug"), "only a Spanish (%s) variation has a variationSlug", SpainWideRegionKey)
+	}
+	switch {
+	case !dp.known.seen[v.RegionKey]:
+		ps.add(at.at("regionKey"), "unknown region %q", v.RegionKey)
+	case dp.regions[v.RegionKey]:
+		ps.add(at.at("regionKey"), "dish %q already has a variation in region %q", dp.dishKey, v.RegionKey)
+	}
+	dp.regions[v.RegionKey] = true
+}
+
+func (dp dishPlaces) checkSlug(ps *problems, at pointer, slug string) {
+	switch {
+	case slug == "":
+		ps.add(at, "a Spanish (%s) variation needs a variationSlug", SpainWideRegionKey)
+	case !validSlug(slug):
+		ps.add(at, "variationSlug %q is not a slug (lowercase a-z, 0-9 and single hyphens, at most %d characters)", slug, MaxKeyLength)
+	case dp.slugs[slug]:
+		ps.add(at, "dish %q already has a Spanish variation with slug %q", dp.dishKey, slug)
+	}
+	dp.slugs[slug] = true
 }
 
 func (r *recipeRefs) add(ps *problems, at pointer, key string) {

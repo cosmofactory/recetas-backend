@@ -24,8 +24,9 @@ import (
 // A new path parameter fails TestRegister_EveryCatalogOperationIsWired until
 // it is added here.
 var validPathParams = map[string]string{
-	"dishKey":   "tortilla",
-	"regionKey": "gal",
+	"dishKey":       "tortilla",
+	"regionKey":     "gal",
+	"variationSlug": "allioli-de-morter",
 }
 
 var pathParam = regexp.MustCompile(`\{([^}]+)\}`)
@@ -155,6 +156,8 @@ func TestRegister_LangValidation(t *testing.T) {
 		{name: "lang is case-sensitive", target: "/v1/regions?lang=EN", wantStatus: http.StatusBadRequest, wantCode: "bad_request"},
 		{name: "unknown lang on detail route", target: "/v1/dishes/tortilla?lang=fr", wantStatus: http.StatusBadRequest, wantCode: "bad_request"},
 		{name: "unknown lang on recipe route", target: "/v1/dishes/tortilla/variations/gal/recipe?lang=de", wantStatus: http.StatusBadRequest, wantCode: "bad_request"},
+		{name: "unknown lang on spain-wide recipe route", target: "/v1/dishes/allioli/variations/esp/allioli-de-morter/recipe?lang=de", wantStatus: http.StatusBadRequest, wantCode: "bad_request"},
+		{name: "lang es on spain-wide recipe route", target: "/v1/dishes/allioli/variations/esp/allioli-de-morter/recipe?lang=es", wantStatus: http.StatusNotImplemented, wantCode: "not_implemented"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

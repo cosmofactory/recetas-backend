@@ -47,12 +47,27 @@ type (
 	dishWrite   = orderedWrite[Dish]
 )
 
-// variationWrite and recipeWrite create their row when id is 0.
+// variationWrite and recipeWrite create their row when id is 0. A kept
+// variation is edited when its content changes and moved when its position
+// within its dish does.
 type variationWrite struct {
 	id        int64
 	dishKey   string
+	position  int
+	edited    bool
+	moved     bool
 	variation Variation
 }
+
+// reported is whether the plan counts the write. Only Spanish variations are
+// listed by position (D-ESP-4); a regional one is listed by region order, so
+// its position changing (e.g. after a removal) is written but changes
+// nothing served.
+func (w variationWrite) reported() bool {
+	return w.id == 0 || w.edited || (w.moved && w.variation.spainWide())
+}
+
+func (w variationWrite) needed() bool { return w.reported() || w.moved }
 
 type recipeWrite struct {
 	id     int64
