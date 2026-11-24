@@ -15,6 +15,7 @@ var summaryLine = regexp.MustCompile(`^(` +
 	`|dry run, rolled back; changes against content version \d+:` +
 	`|(dry run: )?no changes \(content version \d+ is current\)` +
 	`|  [a-z]+ +created +\d+ +updated +\d+ +deleted +\d+` +
+	`|  removed /[a-z0-9/-]+` +
 	`)$`)
 
 // Scripts capture stdout as the import's result, so diagnostics, usage and

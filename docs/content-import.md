@@ -95,6 +95,7 @@ The bundle is a **full replacement** of the previous state. It is declarative, n
 - On success a `content_versions` row records `--source` and the bundle checksum. The checksum is the SHA-256 of the canonical JSON of the parsed bundle, so key order and whitespace in the input don't matter. The new version changes every API ETag, so caches revalidate.
 - Every import compares the bundle with the rows in the database, never only with the last checksum, so re-importing a bundle repairs any drift (a row edited by hand, say).
 - **Idempotent:** a bundle that changes nothing makes no changes, adds no version and prints `no changes`.
+- **Removals need an allowance** (INF-7, D-INF7-3). See [Removals](#removals).
 
 The summary lists the rows created, updated and deleted for each entity:
 
@@ -104,12 +105,39 @@ imported content version 2 (source "pipeline 2026-10-15"):
   dishes      created   0  updated   0  deleted   0
   variations  created   0  updated   0  deleted   1
   recipes     created   0  updated   0  deleted   1
+  removed /dishes/tortilla/gal
 ```
+
+After the counts, one `removed <path>` line names each public path the import removes, in a dry run too.
+
+### Removals
+
+A removal is a public path, without the locale prefix, that the database serves and the bundle no longer does:
+
+| Path | Removed when |
+|------|--------------|
+| `/regions/<region>` | the region is missing or its `key` changed |
+| `/dishes/<dish>` | the dish is missing or its `key` changed |
+| `/dishes/<dish>/<region>` | the regional variation is missing, moved to another dish or region, or made Spanish; also when its dish or region is removed |
+| `/dishes/<dish>/esp/<slug>` | the Spanish variation is missing, moved, or its `variationSlug` changed; also when its dish is removed |
+
+A recipe goes with its variation and has no path of its own. A variation recreated at the same path (its `recipeKey` renamed at the same dish and region) is not a removal. The first import into an empty database has none.
+
+Every removal must be listed in the `--allow-removals` file, by exact path: removing a dish or region needs the dish's or region's own path **and** each of its variations' paths. Without the flag nothing is allowed. Any unlisted removal refuses the whole import, the dry run included: exit 1, stdout empty, and stderr names only the paths still missing from the file. Nothing is written. Listing a path that isn't removed is fine, so the file can outlive the release it was written for. Run a dry run without the file to see every removal the bundle makes, then list the ones you mean.
+
+The file has one path per line. Surrounding whitespace (CRLF included) is ignored, and so are blank lines and lines starting with `#`:
+
+```
+# 2026-11-24: codony allioli merged into the morter one
+/dishes/allioli/esp/allioli-de-codony
+```
+
+Redirects for removed URLs are not built yet (INF-7 follow-up).
 
 ## Invocation
 
 ```
-/app/import --source <label> [--file bundle.json] [--dry-run]
+/app/import --source <label> [--file bundle.json] [--dry-run] [--allow-removals paths.txt]
 ```
 
 | Flag | Meaning |
@@ -117,6 +145,7 @@ imported content version 2 (source "pipeline 2026-10-15"):
 | `--source` | Required. A free-text label (at most 200 bytes) stored with the content version, e.g. the pipeline run id. |
 | `--file` | Reads the bundle from this file. Without it, the bundle is read from stdin. |
 | `--dry-run` | Validates, applies the changes inside the transaction, prints the summary and rolls everything back. It catches database-level failures too, and writes nothing. |
+| `--allow-removals` | Reads the public paths the import may remove from this file (see [Removals](#removals)). A missing or unreadable file exits 1 before the database is contacted. Without it, no removal is allowed. |
 
 The CLI reads only `DATABASE_URL`, the same DSN the server uses. It also loads `.env` when one is present. It doesn't need `APP_ENV`. The image's entrypoint applies pending migrations before it starts the import, as it does for the server, even for a dry run or a bundle that turns out to be invalid. `docker compose run --rm -T --entrypoint /app/import backend --source …` skips that step, and fails if the schema is behind the binary. The entrypoint and goose log to stderr, so stdout carries only the summary.
 
@@ -137,11 +166,18 @@ ssh <vps> "sudo -u deploy bash -c 'cd /srv/recetas/prod && docker compose -p rec
 
 Quote the command as above: double quotes around the whole remote command, single quotes around what `bash -c` runs as `deploy`. ssh joins its arguments into one string and the remote shell splits it again, so local quotes around an argument are lost: `--source "pipeline $RUN_ID"` arrives as two words and the import fails with a usage error. Keep the label a single token without spaces or shell metacharacters, such as `pipeline-<run-id>`. The `<` stays outside the quotes, because the bundle is read locally.
 
+The allowance file has to be inside the container. Mount it read-only, since stdin already carries the bundle:
+
+```bash
+scp allow-removals.txt <vps>:/tmp/allow-removals.txt
+ssh <vps> "sudo -u deploy bash -c 'cd /srv/recetas/prod && docker compose -p recetas-prod --env-file .env --env-file versions.env run --rm -T -v /tmp/allow-removals.txt:/tmp/allow-removals.txt:ro backend /app/import --source pipeline-<run-id> --allow-removals /tmp/allow-removals.txt --dry-run'" < bundle.json
+```
+
 To seed demo with the design content, use recetas-infra's `/srv/recetas/scripts/reseed-demo.sh` (dry run first, `--source design-seed`; its RUNBOOK.md, Demo → Reseed), with `testdata/content.design.json` from this repo at the deployed tag on stdin.
 
 ### Dry-run workflow
 
-1. Run with `--dry-run` and read the summary. The deleted counts deserve the most attention, because anything missing from the bundle gets deleted.
+1. Run with `--dry-run` and read the summary. The deleted counts and `removed` paths deserve the most attention, because anything missing from the bundle gets deleted. An exit 1 naming paths means removals that aren't allowed yet: list the intended ones in the `--allow-removals` file, or fix the bundle.
 2. If it exits 0 and the summary is what you expect, run the same command without `--dry-run`.
 3. Keep the bundle. Re-running it is harmless only while it is still the latest import, when it prints `no changes` (or repairs drift); importing an older bundle reverts newer content.
 
@@ -161,7 +197,9 @@ make design-bundle            # regenerate testdata/content.design.json after th
 | Code | Meaning | Output |
 |------|---------|--------|
 | 0 | Imported, no changes, or dry run done | Summary on stdout |
-| 1 | Usage error (missing `--source`, unknown flag, unreadable file) or invalid bundle | `import: invalid bundle, N problem(s):` followed by one `<pointer>: <message>` line per problem, on stderr. The database isn't contacted. |
+| 1 | Usage error (missing `--source`, unknown flag, unreadable bundle or `--allow-removals` file) | `import: <message>` on stderr, e.g. `import: read --allow-removals: open …`. The database isn't contacted. |
+| 1 | Invalid bundle | `import: invalid bundle, N problem(s):` followed by one `<pointer>: <message>` line per problem, on stderr. The database isn't contacted. |
+| 1 | Unlisted removal | `import: import would remove N public path(s) not listed as allowed removals: <paths>` on stderr, nothing on stdout. The transaction was rolled back. |
 | 2 | Database error (unreachable, constraint failure, commit failure) | The error on stderr. The transaction was rolled back. |
 
 ## Schema versions

@@ -95,7 +95,9 @@ The container healthcheck (`$dc ps`) is the same request; in the repo's compose 
 
 ## Import content
 
-The full contract is [`content-import.md`](content-import.md). Dry run first, every time, and read the `deleted` counts: anything missing from the bundle is deleted.
+The full contract is [`content-import.md`](content-import.md). Dry run first, every time, and read the `deleted` counts and `removed` paths: anything missing from the bundle is deleted.
+
+Removing a public path (a region, dish or variation URL, or changing its key or slug) needs an allowance (INF-7, D-INF7-3): an import that would remove a path not listed in its `--allow-removals` file exits 1, names the unlisted paths on stderr and changes nothing, in a dry run too. To allow a removal, write the paths it names, one per line without the locale (e.g. `/dishes/allioli/esp/allioli-de-codony`; a dish or region and each of its variations), to a file, mount it into the import container and pass it (see [Removals](content-import.md#removals) and the mount example under Demo and prod there). Prod's file is recetas-infra's `content/prod/allow-removals.txt`, reset by each promote PR.
 
 `docker compose run backend` goes through the image's entrypoint, which runs `goose up` first. So even a `--dry-run` import applies any pending migrations when the compose tag is ahead of the database.
 
@@ -250,6 +252,7 @@ $dc exec database sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT s
 | Exit | What happened | Database | Next |
 |------|---------------|----------|------|
 | 1 | Usage error, or the bundle failed validation. stderr lists every problem as `<pointer>: <message>`. | Not contacted, nothing changed (the entrypoint's `goose up` may still have applied pending migrations). | Fix the bundle or the flags, dry-run again. |
+| 1, stderr `import would remove N public path(s) not listed as allowed removals: …` | The bundle removes public paths the `--allow-removals` file doesn't list (or no file was passed). | Rolled back, nothing changed. | If the removals are intended, list exactly those paths in the file and dry-run again; otherwise fix the bundle. |
 | 2 | Database error: unreachable, constraint violation or failed commit. | Rolled back, nothing changed. | Check [Database down](#database-down), then re-run the same command; an import is all-or-nothing, so a re-run is safe. |
 | 0 with unexpected counts | The bundle was valid but wrong (rows missing, so deleted). | Changed: a new content version. | Re-import the previous good bundle (dry run first). Content isn't backed up separately: the pipeline's bundles are the source. |
 
