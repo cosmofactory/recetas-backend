@@ -6,9 +6,11 @@ import (
 	"strings"
 )
 
+// MaxKeyLength bounds every key and slug in a bundle, recipe keys included.
+const MaxKeyLength = 64
+
 // Bounds shared with api/content-bundle.schema.json.
 const (
-	maxSlugLength  = 64
 	minServings    = 1
 	maxServings    = 20
 	maxTimeMinutes = 7 * 24 * 60
@@ -23,7 +25,7 @@ var (
 	tileColorPattern = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
 	photoHashPattern = regexp.MustCompile(`^[0-9a-f]{8,64}$`)
 
-	courses = []string{"tapas", "mains", "desserts"}
+	courses = []string{"tapas", "mains", "desserts", "basics"}
 	seasons = []string{"summer", "winter", "easter", "all"}
 	units   = []string{"g", "ml", "tsp"}
 )
@@ -42,7 +44,7 @@ func Validate(b Bundle) error {
 }
 
 func validSlug(s string) bool {
-	return len(s) <= maxSlugLength && slugPattern.MatchString(s)
+	return len(s) <= MaxKeyLength && slugPattern.MatchString(s)
 }
 
 // keySet checks that keys are slugs and unique.
@@ -58,7 +60,7 @@ func newKeySet(what string) keySet {
 func (k keySet) check(ps *problems, at pointer, key string) {
 	switch {
 	case !validSlug(key):
-		ps.add(at, "%s key %q is not a slug (lowercase a-z, 0-9 and single hyphens, at most %d characters)", k.what, key, maxSlugLength)
+		ps.add(at, "%s key %q is not a slug (lowercase a-z, 0-9 and single hyphens, at most %d characters)", k.what, key, MaxKeyLength)
 	case k.seen[key]:
 		ps.add(at, "duplicate %s key %q", k.what, key)
 	}
@@ -84,6 +86,9 @@ func validateRegions(ps *problems, regions []Region) keySet {
 	for i, r := range regions {
 		at := pointer("/regions").at(i)
 		keys.check(ps, at.at("key"), r.Key)
+		if r.Key == SpainWideRegionKey {
+			ps.add(at.at("key"), "region key %q is reserved for Spanish (Spain-wide) variations", r.Key)
+		}
 		if !tileColorPattern.MatchString(r.TileColor) {
 			ps.add(at.at("tileColor"), "tile color %q is not #RRGGBB", r.TileColor)
 		}

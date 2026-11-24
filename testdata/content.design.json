@@ -1395,6 +1395,104 @@
           "photos": null
         }
       ]
+    },
+    {
+      "key": "allioli",
+      "name": {
+        "en": "Allioli",
+        "es": "Allioli",
+        "ru": "Альиоли"
+      },
+      "description": {
+        "en": "Garlic and oil pounded into a sauce. The mortar purists and the blender households both call it theirs.",
+        "es": "Ajo y aceite majados hasta ligar. Los puristas del mortero y los de la batidora lo llaman suyo.",
+        "ru": "Чеснок и масло, растёртые в соус. Сторонники ступки и блендера считают его своим."
+      },
+      "flags": {
+        "vegetarian": true,
+        "seafood": false,
+        "pork": false,
+        "quick": true,
+        "slowCooked": false
+      },
+      "course": "basics",
+      "season": "all",
+      "photos": null,
+      "variations": [
+        {
+          "regionKey": "esp",
+          "variationSlug": "allioli-de-morter",
+          "recipeKey": "allioli-esp-allioli-de-morter",
+          "name": {
+            "en": "Allioli de morter",
+            "es": "Allioli de morter",
+            "ru": "Allioli de morter"
+          },
+          "description": {
+            "en": "Garlic and oil only, pounded by hand",
+            "es": "Solo ajo y aceite, majado a mano",
+            "ru": "Только чеснок и масло, вручную в ступке"
+          },
+          "photos": null
+        },
+        {
+          "regionKey": "esp",
+          "variationSlug": "allioli-de-codony",
+          "recipeKey": "allioli-esp-allioli-de-codony",
+          "name": {
+            "en": "Allioli de codony",
+            "es": "Allioli de codony",
+            "ru": "Allioli de codony"
+          },
+          "description": {
+            "en": "Baked quince folded in, for game and rice",
+            "es": "Con membrillo asado, para caza y arroces",
+            "ru": "С печёной айвой, к дичи и рису"
+          },
+          "photos": null
+        }
+      ]
+    },
+    {
+      "key": "arrozblanco",
+      "name": {
+        "en": "Arroz blanco con tomate",
+        "es": "Arroz blanco con tomate",
+        "ru": "Арроз бланко с томатом"
+      },
+      "description": {
+        "en": "Plain white rice with fried tomato: the weeknight supper of half of Spain.",
+        "es": "Arroz blanco con tomate frito: la cena de diario de media España.",
+        "ru": "Белый рис с жареным томатным соусом: будничный ужин половины Испании."
+      },
+      "flags": {
+        "vegetarian": true,
+        "seafood": false,
+        "pork": false,
+        "quick": true,
+        "slowCooked": false
+      },
+      "course": "mains",
+      "season": "all",
+      "photos": null,
+      "variations": [
+        {
+          "regionKey": "esp",
+          "variationSlug": "arroz-blanco-con-tomate",
+          "recipeKey": "arrozblanco-esp-arroz-blanco-con-tomate",
+          "name": {
+            "en": "Arroz blanco con tomate",
+            "es": "Arroz blanco con tomate",
+            "ru": "Arroz blanco con tomate"
+          },
+          "description": {
+            "en": "Garlic-scented rice, tomate frito on top",
+            "es": "Arroz con un toque de ajo, tomate frito por encima",
+            "ru": "Рис с чесноком, сверху томатный соус"
+          },
+          "photos": null
+        }
+      ]
     }
   ],
   "recipes": [
@@ -2955,6 +3053,198 @@
           "en": "Placeholder: the real recipe arrives with the content pipeline.",
           "es": "Provisional: la receta real llegará con el canal de contenidos.",
           "ru": "Заглушка: настоящий рецепт появится вместе с контент-конвейером."
+        }
+      ]
+    },
+    {
+      "recipeKey": "allioli-esp-allioli-de-morter",
+      "timeMinutes": 15,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 4,
+          "unit": null,
+          "name": {
+            "en": "Garlic cloves",
+            "es": "Dientes de ajo",
+            "ru": "Зубчики чеснока"
+          }
+        },
+        {
+          "quantity": 1,
+          "unit": "tsp",
+          "name": {
+            "en": "Coarse salt",
+            "es": "Sal gorda",
+            "ru": "Крупная соль"
+          }
+        },
+        {
+          "quantity": 250,
+          "unit": "ml",
+          "name": {
+            "en": "Mild olive oil",
+            "es": "Aceite de oliva suave",
+            "ru": "Мягкое оливковое масло"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Pound the garlic with the salt in a mortar to a smooth paste.",
+          "es": "Maja los ajos con la sal en el mortero hasta tener una pasta fina.",
+          "ru": "Разотрите чеснок с солью в ступке до гладкой пасты."
+        },
+        {
+          "en": "Add the oil a thread at a time, always stirring the same way, until it binds.",
+          "es": "Añade el aceite en hilo, removiendo siempre en el mismo sentido, hasta que ligue.",
+          "ru": "Вливайте масло тонкой струйкой, мешая всегда в одну сторону, пока соус не загустеет."
+        },
+        {
+          "en": "Stop when it holds the pestle upright; serve the same day.",
+          "es": "Para cuando la mano del mortero se sostenga de pie; sírvelo en el día.",
+          "ru": "Готово, когда пестик стоит в соусе; подавайте в тот же день."
+        }
+      ]
+    },
+    {
+      "recipeKey": "allioli-esp-allioli-de-codony",
+      "timeMinutes": 60,
+      "timeNote": null,
+      "baseServings": 6,
+      "ingredients": [
+        {
+          "quantity": 300,
+          "unit": "g",
+          "name": {
+            "en": "Quince",
+            "es": "Membrillo",
+            "ru": "Айва"
+          }
+        },
+        {
+          "quantity": 3,
+          "unit": null,
+          "name": {
+            "en": "Garlic cloves",
+            "es": "Dientes de ajo",
+            "ru": "Зубчики чеснока"
+          }
+        },
+        {
+          "quantity": 200,
+          "unit": "ml",
+          "name": {
+            "en": "Mild olive oil",
+            "es": "Aceite de oliva suave",
+            "ru": "Мягкое оливковое масло"
+          }
+        },
+        {
+          "quantity": 1,
+          "unit": "tsp",
+          "name": {
+            "en": "Salt",
+            "es": "Sal",
+            "ru": "Соль"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Bake the whole quince at 180 °C for 45 minutes, until soft; peel and core it.",
+          "es": "Asa el membrillo entero a 180 °C 45 minutos, hasta que esté tierno; pélalo y quítale el corazón.",
+          "ru": "Запеките айву целиком при 180 °C 45 минут до мягкости; очистите и удалите сердцевину."
+        },
+        {
+          "en": "Pound the garlic with the salt, then the warm quince flesh, to a paste.",
+          "es": "Maja los ajos con la sal y después la pulpa templada del membrillo, hasta hacer una pasta.",
+          "ru": "Разотрите чеснок с солью, затем тёплую мякоть айвы до пасты."
+        },
+        {
+          "en": "Work in the oil a thread at a time until thick and glossy.",
+          "es": "Incorpora el aceite en hilo hasta que quede espeso y brillante.",
+          "ru": "Понемногу вмешайте масло, пока соус не станет густым и блестящим."
+        }
+      ]
+    },
+    {
+      "recipeKey": "arrozblanco-esp-arroz-blanco-con-tomate",
+      "timeMinutes": 30,
+      "timeNote": null,
+      "baseServings": 4,
+      "ingredients": [
+        {
+          "quantity": 300,
+          "unit": "g",
+          "name": {
+            "en": "Long-grain rice",
+            "es": "Arroz largo",
+            "ru": "Длиннозёрный рис"
+          }
+        },
+        {
+          "quantity": 2,
+          "unit": null,
+          "name": {
+            "en": "Garlic cloves",
+            "es": "Dientes de ajo",
+            "ru": "Зубчики чеснока"
+          }
+        },
+        {
+          "quantity": 30,
+          "unit": "ml",
+          "name": {
+            "en": "Olive oil",
+            "es": "Aceite de oliva",
+            "ru": "Оливковое масло"
+          }
+        },
+        {
+          "quantity": 600,
+          "unit": "ml",
+          "name": {
+            "en": "Water",
+            "es": "Agua",
+            "ru": "Вода"
+          }
+        },
+        {
+          "quantity": 400,
+          "unit": "g",
+          "name": {
+            "en": "Tomate frito",
+            "es": "Tomate frito",
+            "ru": "Томатный соус (томате фрито)"
+          }
+        },
+        {
+          "quantity": 1,
+          "unit": "tsp",
+          "name": {
+            "en": "Salt",
+            "es": "Sal",
+            "ru": "Соль"
+          }
+        }
+      ],
+      "steps": [
+        {
+          "en": "Brown the whole garlic cloves in the oil, add the rice and stir for a minute.",
+          "es": "Dora los ajos enteros en el aceite, añade el arroz y rehógalo un minuto.",
+          "ru": "Обжарьте целые зубчики чеснока в масле, добавьте рис и помешивайте минуту."
+        },
+        {
+          "en": "Pour in the boiling salted water and cook covered over low heat for 18 minutes.",
+          "es": "Vierte el agua hirviendo con sal y cuece tapado a fuego bajo 18 minutos.",
+          "ru": "Влейте кипящую подсоленную воду и варите под крышкой на слабом огне 18 минут."
+        },
+        {
+          "en": "Rest 5 minutes, fluff, and serve with the warmed tomate frito on top.",
+          "es": "Deja reposar 5 minutos, suelta el grano y sirve con el tomate frito caliente por encima.",
+          "ru": "Дайте постоять 5 минут, разрыхлите и подавайте с горячим томатным соусом сверху."
         }
       ]
     }

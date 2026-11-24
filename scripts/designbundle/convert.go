@@ -27,8 +27,9 @@ var (
 	}
 )
 
-// convert keys every variation's recipe by <dishKey>-<regionKey> and lists
-// the recipes in variation order.
+// convert keys every regional variation's recipe by <dishKey>-<regionKey>,
+// gives every Spanish one its slug and the recipe key <dishKey>-esp-<slug>,
+// and lists the recipes in variation order.
 func convert(d design) (importer.Bundle, error) {
 	if err := checkRecipesMatched(d); err != nil {
 		return importer.Bundle{}, err
@@ -70,7 +71,9 @@ func convertDish(dish *importer.Dish, byKey map[string]designRecipe) ([]importer
 	for j := range dish.Variations {
 		v := &dish.Variations[j]
 		designKey := v.RecipeKey
-		v.RecipeKey = dish.Key + "-" + v.RegionKey
+		if err := keyVariation(dish.Key, v); err != nil {
+			return nil, fmt.Errorf("variation %q: %w", designKey, err)
+		}
 		dr, ok := byKey[designKey]
 		if !ok {
 			recipes = append(recipes, placeholder(v.RecipeKey))
@@ -83,6 +86,21 @@ func convertDish(dish *importer.Dish, byKey map[string]designRecipe) ([]importer
 		recipes = append(recipes, rc)
 	}
 	return recipes, nil
+}
+
+// keyVariation sets the variation's recipe key, and a Spanish variation's
+// slug.
+func keyVariation(dishKey string, v *importer.Variation) error {
+	if v.RegionKey != importer.SpainWideRegionKey {
+		v.RecipeKey = dishKey + "-" + v.RegionKey
+		return nil
+	}
+	slug, recipeKey, err := spainWideKeys(dishKey, v.Name.Es)
+	if err != nil {
+		return err
+	}
+	v.VariationSlug, v.RecipeKey = slug, recipeKey
+	return nil
 }
 
 func placeholder(key string) importer.Recipe {

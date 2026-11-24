@@ -16,6 +16,7 @@ SELECT
     rc.base_servings,
     d.key          AS dish_key,
     r.key          AS region_key,
+    v.slug,
     v.recipe_key,
     v.photo_thumb,
     v.photo_card,
@@ -30,7 +31,7 @@ SELECT
 FROM recipes rc
 JOIN variations v ON v.id = rc.variation_id
 JOIN dishes d ON d.id = v.dish_id
-JOIN regions r ON r.id = v.region_id
+LEFT JOIN regions r ON r.id = v.region_id
 LEFT JOIN dish_translations dt ON dt.dish_id = d.id AND dt.locale = $1::text
 LEFT JOIN region_translations rt ON rt.region_id = r.id AND rt.locale = $1::text
 LEFT JOIN variation_translations vt ON vt.variation_id = v.id AND vt.locale = $1::text
@@ -51,7 +52,8 @@ type GetRecipeByDishRegionRow struct {
 	TimeMinutes  int32   `json:"time_minutes"`
 	BaseServings int32   `json:"base_servings"`
 	DishKey      string  `json:"dish_key"`
-	RegionKey    string  `json:"region_key"`
+	RegionKey    *string `json:"region_key"`
+	Slug         *string `json:"slug"`
 	RecipeKey    string  `json:"recipe_key"`
 	PhotoThumb   *string `json:"photo_thumb"`
 	PhotoCard    *string `json:"photo_card"`
@@ -66,7 +68,8 @@ type GetRecipeByDishRegionRow struct {
 }
 
 // has_time_note is true when the recipe has a note in any locale, so a NULL
-// time_note then means this locale's row is missing.
+// time_note then means this locale's row is missing. Regions are LEFT JOINed
+// so the row matches GetRecipeBySlug's; the WHERE makes it an inner join.
 func (q *Queries) GetRecipeByDishRegion(ctx context.Context, arg GetRecipeByDishRegionParams) (GetRecipeByDishRegionRow, error) {
 	row := q.db.QueryRow(ctx, getRecipeByDishRegion,
 		arg.Locale,
@@ -81,6 +84,97 @@ func (q *Queries) GetRecipeByDishRegion(ctx context.Context, arg GetRecipeByDish
 		&i.BaseServings,
 		&i.DishKey,
 		&i.RegionKey,
+		&i.Slug,
+		&i.RecipeKey,
+		&i.PhotoThumb,
+		&i.PhotoCard,
+		&i.PhotoHero,
+		&i.DishName,
+		&i.RegionName,
+		&i.Name,
+		&i.Description,
+		&i.NameEs,
+		&i.TimeNote,
+		&i.HasTimeNote,
+	)
+	return i, err
+}
+
+const getRecipeBySlug = `-- name: GetRecipeBySlug :one
+SELECT
+    rc.id,
+    rc.time_minutes,
+    rc.base_servings,
+    d.key          AS dish_key,
+    r.key          AS region_key,
+    v.slug,
+    v.recipe_key,
+    v.photo_thumb,
+    v.photo_card,
+    v.photo_hero,
+    dt.name        AS dish_name,
+    rt.name        AS region_name,
+    vt.name        AS name,
+    vt.description AS description,
+    es.name        AS name_es,
+    nt.time_note   AS time_note,
+    EXISTS (SELECT 1 FROM recipe_translations n WHERE n.recipe_id = rc.id) AS has_time_note
+FROM recipes rc
+JOIN variations v ON v.id = rc.variation_id
+JOIN dishes d ON d.id = v.dish_id
+LEFT JOIN regions r ON r.id = v.region_id
+LEFT JOIN dish_translations dt ON dt.dish_id = d.id AND dt.locale = $1::text
+LEFT JOIN region_translations rt ON rt.region_id = r.id AND rt.locale = $1::text
+LEFT JOIN variation_translations vt ON vt.variation_id = v.id AND vt.locale = $1::text
+LEFT JOIN variation_translations es ON es.variation_id = v.id AND es.locale = $2::text
+LEFT JOIN recipe_translations nt ON nt.recipe_id = rc.id AND nt.locale = $1::text
+WHERE d.key = $3 AND v.region_id IS NULL AND v.slug = $4::text
+`
+
+type GetRecipeBySlugParams struct {
+	Locale  string `json:"locale"`
+	Spanish string `json:"spanish"`
+	DishKey string `json:"dish_key"`
+	Slug    string `json:"slug"`
+}
+
+type GetRecipeBySlugRow struct {
+	ID           int64   `json:"id"`
+	TimeMinutes  int32   `json:"time_minutes"`
+	BaseServings int32   `json:"base_servings"`
+	DishKey      string  `json:"dish_key"`
+	RegionKey    *string `json:"region_key"`
+	Slug         *string `json:"slug"`
+	RecipeKey    string  `json:"recipe_key"`
+	PhotoThumb   *string `json:"photo_thumb"`
+	PhotoCard    *string `json:"photo_card"`
+	PhotoHero    *string `json:"photo_hero"`
+	DishName     *string `json:"dish_name"`
+	RegionName   *string `json:"region_name"`
+	Name         *string `json:"name"`
+	Description  *string `json:"description"`
+	NameEs       *string `json:"name_es"`
+	TimeNote     *string `json:"time_note"`
+	HasTimeNote  bool    `json:"has_time_note"`
+}
+
+// A Spanish (Spain-wide) variation's recipe, by its dish and slug; the same
+// columns as GetRecipeByDishRegion, with no region.
+func (q *Queries) GetRecipeBySlug(ctx context.Context, arg GetRecipeBySlugParams) (GetRecipeBySlugRow, error) {
+	row := q.db.QueryRow(ctx, getRecipeBySlug,
+		arg.Locale,
+		arg.Spanish,
+		arg.DishKey,
+		arg.Slug,
+	)
+	var i GetRecipeBySlugRow
+	err := row.Scan(
+		&i.ID,
+		&i.TimeMinutes,
+		&i.BaseServings,
+		&i.DishKey,
+		&i.RegionKey,
+		&i.Slug,
 		&i.RecipeKey,
 		&i.PhotoThumb,
 		&i.PhotoCard,

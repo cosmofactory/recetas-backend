@@ -20,6 +20,7 @@ type (
 	storedVariation struct {
 		id        int64
 		dishKey   string
+		position  int // 1-based, within the dish
 		variation Variation
 	}
 	storedRecipe struct {
@@ -107,14 +108,32 @@ func loadVariations(ctx context.Context, q *catalogdb.Queries) (map[string]store
 	}
 	out := make(map[string]storedVariation, len(rows))
 	for _, r := range rows {
-		out[r.RecipeKey] = storedVariation{id: r.ID, dishKey: r.DishKey, variation: Variation{
-			RegionKey:   r.RegionKey,
-			RecipeKey:   r.RecipeKey,
-			Name:        Text{r.NameEn, r.NameEs, r.NameRu},
-			Description: Text{r.DescriptionEn, r.DescriptionEs, r.DescriptionRu},
-			Photos:      &Photos{Thumb: r.PhotoThumb, Card: r.PhotoCard, Hero: r.PhotoHero},
-			Score:       r.Score,
+		out[r.RecipeKey] = storedVariation{id: r.ID, dishKey: r.DishKey, position: int(r.Position), variation: Variation{
+			RegionKey:     storedRegionKey(r.RegionKey),
+			VariationSlug: valueOr(r.Slug),
+			RecipeKey:     r.RecipeKey,
+			Name:          Text{r.NameEn, r.NameEs, r.NameRu},
+			Description:   Text{r.DescriptionEn, r.DescriptionEs, r.DescriptionRu},
+			Photos:        &Photos{Thumb: r.PhotoThumb, Card: r.PhotoCard, Hero: r.PhotoHero},
+			Score:         r.Score,
 		}}
 	}
 	return out, nil
+}
+
+// storedRegionKey is a variation row's region key, or SpainWideRegionKey for
+// a row without a region.
+func storedRegionKey(regionKey *string) string {
+	if regionKey == nil {
+		return SpainWideRegionKey
+	}
+	return *regionKey
+}
+
+// valueOr is *s, or "" for nil.
+func valueOr(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }

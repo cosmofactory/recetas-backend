@@ -63,7 +63,7 @@
       "$ref": "#/$defs/textFields"
     },
     "photoKey": {
-      "description": "CDN-relative key prefix: dishes/<dishKey>[/<regionKey>]/<role>-<hash>, hash 8-64 lowercase hex digits.",
+      "description": "CDN-relative key prefix: dishes/<dishKey>[/<regionKey> or /esp-<variationSlug>]/<role>-<hash>, hash 8-64 lowercase hex digits.",
       "type": ["string", "null"],
       "maxLength": 256
     },
@@ -116,11 +116,11 @@
         "name": { "$ref": "#/$defs/text" },
         "description": { "$ref": "#/$defs/text" },
         "flags": { "$ref": "#/$defs/flags" },
-        "course": { "enum": ["tapas", "mains", "desserts"] },
+        "course": { "enum": ["tapas", "mains", "desserts", "basics"] },
         "season": { "enum": ["summer", "winter", "easter", "all"] },
         "photos": { "$ref": "#/$defs/photos" },
         "variations": {
-          "description": "At most one per region; listed in region order whatever the order here.",
+          "description": "At most one per region, plus any Spanish (regionKey esp) ones. Regional variations are listed in region order whatever the order here; Spanish ones after them, in the order here.",
           "type": "array",
           "minItems": 1,
           "maxItems": 100,
@@ -133,7 +133,14 @@
       "required": ["regionKey", "recipeKey", "name", "description"],
       "additionalProperties": false,
       "properties": {
-        "regionKey": { "$ref": "#/$defs/slug" },
+        "regionKey": {
+          "description": "A region's key, or esp for a Spanish (Spain-wide) variation, which belongs to no region.",
+          "$ref": "#/$defs/slug"
+        },
+        "variationSlug": {
+          "description": "Required when regionKey is esp and forbidden otherwise: identifies the Spanish variation within its dish and in its URL. Unique within the dish; see docs/content-import.md.",
+          "$ref": "#/$defs/slug"
+        },
         "recipeKey": { "$ref": "#/$defs/slug" },
         "name": { "$ref": "#/$defs/text" },
         "description": { "$ref": "#/$defs/text" },

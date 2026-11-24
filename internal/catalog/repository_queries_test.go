@@ -49,8 +49,9 @@ func addDish(t *testing.T, p pgFixture, i int) {
 	}
 	p.exec(t, `INSERT INTO dish_translations (dish_id, locale, name, description)
 		SELECT $1::bigint, code, 'n', 'd' FROM locales`, id)
-	p.exec(t, `INSERT INTO variations (dish_id, region_id, recipe_key)
-		SELECT $1::bigint, r.id, $2::text || '-' || r.key FROM regions r WHERE r.key IN ('gal', 'ast')`, id, key)
+	p.exec(t, `INSERT INTO variations (dish_id, region_id, recipe_key, position)
+		SELECT $1::bigint, r.id, $2::text || '-' || r.key, row_number() OVER (ORDER BY r.sort_order)
+		FROM regions r WHERE r.key IN ('gal', 'ast')`, id, key)
 	p.exec(t, `INSERT INTO variation_translations (variation_id, locale, name, description)
 		SELECT v.id, l.code, 'n', 'd' FROM variations v CROSS JOIN locales l WHERE v.dish_id = $1::bigint`, id)
 }

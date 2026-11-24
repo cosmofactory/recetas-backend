@@ -15,11 +15,12 @@ const defaultLocale Locale = "en"
 
 // Operation names logged with unexpected errors.
 const (
-	opListRegions = "listRegions"
-	opGetRegion   = "getRegion"
-	opListDishes  = "listDishes"
-	opGetDish     = "getDish"
-	opGetRecipe   = "getRecipe"
+	opListRegions        = "listRegions"
+	opGetRegion          = "getRegion"
+	opListDishes         = "listDishes"
+	opGetDish            = "getDish"
+	opGetRecipe          = "getRecipe"
+	opGetSpainWideRecipe = "getSpainWideRecipe"
 )
 
 // Handler implements the catalog operations of the generated strict server.
@@ -115,7 +116,26 @@ func (h *Handler) GetRecipe(ctx context.Context, req apigen.GetRecipeRequestObje
 	}
 	return apigen.GetRecipe200JSONResponse{
 		Body:    toAPIRecipe(rc),
-		Headers: apigen.GetRecipe200ResponseHeaders(cacheHeaders(recipeETag(version, l, rc.DishKey, rc.RegionKey))),
+		Headers: apigen.GetRecipe200ResponseHeaders(cacheHeaders(recipeETag(version, l, rc))),
+	}, nil
+}
+
+func (h *Handler) GetSpainWideRecipe(ctx context.Context, req apigen.GetSpainWideRecipeRequestObject) (apigen.GetSpainWideRecipeResponseObject, error) {
+	if !validSlug(req.DishKey) || !validSlug(req.VariationSlug) {
+		return apigen.GetSpainWideRecipe404JSONResponse{NotFoundJSONResponse: notFoundBody()}, nil
+	}
+	l := localeOf(req.Params.Lang)
+	rc, version, err := h.svc.SpainWideRecipe(ctx, req.DishKey, req.VariationSlug, l)
+	switch {
+	case errors.Is(err, ErrNotFound):
+		return apigen.GetSpainWideRecipe404JSONResponse{NotFoundJSONResponse: notFoundBody()}, nil
+	case err != nil:
+		h.logFailure(ctx, opGetSpainWideRecipe, err)
+		return apigen.GetSpainWideRecipe500JSONResponse{InternalJSONResponse: internalBody()}, nil
+	}
+	return apigen.GetSpainWideRecipe200JSONResponse{
+		Body:    toAPIRecipe(rc),
+		Headers: apigen.GetSpainWideRecipe200ResponseHeaders(cacheHeaders(recipeETag(version, l, rc))),
 	}, nil
 }
 

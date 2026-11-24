@@ -1,7 +1,9 @@
 // Command designbundle converts the design handoff's content.json into an
 // import bundle (testdata/content.design.json): recipe keys become
-// <dishKey>-<regionKey>, recipe times become minutes plus a time note, photos
-// are null, and every variation without a design recipe gets a placeholder.
+// <dishKey>-<regionKey>, or <dishKey>-esp-<slug> for a Spanish variation
+// whose variationSlug is derived from its Spanish name; recipe times become
+// minutes plus a time note, photos are null, and every variation without a
+// design recipe gets a placeholder.
 //
 //	go run ./scripts/designbundle -in ../design/design_handoff_asadorov_desktop/content.json -out testdata/content.design.json
 package main
@@ -22,8 +24,11 @@ type (
 	design struct {
 		Note    string            `json:"_note"`
 		Regions []importer.Region `json:"regions"`
-		Dishes  []importer.Dish   `json:"dishes"`
-		Recipes []designRecipe    `json:"recipes"`
+		// SpainWide names the Spanish term for the design only; the bundle
+		// carries no such names (D-ESP-3).
+		SpainWide json.RawMessage `json:"spainWide"`
+		Dishes    []importer.Dish `json:"dishes"`
+		Recipes   []designRecipe  `json:"recipes"`
 	}
 	designRecipe struct {
 		RecipeKey    string                `json:"recipeKey"` // free text, matching a variation's

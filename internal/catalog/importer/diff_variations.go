@@ -2,20 +2,29 @@ package importer
 
 import "slices"
 
-// placedVariation is a bundle variation with the key of its dish.
+// placedVariation is a bundle variation with the key of its dish and its
+// 1-based position there.
 type placedVariation struct {
 	dishKey   string
+	position  int
 	variation Variation
 }
 
 func placed(dishes []Dish) []placedVariation {
 	var out []placedVariation
 	for _, d := range dishes {
-		for _, v := range d.Variations {
-			out = append(out, placedVariation{dishKey: d.Key, variation: v})
+		for j, v := range d.Variations {
+			out = append(out, placedVariation{dishKey: d.Key, position: j + 1, variation: v})
 		}
 	}
 	return out
+}
+
+// samePlace is true when the stored variation is still the bundle one: the
+// same dish and region, or for a Spanish variation the same slug.
+func (s storedVariation) samePlace(pv placedVariation) bool {
+	return s.dishKey == pv.dishKey && s.variation.RegionKey == pv.variation.RegionKey &&
+		s.variation.VariationSlug == pv.variation.VariationSlug
 }
 
 // variationChanges tells the recipe diff which recipes lose or gain their
@@ -26,8 +35,9 @@ type variationChanges struct {
 }
 
 // diffVariations matches variations by recipe key. A variation that moved to
-// another dish or region is deleted and created again, so the unique
-// (dish, region) pair never collides while rows are being written.
+// another dish or region, or changed its slug, is deleted and created again,
+// so the unique (dish, region) and (dish, slug) never collide while rows are
+// being written.
 func (p *plan) diffVariations(cur map[string]storedVariation, dishes []Dish) variationChanges {
 	var c Counts
 	vc := variationChanges{created: map[string]bool{}}
@@ -35,18 +45,18 @@ func (p *plan) diffVariations(cur map[string]storedVariation, dishes []Dish) var
 	for _, pv := range placed(dishes) {
 		key := pv.variation.RecipeKey
 		old, ok := cur[key]
-		keep[key] = ok && old.dishKey == pv.dishKey && old.variation.RegionKey == pv.variation.RegionKey
-		if keep[key] && sameVariation(old.variation, pv.variation) {
+		keep[key] = ok && old.samePlace(pv)
+		w := variationWriteFor(old, keep[key], pv)
+		if !w.needed() {
 			continue
 		}
-		w := variationWrite{dishKey: pv.dishKey, variation: pv.variation}
-		if keep[key] {
-			w.id = old.id
-		} else {
+		p.variations = append(p.variations, w)
+		if !keep[key] {
 			vc.created[key] = true
 		}
-		c.add(keep[key])
-		p.variations = append(p.variations, w)
+		if w.reported() {
+			c.add(keep[key])
+		}
 	}
 	vc.deleted = missingKeys(cur, keep)
 	for _, key := range vc.deleted {
@@ -55,6 +65,17 @@ func (p *plan) diffVariations(cur map[string]storedVariation, dishes []Dish) var
 	c.Deleted = len(vc.deleted)
 	p.changes[EntityVariations] = c
 	return vc
+}
+
+// variationWriteFor writes pv over old when kept, else as a new row.
+func variationWriteFor(old storedVariation, kept bool, pv placedVariation) variationWrite {
+	w := variationWrite{dishKey: pv.dishKey, position: pv.position, variation: pv.variation}
+	if kept {
+		w.id = old.id
+		w.edited = !sameVariation(old.variation, pv.variation)
+		w.moved = old.position != pv.position
+	}
+	return w
 }
 
 // missingKeys returns the stored keys that aren't kept, sorted.

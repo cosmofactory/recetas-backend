@@ -132,7 +132,7 @@ func TestRun_ImportsFileAndPrintsSummary(t *testing.T) {
 	tx := emptyTx(t)
 	r := runCLI(t, []string{"--source", "local seed", "--file", designBundlePath}, strings.NewReader(""), tx)
 	r.requireCode(t, 0)
-	assertContains(t, "stdout", r.stdout, "regions", "dishes", "variations", "recipes", "17", "54")
+	assertContains(t, "stdout", r.stdout, "regions", "dishes", "variations", "recipes", "17", "57")
 	if got := count(t, tx, "regions"); got != 17 {
 		t.Errorf("got %d regions, want 17", got)
 	}
@@ -145,8 +145,8 @@ func TestRun_ReadsStdinWithoutFile(t *testing.T) {
 	tx := emptyTx(t)
 	r := runCLI(t, []string{"--source=ssh"}, bytes.NewReader(designJSON(t)), tx)
 	r.requireCode(t, 0)
-	if got := count(t, tx, "recipes"); got != 54 {
-		t.Errorf("got %d recipes, want 54", got)
+	if got := count(t, tx, "recipes"); got != 57 {
+		t.Errorf("got %d recipes, want 57", got)
 	}
 	if got := latestSource(t, tx); got != "ssh" {
 		t.Errorf("source: got %q, want %q", got, "ssh")

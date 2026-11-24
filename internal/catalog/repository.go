@@ -77,18 +77,34 @@ func (r *pgRepository) Dishes(ctx context.Context, l Locale) ([]Dish, error) {
 }
 
 func (r *pgRepository) Recipe(ctx context.Context, dishKey, regionKey string, l Locale) (Recipe, error) {
+	return r.recipe(ctx, recipeRef{dishKey: dishKey, regionKey: regionKey}, l)
+}
+
+func (r *pgRepository) SpainWideRecipe(ctx context.Context, dishKey, variationSlug string, l Locale) (Recipe, error) {
+	return r.recipe(ctx, recipeRef{dishKey: dishKey, regionKey: spainWideRegionKey, slug: variationSlug}, l)
+}
+
+func (r *pgRepository) recipe(ctx context.Context, ref recipeRef, l Locale) (Recipe, error) {
 	var rc Recipe
 	err := r.snapshot(ctx, func(q *catalogdb.Queries) error {
 		var err error
-		rc, err = readRecipe(ctx, q, recipeRef{dishKey: dishKey, regionKey: regionKey}, l)
+		rc, err = readRecipe(ctx, q, ref, l)
 		return err
 	})
 	return rc, err
 }
 
-// recipeRef names a variation's recipe by its dish and region.
+// recipeRef names a variation's recipe by its dish and region, or a Spanish
+// variation's by its dish and slug.
 type recipeRef struct {
-	dishKey, regionKey string
+	dishKey, regionKey, slug string
+}
+
+func (ref recipeRef) String() string {
+	if ref.slug != "" {
+		return ref.dishKey + "/" + ref.regionKey + "/" + ref.slug
+	}
+	return ref.dishKey + "/" + ref.regionKey
 }
 
 // readRegions takes two queries: the regions, then every regional dish.
@@ -134,14 +150,12 @@ func readDishes(ctx context.Context, q *catalogdb.Queries, l Locale) ([]Dish, er
 // readRecipe takes four queries: the recipe, its ingredients, its steps and
 // its tips.
 func readRecipe(ctx context.Context, q *catalogdb.Queries, ref recipeRef, l Locale) (Recipe, error) {
-	row, err := q.GetRecipeByDishRegion(ctx, catalogdb.GetRecipeByDishRegionParams{
-		Locale: string(l), Spanish: string(localeSpanish), DishKey: ref.dishKey, RegionKey: ref.regionKey,
-	})
+	row, err := getRecipeRow(ctx, q, ref, l)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return Recipe{}, fmt.Errorf("recipe %s/%s: %w", ref.dishKey, ref.regionKey, ErrNotFound)
+		return Recipe{}, fmt.Errorf("recipe %s: %w", ref, ErrNotFound)
 	}
 	if err != nil {
-		return Recipe{}, fmt.Errorf("get recipe %s/%s: %w", ref.dishKey, ref.regionKey, err)
+		return Recipe{}, fmt.Errorf("get recipe %s: %w", ref, err)
 	}
 	rc, err := recipeFromRow(row, l)
 	if err != nil {
@@ -151,6 +165,21 @@ func readRecipe(ctx context.Context, q *catalogdb.Queries, ref recipeRef, l Loca
 		return Recipe{}, err
 	}
 	return rc, nil
+}
+
+// recipeRow is a recipe row of either lookup; both select the same columns.
+type recipeRow = catalogdb.GetRecipeByDishRegionRow
+
+func getRecipeRow(ctx context.Context, q *catalogdb.Queries, ref recipeRef, l Locale) (recipeRow, error) {
+	if ref.slug == "" {
+		return q.GetRecipeByDishRegion(ctx, catalogdb.GetRecipeByDishRegionParams{
+			Locale: string(l), Spanish: string(localeSpanish), DishKey: ref.dishKey, RegionKey: ref.regionKey,
+		})
+	}
+	row, err := q.GetRecipeBySlug(ctx, catalogdb.GetRecipeBySlugParams{
+		Locale: string(l), Spanish: string(localeSpanish), DishKey: ref.dishKey, Slug: ref.slug,
+	})
+	return recipeRow(row), err
 }
 
 // readRecipeLists fills the recipe's ingredients, steps and tips.

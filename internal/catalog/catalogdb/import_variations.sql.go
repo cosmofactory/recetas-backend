@@ -19,17 +19,19 @@ func (q *Queries) ImportDeleteVariations(ctx context.Context, ids []int64) error
 }
 
 const importInsertVariation = `-- name: ImportInsertVariation :one
-INSERT INTO variations (dish_id, region_id, recipe_key, photo_thumb, photo_card, photo_hero, score)
+INSERT INTO variations (dish_id, region_id, slug, position, recipe_key, photo_thumb, photo_card, photo_hero, score)
 VALUES (
-    $1, $2, $3,
-    $4, $5, $6, $7
+    $1, $2, $3, $4::bigint, $5,
+    $6, $7, $8, $9
 )
 RETURNING id
 `
 
 type ImportInsertVariationParams struct {
 	DishID     int64   `json:"dish_id"`
-	RegionID   int64   `json:"region_id"`
+	RegionID   *int64  `json:"region_id"`
+	Slug       *string `json:"slug"`
+	Position   int64   `json:"position"`
 	RecipeKey  string  `json:"recipe_key"`
 	PhotoThumb *string `json:"photo_thumb"`
 	PhotoCard  *string `json:"photo_card"`
@@ -37,10 +39,13 @@ type ImportInsertVariationParams struct {
 	Score      float64 `json:"score"`
 }
 
+// A Spanish (Spain-wide) variation has no region and a slug.
 func (q *Queries) ImportInsertVariation(ctx context.Context, arg ImportInsertVariationParams) (int64, error) {
 	row := q.db.QueryRow(ctx, importInsertVariation,
 		arg.DishID,
 		arg.RegionID,
+		arg.Slug,
+		arg.Position,
 		arg.RecipeKey,
 		arg.PhotoThumb,
 		arg.PhotoCard,
@@ -50,6 +55,27 @@ func (q *Queries) ImportInsertVariation(ctx context.Context, arg ImportInsertVar
 	var id int64
 	err := row.Scan(&id)
 	return id, err
+}
+
+const importMoveVariations = `-- name: ImportMoveVariations :exec
+UPDATE variations v
+SET position = m.position
+FROM (
+    SELECT unnest($1::bigint[]) AS id, unnest($2::bigint[]) AS position
+) m
+WHERE v.id = m.id
+`
+
+type ImportMoveVariationsParams struct {
+	Ids       []int64 `json:"ids"`
+	Positions []int64 `json:"positions"`
+}
+
+// One statement, so the deferrable UNIQUE (dish_id, position) is checked
+// only once every position has moved.
+func (q *Queries) ImportMoveVariations(ctx context.Context, arg ImportMoveVariationsParams) error {
+	_, err := q.db.Exec(ctx, importMoveVariations, arg.Ids, arg.Positions)
+	return err
 }
 
 const importUpdateVariation = `-- name: ImportUpdateVariation :exec

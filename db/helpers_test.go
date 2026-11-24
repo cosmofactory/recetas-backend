@@ -149,11 +149,24 @@ func insertDish(t *testing.T, tx pgx.Tx) int64 {
 		uniqKey(t, "dish"), uniqOrder(t))
 }
 
+// nextPositionSQL is the next free variation position of dish $1, so
+// inserts that don't test position never collide on UNIQUE (dish_id, position).
+const nextPositionSQL = `(SELECT COALESCE(MAX(position), 0) + 1 FROM variations WHERE dish_id = $1)`
+
 func insertVariation(t *testing.T, tx pgx.Tx, dishID, regionID int64) int64 {
 	t.Helper()
 	return mustID(t, tx,
-		`INSERT INTO variations (dish_id, region_id, recipe_key) VALUES ($1, $2, $3) RETURNING id`,
+		`INSERT INTO variations (dish_id, region_id, recipe_key, position) VALUES ($1, $2, $3, `+nextPositionSQL+`) RETURNING id`,
 		dishID, regionID, uniqKey(t, "rec"))
+}
+
+// insertSpainWideVariation inserts a Spanish (Spain-wide) variation: no
+// region, a slug, at the dish's next position.
+func insertSpainWideVariation(t *testing.T, tx pgx.Tx, dishID int64, slug string) int64 {
+	t.Helper()
+	return mustID(t, tx,
+		`INSERT INTO variations (dish_id, region_id, slug, recipe_key, position) VALUES ($1, NULL, $2, $3, `+nextPositionSQL+`) RETURNING id`,
+		dishID, slug, uniqKey(t, "rec"))
 }
 
 func insertRecipe(t *testing.T, tx pgx.Tx, variationID int64) int64 {

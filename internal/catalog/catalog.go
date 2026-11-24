@@ -1,5 +1,6 @@
 // Package catalog serves the read-only atlas: regions, dishes with their
-// variations (one per dish and region), and one recipe per variation.
+// variations (one per dish and region, plus any Spanish ones), and one
+// recipe per variation.
 package catalog
 
 import "context"
@@ -9,6 +10,11 @@ type Locale string
 
 // localeSpanish is the locale that feeds every NameEs field.
 const localeSpanish Locale = "es"
+
+// spainWideRegionKey is the reserved region key of a Spanish (Spain-wide)
+// variation, which belongs to no region (D-ESP-1). It is never a region. It
+// equals importer.SpainWideRegionKey; the server doesn't import the importer.
+const spainWideRegionKey = "esp"
 
 // Photos are media object key prefixes; nil means no photo yet.
 type Photos struct {
@@ -36,20 +42,24 @@ type Flags struct {
 	SlowCooked bool
 }
 
-// Variation is a dish as cooked in one region. All variations of a dish are
-// equal; they are ordered by region order only. Score is the hidden
-// importance score (stack.md X15) and is never served; RegionRank is the
-// variation's 1-based position in its region's list.
+// Variation is a dish as cooked in one region, or a Spanish variation
+// (RegionKey spainWideRegionKey, identified by VariationSlug). All variations
+// of a dish are equal; regional ones come in region order, then Spanish ones
+// in bundle order. Score is the hidden importance score (stack.md X15) and is
+// never served; RegionRank is the variation's 1-based position in its
+// region's list. A Spanish variation has no RegionName ("") and no
+// RegionRank (0); a regional one has no VariationSlug ("").
 type Variation struct {
-	RegionKey   string
-	RegionName  string
-	RecipeKey   string
-	Name        string
-	NameEs      string
-	Description string
-	Photos      Photos
-	Score       float64
-	RegionRank  int
+	RegionKey     string
+	RegionName    string
+	VariationSlug string
+	RecipeKey     string
+	Name          string
+	NameEs        string
+	Description   string
+	Photos        Photos
+	Score         float64
+	RegionRank    int
 }
 
 type Dish struct {
@@ -62,7 +72,7 @@ type Dish struct {
 	Course      string
 	Season      string
 	Photos      Photos
-	Variations  []Variation // in region order
+	Variations  []Variation // regional in region order, then Spanish
 }
 
 // RegionVariation is a variation listed under its region, named by its dish.
@@ -84,22 +94,25 @@ type Ingredient struct {
 	Name     string
 }
 
+// Recipe is one variation's recipe; RegionName and VariationSlug follow
+// Variation's rules.
 type Recipe struct {
-	DishKey      string
-	DishName     string
-	RegionKey    string
-	RegionName   string
-	RecipeKey    string
-	Name         string
-	NameEs       string
-	Description  string
-	TimeMinutes  int
-	TimeNote     *string
-	BaseServings int
-	Ingredients  []Ingredient
-	Steps        []string
-	Tips         []string // nil when the recipe has none
-	Photos       Photos
+	DishKey       string
+	DishName      string
+	RegionKey     string
+	RegionName    string
+	VariationSlug string
+	RecipeKey     string
+	Name          string
+	NameEs        string
+	Description   string
+	TimeMinutes   int
+	TimeNote      *string
+	BaseServings  int
+	Ingredients   []Ingredient
+	Steps         []string
+	Tips          []string // nil when the recipe has none
+	Photos        Photos
 }
 
 // Repository reads the catalog in one locale. Regions come in region order;
@@ -112,4 +125,7 @@ type Repository interface {
 	Dishes(ctx context.Context, l Locale) ([]Dish, error)
 	// Recipe returns ErrNotFound when the dish has no variation in the region.
 	Recipe(ctx context.Context, dishKey, regionKey string, l Locale) (Recipe, error)
+	// SpainWideRecipe returns ErrNotFound when the dish has no Spanish
+	// variation with that slug.
+	SpainWideRecipe(ctx context.Context, dishKey, variationSlug string, l Locale) (Recipe, error)
 }
