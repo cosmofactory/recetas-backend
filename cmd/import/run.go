@@ -27,9 +27,10 @@ type stdio struct {
 }
 
 type options struct {
-	file   string
-	source string
-	dryRun bool
+	file          string
+	source        string
+	dryRun        bool
+	allowRemovals string // file listing the allowed removals
 }
 
 // run imports one bundle and returns the exit code. It reaches db only once
@@ -43,22 +44,34 @@ func run(ctx context.Context, args []string, std stdio, db importer.Beginner) in
 		say(std.err, "import: %v\n", err)
 		return exitInvalid
 	}
+	allowed, err := readAllowedRemovals(opts.allowRemovals)
+	if err != nil {
+		say(std.err, "import: %v\n", err)
+		return exitInvalid
+	}
 	b, err := readBundle(opts.file, std.in)
 	if err != nil {
 		printError(std.err, err)
 		return exitInvalid
 	}
-	s, err := importer.Apply(ctx, db, b, importer.Options{Source: opts.source, DryRun: opts.dryRun})
+	s, err := importer.Apply(ctx, db, b, importer.Options{Source: opts.source, DryRun: opts.dryRun, AllowedRemovals: allowed})
 	if err != nil {
 		printError(std.err, err)
-		var verr *importer.ValidationError
-		if errors.As(err, &verr) {
-			return exitInvalid
-		}
-		return exitDatabase
+		return exitCode(err)
 	}
 	printSummary(std.out, s, opts)
 	return exitOK
+}
+
+// exitCode is exitInvalid for an import refused by its input, else
+// exitDatabase.
+func exitCode(err error) int {
+	var verr *importer.ValidationError
+	var rerr *importer.UnlistedRemovalsError
+	if errors.As(err, &verr) || errors.As(err, &rerr) {
+		return exitInvalid
+	}
+	return exitDatabase
 }
 
 func parseFlags(args []string, stderr io.Writer) (options, error) {
@@ -68,8 +81,9 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	fs.StringVar(&opts.file, "file", "", "bundle file (default: read stdin)")
 	fs.StringVar(&opts.source, "source", "", "label stored with the content version (required)")
 	fs.BoolVar(&opts.dryRun, "dry-run", false, "print the changes, then roll them back")
+	fs.StringVar(&opts.allowRemovals, "allow-removals", "", "file of public paths the import may remove, one per line (default: none)")
 	fs.Usage = func() {
-		say(stderr, "usage: import --source <label> [--file bundle.json] [--dry-run]  (version %s)\n", version)
+		say(stderr, "usage: import --source <label> [--file bundle.json] [--dry-run] [--allow-removals paths.txt]  (version %s)\n", version)
 		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {
@@ -133,6 +147,9 @@ func printSummary(w io.Writer, s importer.Summary, opts options) {
 	for _, e := range importer.Entities {
 		c := s.Changes[e]
 		say(w, "  %-10s  created %3d  updated %3d  deleted %3d\n", e, c.Created, c.Updated, c.Deleted)
+	}
+	for _, p := range s.Removed {
+		say(w, "  removed %s\n", p)
 	}
 }
 

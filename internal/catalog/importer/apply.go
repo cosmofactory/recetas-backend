@@ -22,6 +22,9 @@ type Beginner interface {
 type Options struct {
 	Source string // stored in content_versions
 	DryRun bool   // report the changes, then roll them back
+	// AllowedRemovals are the public paths, without a locale, the import
+	// may remove (D-INF7-3); any other removal refuses the whole import.
+	AllowedRemovals map[string]bool
 }
 
 // Summary reports an import. Version is the content version afterwards; a
@@ -30,6 +33,7 @@ type Summary struct {
 	Version   int64
 	NoChanges bool
 	Changes   map[string]Counts // by Entities
+	Removed   []string          // public paths removed, sorted
 }
 
 // Apply validates b and makes the stored catalog equal to it in one
@@ -73,9 +77,12 @@ func apply(ctx context.Context, q *catalogdb.Queries, b Bundle, opts Options) (S
 		return Summary{}, fmt.Errorf("load catalog: %w", err)
 	}
 	p := diff(cur, b)
-	s := Summary{Version: latest.ID, NoChanges: p.empty(), Changes: p.changes}
+	s := Summary{Version: latest.ID, NoChanges: p.empty(), Changes: p.changes, Removed: removedPaths(cur, b)}
 	if s.NoChanges {
 		return s, nil
+	}
+	if paths := unlisted(s.Removed, opts.AllowedRemovals); len(paths) > 0 {
+		return Summary{}, &UnlistedRemovalsError{Paths: paths}
 	}
 	if err := newWriter(q, cur).execute(ctx, p); err != nil {
 		return Summary{}, err

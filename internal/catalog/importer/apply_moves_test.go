@@ -19,17 +19,18 @@ var replacedOne = map[string]importer.Counts{
 // the old one and its recipe are deleted, the new one created.
 func TestApply_ReplacedVariation(t *testing.T) {
 	tests := []struct {
-		name string
-		edit func(b *importer.Bundle)
-		gone pairKey
+		name  string
+		edit  func(b *importer.Bundle)
+		gone  pairKey
+		allow []string // removals allowed
 	}{
 		{"moved to another region, same recipe key", func(b *importer.Bundle) {
 			b.Dishes[0].Variations[1].RegionKey = "mad"
-		}, pairKey{"tortilla", "ast"}},
+		}, pairKey{"tortilla", "ast"}, []string{"/dishes/tortilla/ast"}},
 		{"recipe key renamed at the same dish and region", func(b *importer.Bundle) {
 			b.Dishes[1].Variations[0].RecipeKey = "cocido-de-madrid"
 			b.Recipes[2].RecipeKey = "cocido-de-madrid"
-		}, pairKey{}},
+		}, pairKey{}, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -38,7 +39,7 @@ func TestApply_ReplacedVariation(t *testing.T) {
 
 			b := validBundle()
 			tt.edit(&b)
-			s := mustApply(t, tx, b, realImport("replaced"))
+			s := mustApply(t, tx, b, allowRemovals(realImport("replaced"), tt.allow...))
 
 			assertChanges(t, s, replacedOne)
 			assertCatalogMatches(t, tx, b)
@@ -58,7 +59,7 @@ func TestApply_RemovedRegionDeletesItsVariations(t *testing.T) {
 
 	b := validBundle()
 	removed := removeRegion(&b, "ast")
-	s := mustApply(t, tx, b, realImport("without ast"))
+	s := mustApply(t, tx, b, allowRemovals(realImport("without ast"), "/regions/ast", "/dishes/tortilla/ast", "/dishes/cocido/ast"))
 
 	assertChanges(t, s, map[string]importer.Counts{
 		"regions":    {Updated: 1, Deleted: 1},

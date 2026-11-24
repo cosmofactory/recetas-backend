@@ -139,7 +139,7 @@ func TestApply_RemovedVariationDeletesOnlyItsTree(t *testing.T) {
 
 	b := readDesignBundle(t)
 	removed := removeVariation(t, &b, "tortilla", "gal")
-	s := mustApply(t, tx, b, realImport("without tortilla/gal"))
+	s := mustApply(t, tx, b, allowRemovals(realImport("without tortilla/gal"), "/dishes/tortilla/gal"))
 
 	assertChanges(t, s, map[string]importer.Counts{"variations": {Deleted: 1}, "recipes": {Deleted: 1}})
 	wantCounts := subtractRows(before.counts, recipeTreeRows(removed))
@@ -226,17 +226,18 @@ func TestApply_ReordersRegionsAndDishes(t *testing.T) {
 
 func TestApply_DryRunReportsWithoutWriting(t *testing.T) {
 	tests := []struct {
-		name string
-		base bool // import the design bundle first
-		edit func(t *testing.T, b *importer.Bundle)
+		name  string
+		base  bool // import the design bundle first
+		edit  func(t *testing.T, b *importer.Bundle)
+		allow []string // removals allowed
 	}{
-		{"first import", false, func(*testing.T, *importer.Bundle) {}},
-		{"update", true, func(_ *testing.T, b *importer.Bundle) { b.Regions[0].Name.En = "Galiza" }},
+		{"first import", false, func(*testing.T, *importer.Bundle) {}, nil},
+		{"update", true, func(_ *testing.T, b *importer.Bundle) { b.Regions[0].Name.En = "Galiza" }, nil},
 		{"tip added", true, func(_ *testing.T, b *importer.Bundle) {
 			b.Recipes[0].Tips = []importer.Text{txt("Rest it for a minute.")}
-		}},
-		{"removal", true, func(t *testing.T, b *importer.Bundle) { removeVariation(t, b, "cocido", "ast") }},
-		{"identical", true, func(*testing.T, *importer.Bundle) {}},
+		}, nil},
+		{"removal", true, func(t *testing.T, b *importer.Bundle) { removeVariation(t, b, "cocido", "ast") }, []string{"/dishes/cocido/ast"}},
+		{"identical", true, func(*testing.T, *importer.Bundle) {}, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -248,14 +249,15 @@ func TestApply_DryRunReportsWithoutWriting(t *testing.T) {
 			b := readDesignBundle(t)
 			tt.edit(t, &b)
 
-			dry := mustApply(t, tx, b, dryRun("dry"))
+			dry := mustApply(t, tx, b, allowRemovals(dryRun("dry"), tt.allow...))
 			assertStateUnchanged(t, tx, before)
 
-			actual := mustApply(t, tx, b, realImport("real"))
+			actual := mustApply(t, tx, b, allowRemovals(realImport("real"), tt.allow...))
 			if dry.NoChanges != actual.NoChanges {
 				t.Errorf("NoChanges: got %v on the dry run, want %v as on the real one", dry.NoChanges, actual.NoChanges)
 			}
 			assertChanges(t, dry, actual.Changes)
+			assertDeepEqual(t, "removed paths", dry.Removed, actual.Removed)
 		})
 	}
 }

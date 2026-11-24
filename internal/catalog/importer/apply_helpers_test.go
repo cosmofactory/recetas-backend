@@ -42,6 +42,16 @@ func realImport(source string) importer.Options { return importer.Options{Source
 
 func dryRun(source string) importer.Options { return importer.Options{Source: source, DryRun: true} }
 
+// allowRemovals returns opts allowing the removal of exactly paths, the
+// public paths without a locale (D-INF7-3).
+func allowRemovals(opts importer.Options, paths ...string) importer.Options {
+	opts.AllowedRemovals = make(map[string]bool, len(paths))
+	for _, p := range paths {
+		opts.AllowedRemovals[p] = true
+	}
+	return opts
+}
+
 // assertChanges compares every entity's counts; entities missing from want
 // must be all zero.
 func assertChanges(t *testing.T, s importer.Summary, want map[string]importer.Counts) {

@@ -138,20 +138,21 @@ func TestApply_ReimportingSpainWideBundleMakesNoChanges(t *testing.T) {
 // is identified by (dish, esp, slug), whatever its recipe key.
 func TestApply_SpainWideSlugChangeIsRemoveAndAdd(t *testing.T) {
 	tests := []struct {
-		name string
-		edit func(b *importer.Bundle)
+		name    string
+		edit    func(b *importer.Bundle)
+		removed string // the old public path
 	}{
 		{"slug and recipe key renamed", func(b *importer.Bundle) {
 			b.Dishes[2].Variations[0] = spainWideVariation("allioli", "allioli-a-mano")
 			b.Recipes[4].RecipeKey = spainWideRecipeKey("allioli", "allioli-a-mano")
-		}},
+		}, "/dishes/allioli/esp/" + morterSlug},
 		{"slug renamed, recipe key kept", func(b *importer.Bundle) {
 			b.Dishes[2].Variations[0].VariationSlug = "allioli-a-mano"
-		}},
+		}, "/dishes/allioli/esp/" + morterSlug},
 		{"regional variation made spanish, recipe key kept", func(b *importer.Bundle) {
 			b.Dishes[2].Variations[1].RegionKey = spainWideKey
 			b.Dishes[2].Variations[1].VariationSlug = "allioli-asturiano"
-		}},
+		}, "/dishes/allioli/ast"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -159,7 +160,7 @@ func TestApply_SpainWideSlugChangeIsRemoveAndAdd(t *testing.T) {
 			b := spainWideBundle()
 			tt.edit(&b)
 
-			s := mustApply(t, tx, b, realImport("renamed"))
+			s := mustApply(t, tx, b, allowRemovals(realImport("renamed"), tt.removed))
 
 			assertChanges(t, s, replacedOne)
 			assertCatalogMatches(t, tx, b)
@@ -171,7 +172,7 @@ func TestApply_RenamedSlugServesOnlyTheNewSlug(t *testing.T) {
 	tx, _ := importedSpainWide(t)
 	b := spainWideBundle()
 	b.Dishes[2].Variations[0].VariationSlug = "allioli-a-mano"
-	mustApply(t, tx, b, realImport("renamed"))
+	mustApply(t, tx, b, allowRemovals(realImport("renamed"), "/dishes/allioli/esp/"+morterSlug))
 	svc := newService(tx)
 
 	if _, _, err := svc.SpainWideRecipe(context.Background(), "allioli", morterSlug, "en"); !errors.Is(err, catalog.ErrNotFound) {
@@ -225,7 +226,7 @@ func TestApply_RemovedSpanishVariationDeletesOnlyItsTree(t *testing.T) {
 	b.Dishes[2].Variations = b.Dishes[2].Variations[:2]
 	b.Recipes = b.Recipes[:6]
 
-	s := mustApply(t, tx, b, realImport("without codony"))
+	s := mustApply(t, tx, b, allowRemovals(realImport("without codony"), "/dishes/allioli/esp/"+codonySlug))
 
 	assertChanges(t, s, map[string]importer.Counts{"variations": {Deleted: 1}, "recipes": {Deleted: 1}})
 	assertCatalogMatches(t, tx, b)
